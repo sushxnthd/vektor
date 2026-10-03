@@ -39,6 +39,15 @@ jobs:
             -o build/rtl/tb_rf_bank_arbiter \
             rtl/vtile/rf_bank_arbiter.sv verification/rtl/tb_rf_bank_arbiter.sv
           vvp build/rtl/tb_rf_bank_arbiter
+      - name: Simulate integrated issue control
+        run: |
+          iverilog -g2012 -s tb_issue_control \
+            -o build/rtl/tb_issue_control \
+            rtl/vtile/steal_warp_scheduler.sv \
+            rtl/vtile/rf_bank_arbiter.sv \
+            rtl/vtile/issue_control.sv \
+            verification/rtl/tb_issue_control.sv
+          vvp build/rtl/tb_issue_control
       - name: Generic synthesis — fixed wave scheduler
         run: |
           set -o pipefail
@@ -59,9 +68,14 @@ jobs:
           set -o pipefail
           yosys -p 'read_verilog -sv rtl/vtile/rf_bank_arbiter.sv; synth -top vektor_rf_bank_arbiter; stat' 2>&1 \
             | tee build/rtl/rf_bank_arbiter_yosys.log
+      - name: Generic synthesis — integrated issue control
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/steal_warp_scheduler.sv rtl/vtile/rf_bank_arbiter.sv rtl/vtile/issue_control.sv; synth -top vektor_issue_control; stat' 2>&1 \
+            | tee build/rtl/issue_control_yosys.log
       - name: Capture RTL evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: rtl-wave32-001
+          name: issue-fp32-001-rtl
           path: build/rtl/
