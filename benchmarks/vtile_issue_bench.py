@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict
 
-from vektor.pipeline import (
+from sim.vektor.pipeline import (
     DependencyTileSimulator,
     TileConfig,
     dependency_fma_kernel,
