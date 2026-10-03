@@ -30,3 +30,10 @@ jobs:
         with:
           name: memory-hierarchy-results
           path: memory_hierarchy_results.json
+      - name: Run divergence upper-bound benchmark
+        run: python -m benchmarks.divergence_bench > divergence_results.json
+      - name: Upload divergence evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: divergence-results
+          path: divergence_results.json
