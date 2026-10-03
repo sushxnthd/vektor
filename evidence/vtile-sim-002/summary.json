@@ -1,0 +1,45 @@
+{
+  "milestone": "vtile-sim-002",
+  "status": "simulated_provisional",
+  "source_commit": "3cc4f527cf0a4bd4ba0a1673424acad738fa69c2",
+  "github_actions_run": 37107996482,
+  "artifact": {
+    "name": "vtile-issue-results",
+    "id": 11267449703,
+    "sha256": "791cf869c52fc30ad505fe084496421f54393392d30279071160caf5afb6c2e7"
+  },
+  "ci": {
+    "tests_passed": 7,
+    "benchmark_passed": true,
+    "artifact_upload_passed": true
+  },
+  "headline_rows": {
+    "reuse_fma_no_cache": {
+      "cycles": 1024,
+      "issue_utilization": 0.5,
+      "rf_reads": 4096,
+      "bank_stalls": 30480
+    },
+    "reuse_fma_cache64": {
+      "cycles": 513,
+      "issue_utilization": 0.9980506822612085,
+      "rf_reads": 64,
+      "bank_stalls": 142
+    },
+    "dependency_fma_cache64": {
+      "cycles": 521,
+      "issue_utilization": 0.982725527831094,
+      "rf_reads": 2322,
+      "dependency_stalls": 112
+    },
+    "load_use_cache64": {
+      "cycles": 983,
+      "issue_utilization": 0.13021363173957273,
+      "dependency_stalls": 29092,
+      "resource_stalls": 240,
+      "idle_cycles": 832
+    }
+  },
+  "supported_claim": "In the current deterministic V-Tile simulator, RF-bank pressure can halve issue throughput on a high-reuse synthetic FP32 workload, while a small operand cache largely removes that modeled bottleneck; the same cache does not rescue a dependent long-latency memory workload.",
+  "claim_boundary": "Synthetic simulator evidence only. No physical frequency, area, power, energy, real-workload performance, commercial-GPU superiority, or RTX 5090 equivalence is established."
+}
