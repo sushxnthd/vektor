@@ -51,15 +51,18 @@ module tb_warp_scheduler;
         #8;
         rst_n = 1'b1;
 
-        check_issue4(0, 1, 2, 3);
+        // One issue from each 8-wave scheduler partition.
+        check_issue4(0, 8, 16, 24);
         @(posedge clk);
-        check_issue4(4, 5, 6, 7);
+        check_issue4(1, 9, 17, 25);
 
-        wave_valid[8] = 1'b0;
-        wave_ready[9] = 1'b0;
+        // Each partition skips its own unavailable waves independently.
+        wave_valid[2] = 1'b0;
+        wave_ready[10] = 1'b0;
         @(posedge clk);
-        check_issue4(10, 11, 12, 13);
+        check_issue4(3, 11, 18, 26);
 
+        // Sparse-ready case: only partitions 0 and 2 can issue.
         wave_valid = '0;
         wave_ready = '0;
         wave_valid[3] = 1'b1;
@@ -68,13 +71,10 @@ module tb_warp_scheduler;
         wave_ready[21] = 1'b1;
         @(posedge clk);
         #1;
-        if (issue_valid !== 4'b0011)
-            $fatal(1, "expected two valid issues, got %b", issue_valid);
-        if (issue_wave0 == issue_wave1)
-            $fatal(1, "scheduler issued duplicate wave id");
-        if (!((issue_wave0 == 21 && issue_wave1 == 3) ||
-              (issue_wave0 == 3 && issue_wave1 == 21)))
-            $fatal(1, "unexpected sparse issue ids %0d %0d", issue_wave0, issue_wave1);
+        if (issue_valid !== 4'b0101)
+            $fatal(1, "expected partition-valid mask 0101, got %b", issue_valid);
+        if (issue_wave0 !== 5'd3 || issue_wave2 !== 5'd21)
+            $fatal(1, "unexpected sparse issue ids %0d %0d", issue_wave0, issue_wave2);
 
         $display("warp scheduler tests passed");
         $finish;
