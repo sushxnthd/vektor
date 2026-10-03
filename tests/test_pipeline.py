@@ -1,4 +1,4 @@
-from vektor.pipeline import (
+from sim.vektor.pipeline import (
     DependencyTileSimulator,
     TileConfig,
     dependency_fma_kernel,
