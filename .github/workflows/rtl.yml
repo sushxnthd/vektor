@@ -1,0 +1,42 @@
+name: rtl
+
+on:
+  push:
+    branches: [main, "research/**"]
+  pull_request:
+
+jobs:
+  verify-and-synthesize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Simulate wave scheduler
+        run: |
+          mkdir -p build/rtl
+          iverilog -g2012 -s tb_warp_scheduler \
+            -o build/rtl/tb_warp_scheduler \
+            rtl/vtile/warp_scheduler.sv verification/rtl/tb_warp_scheduler.sv
+          vvp build/rtl/tb_warp_scheduler
+      - name: Simulate RF bank arbiter
+        run: |
+          iverilog -g2012 -s tb_rf_bank_arbiter \
+            -o build/rtl/tb_rf_bank_arbiter \
+            rtl/vtile/rf_bank_arbiter.sv verification/rtl/tb_rf_bank_arbiter.sv
+          vvp build/rtl/tb_rf_bank_arbiter
+      - name: Generic synthesis — wave scheduler
+        run: |
+          yosys -p 'read_verilog -sv rtl/vtile/warp_scheduler.sv; synth -top vektor_warp_scheduler; stat' \
+            | tee build/rtl/warp_scheduler_yosys.log
+      - name: Generic synthesis — RF bank arbiter
+        run: |
+          yosys -p 'read_verilog -sv rtl/vtile/rf_bank_arbiter.sv; synth -top vektor_rf_bank_arbiter; stat' \
+            | tee build/rtl/rf_bank_arbiter_yosys.log
+      - name: Capture RTL evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtl-wave32-001
+          path: build/rtl/
