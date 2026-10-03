@@ -20,13 +20,20 @@ def _validate_trace(trace: list[int]) -> None:
         raise ValueError("readiness masks must fit 32 waves")
 
 
+def _result(trace: list[int], issued: int, ready: int) -> SchedulerTopologyResult:
+    capacity = 4 * len(trace)
+    return SchedulerTopologyResult(
+        cycles=len(trace),
+        ready_wave_slots=ready,
+        issued_wave_slots=issued,
+        issue_capacity=capacity,
+        issue_utilization=issued / capacity,
+        ready_service_ratio=issued / ready if ready else 1.0,
+    )
+
+
 def evaluate_global_four_wide(trace: list[int]) -> SchedulerTopologyResult:
-    """Idealized four-wide global scheduler upper bound.
-
-    Each cycle may issue any four ready waves. This ignores arbitration delay and
-    exists as a performance upper bound for scheduler-topology comparisons.
-    """
-
+    """Idealized four-wide global scheduler upper bound."""
     _validate_trace(trace)
     issued = 0
     ready = 0
@@ -34,43 +41,44 @@ def evaluate_global_four_wide(trace: list[int]) -> SchedulerTopologyResult:
         count = mask.bit_count()
         ready += count
         issued += min(4, count)
-    capacity = 4 * len(trace)
-    return SchedulerTopologyResult(
-        cycles=len(trace),
-        ready_wave_slots=ready,
-        issued_wave_slots=issued,
-        issue_capacity=capacity,
-        issue_utilization=issued / capacity,
-        ready_service_ratio=issued / ready if ready else 1.0,
-    )
+    return _result(trace, issued, ready)
 
 
 def evaluate_fixed_four_by_eight(trace: list[int]) -> SchedulerTopologyResult:
     """Four independent 8-wave partitions, one issue per partition/cycle."""
-
     _validate_trace(trace)
     issued = 0
     ready = 0
     for mask in trace:
         ready += mask.bit_count()
         for partition in range(4):
-            part_mask = (mask >> (partition * 8)) & 0xFF
-            if part_mask:
+            if ((mask >> (partition * 8)) & 0xFF):
                 issued += 1
-    capacity = 4 * len(trace)
-    return SchedulerTopologyResult(
-        cycles=len(trace),
-        ready_wave_slots=ready,
-        issued_wave_slots=issued,
-        issue_capacity=capacity,
-        issue_utilization=issued / capacity,
-        ready_service_ratio=issued / ready if ready else 1.0,
-    )
+    return _result(trace, issued, ready)
+
+
+def evaluate_limited_steal(trace: list[int]) -> SchedulerTopologyResult:
+    """Four 8-wave partitions plus at most one backup issue per donor partition.
+
+    Each non-empty partition supplies one primary issue. If issue slots remain,
+    a partition with at least two ready waves may supply one additional backup.
+    This models the low-state RTL alternative between rigid partitioning and a
+    full 32-wave four-wide arbiter.
+    """
+    _validate_trace(trace)
+    issued = 0
+    ready = 0
+    for mask in trace:
+        counts = [((mask >> (partition * 8)) & 0xFF).bit_count() for partition in range(4)]
+        ready += sum(counts)
+        primary = sum(count > 0 for count in counts)
+        backups = sum(count > 1 for count in counts)
+        issued += min(4, primary + backups)
+    return _result(trace, issued, ready)
 
 
 def balanced_trace(cycles: int = 256) -> list[int]:
     """At least one ready wave in every 8-wave partition every cycle."""
-
     return [
         (1 << ((cycle + 0) % 8))
         | (1 << (8 + (cycle + 1) % 8))
@@ -82,7 +90,6 @@ def balanced_trace(cycles: int = 256) -> list[int]:
 
 def clustered_trace(cycles: int = 256) -> list[int]:
     """Four ready waves exist, but all are concentrated in one partition."""
-
     trace = []
     for cycle in range(cycles):
         partition = cycle % 4
@@ -93,7 +100,6 @@ def clustered_trace(cycles: int = 256) -> list[int]:
 
 def rotating_cluster_trace(cycles: int = 256) -> list[int]:
     """Eight ready waves/cycle concentrated across two neighboring partitions."""
-
     trace = []
     for cycle in range(cycles):
         first = cycle % 4
@@ -109,14 +115,11 @@ def rotating_cluster_trace(cycles: int = 256) -> list[int]:
 
 def lopsided_memory_trace(cycles: int = 256) -> list[int]:
     """Deterministic proxy for correlated stalls leaving readiness lopsided."""
-
     trace = []
     for cycle in range(cycles):
         mask = 0
-        # Partition 0 remains broadly ready.
         for lane in range(6):
             mask |= 1 << lane
-        # Other partitions wake periodically, emulating correlated miss returns.
         if cycle % 2 == 0:
             mask |= 1 << (8 + (cycle // 2) % 8)
         if cycle % 4 == 0:
