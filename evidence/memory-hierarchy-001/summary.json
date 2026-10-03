@@ -1,0 +1,74 @@
+{
+  "milestone": "memory-hierarchy-001",
+  "status": "simulated_provisional",
+  "source_commit": "8372db0df829f6d24c51328d664017984490c8c6",
+  "github_actions_run": 37108593818,
+  "artifact": {
+    "name": "memory-hierarchy-results",
+    "id": 11268990991,
+    "sha256": "b64cd944cbd7b9bed8a92202580648a4df6148583bb2ecfdf1f38c282664a945"
+  },
+  "ci": {
+    "deterministic_tests_passed": 13,
+    "existing_vtile_benchmark_passed": true,
+    "memory_benchmark_passed": true,
+    "artifact_upload_passed": true
+  },
+  "provisional_memory_parameters": {
+    "l1_size_bytes": 131072,
+    "l1_line_bytes": 128,
+    "l1_associativity": 4,
+    "l1_hit_latency_cycles": 4,
+    "l2_size_bytes": 8388608,
+    "l2_associativity": 16,
+    "l2_hit_latency_cycles": 40,
+    "dram_latency_cycles": 300,
+    "dram_requests_per_cycle": 2
+  },
+  "headline_results": {
+    "cold_unique_mshr8": {
+      "cycles": 4804,
+      "issue_utilization": 0.013322231473771857,
+      "dram_misses": 128,
+      "mshr_stall_observations": 99456
+    },
+    "cold_unique_mshr16": {
+      "cycles": 2408,
+      "issue_utilization": 0.026578073089700997,
+      "dram_misses": 128,
+      "mshr_stall_observations": 32704
+    },
+    "cold_unique_mshr32": {
+      "cycles": 1219,
+      "issue_utilization": 0.052502050861361775,
+      "dram_misses": 128,
+      "mshr_stall_observations": 0
+    },
+    "cold_unique_mshr64": {
+      "cycles": 1219,
+      "issue_utilization": 0.052502050861361775,
+      "dram_misses": 128,
+      "mshr_stall_observations": 0
+    },
+    "coalesced_8_lines": {
+      "cycles": 1219,
+      "issue_utilization": 0.052502050861361775,
+      "dram_misses": 8,
+      "merged_misses": 120,
+      "l1_hits": 0
+    },
+    "l1_reuse_single_line": {
+      "cycles": 360,
+      "issue_utilization": 0.17777777777777778,
+      "dram_misses": 1,
+      "merged_misses": 31,
+      "l1_hits": 96
+    }
+  },
+  "supported_claims": [
+    "On the current 32-wave dependent cold-load trace, useful modeled miss-level parallelism saturates at 32 MSHRs; larger MSHR counts do not improve runtime because the trace exposes no more than 32 independent blocking misses at once.",
+    "Outstanding-line coalescing reduces modeled DRAM transactions from 128 to 8 without reducing the 1219-cycle latency-bound runtime once enough MSHRs are available.",
+    "True post-fill L1 reuse is behaviorally distinct from coalescing and reduces modeled runtime from 1219 to 360 cycles on the matched trace."
+  ],
+  "claim_boundary": "Synthetic timing-model evidence only. Cache geometry and timing are provisional architecture parameters. No physical area, power, frequency, GDDR7 behavior, NoC behavior, real-workload performance, commercial-GPU superiority, or RTX 5090 equivalence is established."
+}

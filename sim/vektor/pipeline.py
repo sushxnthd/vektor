@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from .memory import MemoryHierarchy
 
 
 @dataclass(frozen=True)
@@ -16,6 +19,7 @@ class Instruction:
     active_lanes: int = 32
     matrix_ops: int = 0
     memory_bytes: int = 0
+    address: Optional[int] = None
 
 
 @dataclass
@@ -82,17 +86,22 @@ class _OperandCache:
 class DependencyTileSimulator:
     """Deterministic issue/dependency model for one V-Tile.
 
-    The model is deliberately small enough to audit. It models four shared issue
-    slots, separate FP32/matrix/memory issue limits, in-order waves, register
-    dependencies, banked RF reads, an LRU operand cache, fixed load latency and a
-    bounded outstanding-load queue. It is not yet a cache, NoC, DRAM, execution-
-    pipeline, or physical-timing model.
+    The model contains four shared issue slots, separate FP32/matrix/memory issue
+    limits, in-order waves, register dependencies, banked RF reads and an operand
+    cache. Loads can either use the legacy fixed-latency path or, when an address
+    and `MemoryHierarchy` are supplied, take latency/backpressure from the explicit
+    L1 -> L2 -> DRAM model. It is not a physical-timing, NoC, or power model.
     """
 
     def __init__(self, config: TileConfig | None = None):
         self.config = config or TileConfig()
 
-    def run(self, waves: list[Wave], max_cycles: int = 10_000_000) -> SimulationResult:
+    def run(
+        self,
+        waves: list[Wave],
+        max_cycles: int = 10_000_000,
+        memory: MemoryHierarchy | None = None,
+    ) -> SimulationResult:
         waves = [
             Wave(list(w.instructions), w.wave_id, w.pc, dict(w.ready_at))
             for w in waves
@@ -123,7 +132,10 @@ class DependencyTileSimulator:
                 raise RuntimeError("simulation exceeded max_cycles")
 
             cycle += 1
+            if memory is not None:
+                memory.advance(cycle)
             outstanding_loads = [done for done in outstanding_loads if done > cycle]
+
             issued = 0
             fp32_used = 0
             matrix_used = 0
@@ -155,11 +167,19 @@ class DependencyTileSimulator:
                 if ins.op in ("load", "store") and memory_used >= c.memory_issue_per_cycle:
                     resource_stalls += 1
                     continue
-                if ins.op == "load" and len(outstanding_loads) >= c.max_outstanding_loads:
-                    resource_stalls += 1
-                    continue
                 if ins.op not in ("fp32", "matrix", "load", "store"):
                     raise ValueError(f"unsupported op: {ins.op}")
+
+                uses_hierarchy = (
+                    ins.op == "load" and memory is not None and ins.address is not None
+                )
+                if (
+                    ins.op == "load"
+                    and not uses_hierarchy
+                    and len(outstanding_loads) >= c.max_outstanding_loads
+                ):
+                    resource_stalls += 1
+                    continue
 
                 required_bank_reads: dict[int, int] = {}
                 for reg in ins.src:
@@ -175,6 +195,13 @@ class DependencyTileSimulator:
                 ):
                     bank_stalls += 1
                     continue
+
+                hierarchy_result = None
+                if uses_hierarchy:
+                    hierarchy_result = memory.issue(cycle, ins.address)
+                    if hierarchy_result is None:
+                        resource_stalls += 1
+                        continue
 
                 for reg in ins.src:
                     key = (wave.wave_id, reg)
@@ -202,10 +229,13 @@ class DependencyTileSimulator:
                     memory_bytes += ins.memory_bytes
 
                 if ins.dst is not None:
-                    latency = c.memory_latency if ins.op == "load" else ins.latency
-                    wave.ready_at[ins.dst] = cycle + latency
+                    if hierarchy_result is not None:
+                        wave.ready_at[ins.dst] = hierarchy_result.completion_cycle
+                    else:
+                        latency = c.memory_latency if ins.op == "load" else ins.latency
+                        wave.ready_at[ins.dst] = cycle + latency
 
-                if ins.op == "load":
+                if ins.op == "load" and not uses_hierarchy:
                     outstanding_loads.append(cycle + c.memory_latency)
 
                 wave.pc += 1
@@ -263,7 +293,7 @@ def dependency_fma_kernel(wave_count: int = 32, instructions: int = 64) -> list[
 
 
 def load_use_kernel(wave_count: int = 32, iterations: int = 8) -> list[Wave]:
-    """Repeated dependent load/use pairs for a fixed-latency memory stress test."""
+    """Repeated dependent load/use pairs for the legacy fixed-latency path."""
 
     waves: list[Wave] = []
     for wave_id in range(wave_count):
@@ -271,6 +301,47 @@ def load_use_kernel(wave_count: int = 32, iterations: int = 8) -> list[Wave]:
         for i in range(iterations):
             loaded = 2 + (i % 8)
             sequence.append(Instruction("load", dst=loaded, memory_bytes=128))
+            sequence.append(
+                Instruction("fp32", (loaded, 1), dst=10 + (i % 8), latency=4)
+            )
+        waves.append(Wave(sequence, wave_id))
+    return waves
+
+
+def addressed_load_use_kernel(
+    wave_count: int = 32,
+    iterations: int = 8,
+    working_set_lines: int | None = None,
+    line_bytes: int = 128,
+) -> list[Wave]:
+    """Dependent load/use pairs with deterministic cache-line addresses.
+
+    `working_set_lines=None` gives every load a unique line. A smaller positive
+    working set intentionally creates inter-wave reuse/coalescing.
+    """
+
+    if working_set_lines is not None and working_set_lines <= 0:
+        raise ValueError("working_set_lines must be positive when supplied")
+
+    waves: list[Wave] = []
+    for wave_id in range(wave_count):
+        sequence: list[Instruction] = []
+        for i in range(iterations):
+            loaded = 2 + (i % 8)
+            linear_line = wave_id * iterations + i
+            line = (
+                linear_line
+                if working_set_lines is None
+                else linear_line % working_set_lines
+            )
+            sequence.append(
+                Instruction(
+                    "load",
+                    dst=loaded,
+                    memory_bytes=line_bytes,
+                    address=line * line_bytes,
+                )
+            )
             sequence.append(
                 Instruction("fp32", (loaded, 1), dst=10 + (i % 8), latency=4)
             )

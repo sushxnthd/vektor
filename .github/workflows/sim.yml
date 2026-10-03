@@ -18,8 +18,15 @@ jobs:
       - run: pytest
       - name: Run V-Tile issue benchmark
         run: python -m benchmarks.vtile_issue_bench > vtile_issue_results.json
-      - name: Upload benchmark evidence
+      - name: Upload V-Tile issue evidence
         uses: actions/upload-artifact@v4
         with:
           name: vtile-issue-results
           path: vtile_issue_results.json
+      - name: Run memory hierarchy benchmark
+        run: python -m benchmarks.memory_hierarchy_bench > memory_hierarchy_results.json
+      - name: Upload memory hierarchy evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-hierarchy-results
+          path: memory_hierarchy_results.json
