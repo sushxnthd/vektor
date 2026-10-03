@@ -40,6 +40,7 @@ module tb_issue_control;
             src1_bank_by_wave = '0;
             rst_n = 1'b0;
             repeat (2) @(posedge clk);
+            #1;
             rst_n = 1'b1;
             #1;
         end
@@ -48,7 +49,6 @@ module tb_issue_control;
     initial begin
         reset_dut();
 
-        // Four partitions with nonconflicting operand banks all issue.
         wave_valid[0] = 1'b1;
         wave_valid[8] = 1'b1;
         wave_valid[16] = 1'b1;
@@ -62,8 +62,6 @@ module tb_issue_control;
         if (issue_valid !== 4'b1111)
             $fatal(1, "nonconflicting waves should all issue, got %b", issue_valid);
 
-        // Four waves all demand the same same-bank pair. The dual-read bank
-        // capacity admits only one request; the others must remain pending.
         reset_dut();
         wave_valid[0] = 1'b1;
         wave_valid[8] = 1'b1;
@@ -80,9 +78,8 @@ module tb_issue_control;
         if (issue_wave0 !== 5'd0)
             $fatal(1, "expected wave 0 to win first conflict, got %0d", issue_wave0);
 
-        // Model external retirement of the accepted wave only. All rejected
-        // waves remain ready and must be presented again next cycle.
         @(posedge clk);
+        #1;
         wave_valid[0] = 1'b0;
         wave_ready[0] = 1'b0;
         #1;
@@ -92,15 +89,15 @@ module tb_issue_control;
             issue_wave2 !== 5'd8 && issue_wave3 !== 5'd8)
             $fatal(1, "wave 8 was not retried after wave 0 retired");
 
-        // Partial conflict: bank 0 can serve two reads total. Slots 0 and 1
-        // collide on both operands; independent slots remain admissible.
+        // Slot 0 consumes both read ports of bank 0. Slot 1 then conflicts,
+        // while slots 2 and 3 use independent banks and still issue.
         reset_dut();
         wave_valid[0] = 1'b1;
         wave_valid[8] = 1'b1;
         wave_valid[16] = 1'b1;
         wave_valid[24] = 1'b1;
         wave_ready = wave_valid;
-        set_banks(0,  4'd0, 4'd1);
+        set_banks(0,  4'd0, 4'd0);
         set_banks(8,  4'd0, 4'd1);
         set_banks(16, 4'd4, 4'd5);
         set_banks(24, 4'd6, 4'd7);
