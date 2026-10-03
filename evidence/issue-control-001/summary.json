@@ -1,0 +1,26 @@
+{
+  "experiment": "ISSUE-CONTROL-001",
+  "evidence_type": ["rtl_simulation", "generic_synthesis"],
+  "clean_source_head": "b30d6aaf55898845dec44fcba36b470263a236c5",
+  "clean_rtl_run_id": 37131853863,
+  "clean_simulator_run_id": 37131853865,
+  "rtl_artifact_sha256": "7a7b8c5c543a9539e24abfe18a4926537e73c4cdd186d4840879e37fa31e5c9c",
+  "preserved_failed_run": {
+    "run_id": 37131661907,
+    "cause": "testbench reset deassertion race before integrated test; no promoted measurements"
+  },
+  "generic_cell_counts": {
+    "backpressure_aware_limited_steal_scheduler": 1310,
+    "rf_bank_arbiter": 1321,
+    "integrated_issue_control": 3627,
+    "top_level_selection_and_control_approx": 998
+  },
+  "verified_invariants": [
+    "unaccepted_scheduler proposals do not advance fairness state",
+    "RF bank conflicts may reduce issue width without dropping rejected waves",
+    "independent slots continue to issue under partial conflicts",
+    "previously rejected waves are retried while externally valid and ready"
+  ],
+  "claim_boundary": "Synthesizable issue-control RTL and deterministic tests only. No complete RF, operand cache, IEEE-754 execution, timing closure, physical area, power, energy, application performance, or RTX 5090 equivalence is established.",
+  "next_gate": "operand_register_state_and_standards_checked_fp32_fma_backend"
+}
