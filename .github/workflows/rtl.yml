@@ -29,13 +29,16 @@ jobs:
           vvp build/rtl/tb_rf_bank_arbiter
       - name: Generic synthesis — wave scheduler
         run: |
-          yosys -p 'read_verilog -sv rtl/vtile/warp_scheduler.sv; synth -top vektor_warp_scheduler; stat' \
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/warp_scheduler.sv; synth -top vektor_warp_scheduler; stat' 2>&1 \
             | tee build/rtl/warp_scheduler_yosys.log
       - name: Generic synthesis — RF bank arbiter
         run: |
-          yosys -p 'read_verilog -sv rtl/vtile/rf_bank_arbiter.sv; synth -top vektor_rf_bank_arbiter; stat' \
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/rf_bank_arbiter.sv; synth -top vektor_rf_bank_arbiter; stat' 2>&1 \
             | tee build/rtl/rf_bank_arbiter_yosys.log
       - name: Capture RTL evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: rtl-wave32-001
