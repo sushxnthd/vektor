@@ -37,3 +37,10 @@ jobs:
         with:
           name: divergence-results
           path: divergence_results.json
+      - name: Run scheduler topology benchmark
+        run: python -m benchmarks.scheduler_topology_bench > scheduler_topology_results.json
+      - name: Upload scheduler topology evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduler-topology-results
+          path: scheduler_topology_results.json
