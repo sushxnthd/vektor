@@ -96,3 +96,57 @@ Implement a parameterized L1/shared-memory + L2 hierarchy with finite queues, hi
 
 ### Subsequent gate
 If a scheduler/RF effect survives the richer simulator and adversarial traces, implement a synthesizable Wave32 scheduler + banked register-file slice and prove RTL/reference-model equivalence before making timing, area, or power claims.
+
+## 2026-10-03 — Experiment 003: Explicit non-blocking memory hierarchy
+
+Branch: `research/memory-hierarchy-001`
+
+Frozen evidence source: commit `8372db0df829f6d24c51328d664017984490c8c6`
+
+GitHub Actions run: `37108593818`
+
+Artifact digest: `sha256:b64cd944cbd7b9bed8a92202580648a4df6148583bb2ecfdf1f38c282664a945`
+
+### Model change
+The fixed load-latency shortcut can now be replaced by a parameterized L1 -> L2 -> DRAM timing hierarchy. The reference model includes set-associative L1/L2 state, cache-fill timing, finite request bandwidth, same-line miss merging, configurable MSHRs, DRAM request bandwidth, and direct backpressure into wave issue.
+
+Provisional parameters used in the frozen benchmark are 128 KiB L1 / 128-byte line / 4-way / 4-cycle hit, 8 MiB L2 / 16-way / 40-cycle hit, 300-cycle DRAM latency, two DRAM requests/cycle, and an MSHR sweep. These values are model parameters rather than silicon measurements.
+
+### Evidence quality
+- 13 deterministic tests passed in GitHub Actions.
+- Existing Experiment 002 benchmark still passed.
+- Memory-hierarchy benchmark passed and its raw JSON artifact was uploaded in the same clean run.
+- Tests directly exercise DRAM fill to L1 hit, same-line miss merging, MSHR rejection/backpressure, L1 eviction exposing an L2 hit, cold pipeline loads, and integrated same-line coalescing.
+
+### Result A — MSHR threshold on a cold dependent trace
+For 32 resident waves with four dependent unique-line load/use iterations each:
+
+- 8 MSHRs: 4804 cycles, 1.33% issue utilization;
+- 16 MSHRs: 2408 cycles, 2.66% issue utilization;
+- 32 MSHRs: 1219 cycles, 5.25% issue utilization;
+- 64 MSHRs: 1219 cycles;
+- 128 MSHRs: 1219 cycles.
+
+All cases perform 128 modeled DRAM misses. The no-benefit region above 32 MSHRs follows from this trace exposing no more than one blocking miss per each of 32 waves at once. It is not a general recommendation that a V-Tile needs exactly 32 MSHRs.
+
+### Result B — coalescing is not latency reduction
+Mapping the same 128 logical loads onto eight outstanding cache lines yields 8 DRAM misses plus 120 merged requests, a 93.75% reduction in DRAM transactions, yet runtime remains 1219 cycles once MSHR capacity is non-binding.
+
+This is a useful negative result: reducing external transactions does not improve this dependency-limited trace because the critical path still waits on miss completion.
+
+### Result C — true L1 reuse is distinct
+Mapping all four iterations to a single line produces 1 DRAM miss, 31 merged misses, and 96 L1 hits. Runtime falls to 360 cycles and issue utilization rises to 17.78%.
+
+Relative to the 1219-cycle latency-bound cases, actual post-fill L1 reuse reduces modeled runtime by about 70.5%.
+
+### Supported claims
+The simulator now distinguishes miss-level parallelism, outstanding-line coalescing, and post-fill cache reuse as separate mechanisms. On the frozen 32-wave trace, useful MSHR capacity saturates at 32, coalescing cuts traffic without cutting latency-bound runtime, and true L1 reuse materially shortens the critical path.
+
+### Explicit boundary
+Experiment 003 does not establish physically achievable cache latency/bandwidth, optimal MSHR count on real applications, cache area/energy, NoC behavior, GDDR7 controller/PHY feasibility, commercial-GPU superiority, or RTX 5090 equivalence.
+
+### Highest-value next experiment
+Add per-lane execution masks, branch divergence, and a conventional SIMT reconvergence baseline. Freeze balanced traces with matched active-lane work, then implement Vektor cohort compaction as a separate scheduler and compare both under identical RF/memory conditions. Include adversarial cases where compaction overhead should lose.
+
+### Parallel implementation gate
+Begin the first synthesizable Wave32 scheduler + banked-RF slice only against a frozen behavioral interface, then prove RTL/reference-model agreement before any timing/area/power extrapolation.
