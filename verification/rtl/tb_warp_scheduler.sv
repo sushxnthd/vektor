@@ -6,7 +6,10 @@ module tb_warp_scheduler;
     logic [31:0] wave_valid;
     logic [31:0] wave_ready;
     logic [3:0] issue_valid;
-    logic [3:0][4:0] issue_wave_id;
+    logic [4:0] issue_wave0;
+    logic [4:0] issue_wave1;
+    logic [4:0] issue_wave2;
+    logic [4:0] issue_wave3;
 
     vektor_warp_scheduler dut (
         .clk(clk),
@@ -14,7 +17,10 @@ module tb_warp_scheduler;
         .wave_valid(wave_valid),
         .wave_ready(wave_ready),
         .issue_valid(issue_valid),
-        .issue_wave_id(issue_wave_id)
+        .issue_wave0(issue_wave0),
+        .issue_wave1(issue_wave1),
+        .issue_wave2(issue_wave2),
+        .issue_wave3(issue_wave3)
     );
 
     always #5 clk = ~clk;
@@ -29,11 +35,10 @@ module tb_warp_scheduler;
             #1;
             if (issue_valid !== 4'b1111)
                 $fatal(1, "expected four valid issues, got %b", issue_valid);
-            if (issue_wave_id[0] !== a || issue_wave_id[1] !== b ||
-                issue_wave_id[2] !== c || issue_wave_id[3] !== d)
+            if (issue_wave0 !== a || issue_wave1 !== b ||
+                issue_wave2 !== c || issue_wave3 !== d)
                 $fatal(1, "unexpected issue ids %0d %0d %0d %0d",
-                       issue_wave_id[0], issue_wave_id[1],
-                       issue_wave_id[2], issue_wave_id[3]);
+                       issue_wave0, issue_wave1, issue_wave2, issue_wave3);
         end
     endtask
 
@@ -50,13 +55,11 @@ module tb_warp_scheduler;
         @(posedge clk);
         check_issue4(4, 5, 6, 7);
 
-        // Skip waves that are invalid or not ready while retaining round-robin order.
         wave_valid[8] = 1'b0;
         wave_ready[9] = 1'b0;
         @(posedge clk);
         check_issue4(10, 11, 12, 13);
 
-        // Sparse-ready case should issue only eligible waves and never duplicate an id.
         wave_valid = '0;
         wave_ready = '0;
         wave_valid[3] = 1'b1;
@@ -67,12 +70,11 @@ module tb_warp_scheduler;
         #1;
         if (issue_valid !== 4'b0011)
             $fatal(1, "expected two valid issues, got %b", issue_valid);
-        if (issue_wave_id[0] == issue_wave_id[1])
+        if (issue_wave0 == issue_wave1)
             $fatal(1, "scheduler issued duplicate wave id");
-        if (!((issue_wave_id[0] == 21 && issue_wave_id[1] == 3) ||
-              (issue_wave_id[0] == 3 && issue_wave_id[1] == 21)))
-            $fatal(1, "unexpected sparse issue ids %0d %0d",
-                   issue_wave_id[0], issue_wave_id[1]);
+        if (!((issue_wave0 == 21 && issue_wave1 == 3) ||
+              (issue_wave0 == 3 && issue_wave1 == 21)))
+            $fatal(1, "unexpected sparse issue ids %0d %0d", issue_wave0, issue_wave1);
 
         $display("warp scheduler tests passed");
         $finish;
