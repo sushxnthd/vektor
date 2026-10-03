@@ -31,10 +31,11 @@ def run() -> dict:
     rows = []
     for mshrs in (8, 16, 32, 64, 128):
         rows.append(_run_case("cold_unique", mshrs, None))
-        rows.append(_run_case("shared_working_set_8_lines", mshrs, 8))
+        rows.append(_run_case("coalesced_8_lines", mshrs, 8))
+        rows.append(_run_case("l1_reuse_single_line", mshrs, 1))
 
     return {
-        "benchmark": "memory_hierarchy_bench_v1",
+        "benchmark": "memory_hierarchy_bench_v2",
         "claim_boundary": (
             "Synthetic timing-model evidence only. Cache geometry, latency, bandwidth, "
             "and MSHR values are architecture parameters, not measured silicon values. "
