@@ -91,12 +91,6 @@ In the current deterministic V-Tile simulator, RF-bank pressure can halve issue 
 ### Explicit boundary
 Experiment 002 does not establish register-file energy savings, physical frequency, area, power, real-workload performance, superiority over another GPU, or RTX 5090 equivalence.
 
-### Highest-value next experiment
-Implement a parameterized L1/shared-memory + L2 hierarchy with finite queues, hit/miss latency, MSHRs and bandwidth, then add divergence masks and a conventional reconvergence baseline. Only after that baseline exists should Vektor's proposed dynamic cohort scheduler be tested on identical traces.
-
-### Subsequent gate
-If a scheduler/RF effect survives the richer simulator and adversarial traces, implement a synthesizable Wave32 scheduler + banked register-file slice and prove RTL/reference-model equivalence before making timing, area, or power claims.
-
 ## 2026-10-03 — Experiment 003: Explicit non-blocking memory hierarchy
 
 Branch: `research/memory-hierarchy-001`
@@ -145,8 +139,65 @@ The simulator now distinguishes miss-level parallelism, outstanding-line coalesc
 ### Explicit boundary
 Experiment 003 does not establish physically achievable cache latency/bandwidth, optimal MSHR count on real applications, cache area/energy, NoC behavior, GDDR7 controller/PHY feasibility, commercial-GPU superiority, or RTX 5090 equivalence.
 
+## 2026-10-03 — Experiment 004: Divergence compaction upper bound and prior-art closure
+
+Branch: `research/divergence-001`
+
+Frozen evidence source: commit `7153bed73e258fd886866a11ed8a0e1f48e43dd7`
+
+GitHub Actions run: `37109012485`
+
+Artifact digest: `sha256:20c08f67efcef28e35f4ab744af84c7d6867063c6b9cfc3b03df98142d1f3a16`
+
+### Prior-art closure
+The original Vektor-1A phrase "dynamic cohort scheduler" is too broad to support a novelty claim. Dynamic Warp Formation already regroups threads across warps after divergence; Thread Block Compaction extends compaction across a block; CAPRI predicts when compaction is worth performing; and NVIDIA publicly documents Shader Execution Reordering for on-the-fly thread reordering/coherence. Vortex provides an open split/join IPDOM-style reference baseline.
+
+Therefore generic cross-warp branch compaction, generic adequacy gating, and generic thread reordering for coherence are now treated as **baseline capabilities / prior art**, not Vektor inventions.
+
+### Model change
+Added a reorder-safe branch-region model with:
+- a conventional masked/IPDOM issue-slot baseline;
+- bounded cross-warp same-path compaction;
+- configurable compaction windows;
+- explicit synthetic regrouping overhead;
+- an oracle adequacy gate that compacts only when future benefit exceeds charged overhead.
+
+The oracle has perfect knowledge and exists only as an upper bound. It is not an implementable scheduler.
+
+### Evidence quality
+- 19 deterministic tests passed in the frozen GitHub Actions run.
+- Existing V-Tile and memory benchmarks remained green.
+- The divergence upper-bound benchmark passed and uploaded a raw JSON artifact.
+- Coherent execution is a required negative control: forced compaction loses when there is no divergence and overhead is nonzero.
+- A short-region adversarial trace is included specifically to expose cases where regrouping overhead overwhelms benefit.
+
+### Representative result — 8-warp window, 4 issue-slot overhead/window
+- coherent: baseline 512 effective slots; forced compaction 528; speedup proxy 0.970x; oracle bypasses and returns 1.000x;
+- balanced 16/16 divergence: baseline 1024; compaction 528; 1.939x proxy; modeled data-slot lane utilization rises from 50% to 100%;
+- minority 31/1 divergence: baseline 1024; compaction 592; 1.730x proxy; compacted data-slot lane utilization 88.9%;
+- seeded four-path stress trace: baseline 1024; compaction 336; 3.048x proxy; compacted data-slot lane utilization 80%.
+
+### Adversarial result — short branch region
+For the one-instruction balanced branch trace with a 2-warp window and 16 issue-slot overhead/window, forced compaction falls to a **0.222x** speedup proxy. The oracle gate bypasses compaction and returns 1.000x.
+
+This demonstrates why any real Vektor mechanism must explicitly account for regrouping cost rather than treating compaction as free performance.
+
+### Supported claim
+Within the current issue-slot model, the value of branch compaction depends strongly on divergence geometry, grouping window, and regrouping overhead. It can approach large utilization gains on severe divergence and can be catastrophically harmful on short/coherent regions. A profitability/adequacy decision is therefore necessary.
+
+This result **reproduces and quantifies a known motivation from prior art; it is not a Vektor novelty result.**
+
+### Explicit boundary
+Experiment 004 omits register migration cost, operand-cache disruption, cache-line locality changes, memory-system timing under reordering, barriers/cross-lane communication, fairness/starvation, physical timing, area, power, and RTL. The oracle gate has inaccessible future knowledge. No commercial-GPU superiority or RTX 5090 equivalence is established.
+
 ### Highest-value next experiment
-Add per-lane execution masks, branch divergence, and a conventional SIMT reconvergence baseline. Freeze balanced traces with matched active-lane work, then implement Vektor cohort compaction as a separate scheduler and compare both under identical RF/memory conditions. Include adversarial cases where compaction overhead should lose.
+Integrate divergence/regrouping with the explicit Vektor RF and memory models. Compare at least:
+1. no-compaction IPDOM baseline;
+2. a DWF-like bounded same-path compaction baseline;
+3. a CAPRI-like profitability baseline or conservative implementable proxy;
+4. an oracle upper bound that prices issue-slot savings, register movement, operand-cache disruption, and memory-transaction/locality effects.
+
+The purpose is first to determine whether any useful headroom remains after known costs are charged. Only then search for a distinct low-state joint control-flow + memory + RF scheduling policy, with a fresh prior-art audit before any novelty claim.
 
 ### Parallel implementation gate
-Begin the first synthesizable Wave32 scheduler + banked-RF slice only against a frozen behavioral interface, then prove RTL/reference-model agreement before any timing/area/power extrapolation.
+A conventional synthesizable Wave32 scheduler + banked-RF slice may now be implemented against the frozen behavioral interface. Timing/area/power claims require independent RTL/reference-model equivalence plus synthesis artifacts.
