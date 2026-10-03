@@ -48,6 +48,14 @@ jobs:
             rtl/vtile/issue_control.sv \
             verification/rtl/tb_issue_control.sv
           vvp build/rtl/tb_issue_control
+      - name: Generate fused FP32 oracle vectors
+        run: python3 verification/fp32/gen_fmaf_vectors.py
+      - name: Simulate exact fused FP32 reference lane
+        run: |
+          iverilog -g2012 -s tb_fp32_fma_exact_ref \
+            -o build/rtl/tb_fp32_fma_exact_ref \
+            rtl/vtile/fp32_fma_exact_ref.sv verification/rtl/tb_fp32_fma_exact_ref.sv
+          vvp build/rtl/tb_fp32_fma_exact_ref | tee build/rtl/fp32_fma_exact_ref_sim.log
       - name: Generic synthesis — fixed wave scheduler
         run: |
           set -o pipefail
@@ -73,9 +81,14 @@ jobs:
           set -o pipefail
           yosys -p 'read_verilog -sv rtl/vtile/steal_warp_scheduler.sv rtl/vtile/rf_bank_arbiter.sv rtl/vtile/issue_control.sv; synth -top vektor_issue_control; stat' 2>&1 \
             | tee build/rtl/issue_control_yosys.log
+      - name: Generic synthesis — exact FP32 FMA reference
+        run: |
+          set -o pipefail
+          timeout 180s yosys -p 'read_verilog -sv rtl/vtile/fp32_fma_exact_ref.sv; synth -top vektor_fp32_fma_exact_ref; stat' 2>&1 \
+            | tee build/rtl/fp32_fma_exact_ref_yosys.log
       - name: Capture RTL evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: issue-fp32-001-rtl
+          name: fp32-fma-001-rtl
           path: build/rtl/
