@@ -1,0 +1,24 @@
+{
+  "experiment": "RTL-WAVE32-001",
+  "evidence_type": ["rtl_simulation", "generic_synthesis", "synthetic_cycle_model"],
+  "source_head": "0a3e16bf7aa35b4021b3e038b58bb033e8440d27",
+  "rtl_run_id": 37130920341,
+  "rtl_artifact_sha256": "32f67f0d55c59986b42e4ae309619ed55245a69d31ab8701e6713a6361aaf4ab",
+  "simulator_run_id": 37130920361,
+  "scheduler_topology_artifact_sha256": "06a347fb5c239e4fa62dd22f5676eaa9e784bd931faf14478c3b55fcafeb7294",
+  "generic_cell_counts": {
+    "fixed_4x8_scheduler": 444,
+    "limited_steal_scheduler": 1223,
+    "global_4wide_scheduler": 5399,
+    "rf_bank_arbiter": 1321
+  },
+  "synthetic_issue_utilization": {
+    "balanced": {"fixed": 1.0, "limited_steal": 1.0, "global": 1.0},
+    "clustered": {"fixed": 0.25, "limited_steal": 0.5, "global": 1.0},
+    "rotating_cluster": {"fixed": 0.5, "limited_steal": 1.0, "global": 1.0},
+    "lopsided_memory_proxy": {"fixed": 0.46875, "limited_steal": 0.6875, "global": 1.0}
+  },
+  "decision": "limited_steal_is_current_scheduler_candidate",
+  "claim_boundary": "Generic Yosys cell counts and deterministic synthetic readiness traces only. No physical frequency, process area, power, energy, real-application speedup, novelty, complete GPU functionality, or RTX 5090 equivalence is established.",
+  "next_gate": "integrated_issue_control_then_operand_register_state_and_fp32_fma_backend"
+}
