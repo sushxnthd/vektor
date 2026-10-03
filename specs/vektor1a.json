@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "architecture": "Vektor-1A",
+  "status": "hypothesis",
+  "tile_count": 160,
+  "wave_size": 32,
+  "fp32_lanes_per_tile": 128,
+  "schedulers_per_tile": 4,
+  "target_clock_ghz": 2.56,
+  "matrix_engines_per_tile": 2,
+  "l1_shared_kib_per_tile": 128,
+  "architectural_rf_kib_per_tile": 256,
+  "operand_cache_kib_per_tile": 32,
+  "l2_mib": 128,
+  "memory_bus_bits": 512,
+  "gddr7_gbps_per_pin": 28,
+  "target_board_power_w": 575,
+  "claim_boundary": "All performance, frequency, area and power values are targets until measured/simulated/synthesized evidence is recorded."
+}
