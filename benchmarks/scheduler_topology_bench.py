@@ -8,6 +8,7 @@ from sim.vektor.scheduler_topology import (
     clustered_trace,
     evaluate_fixed_four_by_eight,
     evaluate_global_four_wide,
+    evaluate_limited_steal,
     lopsided_memory_trace,
     rotating_cluster_trace,
 )
@@ -23,13 +24,20 @@ def run() -> dict:
     rows = []
     for name, trace in traces.items():
         fixed = evaluate_fixed_four_by_eight(trace)
+        steal = evaluate_limited_steal(trace)
         global_ = evaluate_global_four_wide(trace)
         rows.append(
             {
                 "trace": name,
                 "fixed_4x8": asdict(fixed),
+                "limited_steal": asdict(steal),
                 "global_4wide_upper_bound": asdict(global_),
-                "utilization_recovery_x": (
+                "steal_vs_fixed_utilization_x": (
+                    steal.issue_utilization / fixed.issue_utilization
+                    if fixed.issue_utilization
+                    else None
+                ),
+                "global_vs_fixed_utilization_x": (
                     global_.issue_utilization / fixed.issue_utilization
                     if fixed.issue_utilization
                     else None
@@ -37,11 +45,12 @@ def run() -> dict:
             }
         )
     return {
-        "benchmark": "scheduler_topology_v1",
+        "benchmark": "scheduler_topology_v2",
         "claim_boundary": (
             "Synthetic readiness-trace evidence only. The global scheduler is an "
-            "issue-utilization upper bound until RTL synthesis/timing cost is included; "
-            "these results do not establish application speedup or RTX 5090 equivalence."
+            "issue-utilization upper bound; limited stealing is an implementable RTL "
+            "candidate whose logic cost is measured separately by generic synthesis. "
+            "No application speedup, frequency, power, area, or RTX 5090 equivalence is established."
         ),
         "rows": rows,
     }
