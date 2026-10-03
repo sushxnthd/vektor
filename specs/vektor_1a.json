@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "architecture": "Vektor-1A",
+  "status": "hypothesis",
+  "claim_boundary": "All values under design are architectural targets until supported by simulation, synthesis, place-and-route, or silicon evidence.",
+  "reference_target": {
+    "name": "RTX 5090 class",
+    "fp32_tflops": 104.8,
+    "fp4_tensor_dense_tops": 1676.0,
+    "fp4_tensor_sparse_tops": 3352.0,
+    "memory_bandwidth_gb_s": 1792.0,
+    "l2_mb": 96,
+    "vram_gb": 32,
+    "board_power_w": 575
+  },
+  "design": {
+    "active_tiles": 160,
+    "fabric_islands": 10,
+    "tiles_per_island": 16,
+    "wave_width": 32,
+    "wave_schedulers_per_tile": 4,
+    "fp32_lanes_per_tile": 128,
+    "clock_target_ghz": 2.56,
+    "matrix_engines_per_tile": 2,
+    "fp4_dense_ops_per_tile_cycle": 4096,
+    "structured_sparsity_multiplier": 2,
+    "texture_samples_per_tile_cycle": 4,
+    "rops_total": 176,
+    "register_file_kb_per_tile": 256,
+    "operand_cache_kb_per_tile": 32,
+    "l1_shared_kb_per_tile": 128,
+    "l2_mb": 128,
+    "memory_bus_bits": 512,
+    "gddr7_pin_rate_gbps": 28,
+    "vram_gb": 32,
+    "board_power_ceiling_w": 575,
+    "die_area_ceiling_mm2": 750
+  },
+  "experimental_features": [
+    "hierarchical register storage",
+    "dynamic cross-wave cohort scheduling",
+    "unified vector/matrix scheduling",
+    "asynchronous trace engine"
+  ]
+}
