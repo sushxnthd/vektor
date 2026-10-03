@@ -27,6 +27,12 @@ jobs:
             -o build/rtl/tb_global_warp_scheduler \
             rtl/vtile/global_warp_scheduler.sv verification/rtl/tb_global_warp_scheduler.sv
           vvp build/rtl/tb_global_warp_scheduler
+      - name: Simulate limited work-stealing scheduler
+        run: |
+          iverilog -g2012 -s tb_steal_warp_scheduler \
+            -o build/rtl/tb_steal_warp_scheduler \
+            rtl/vtile/steal_warp_scheduler.sv verification/rtl/tb_steal_warp_scheduler.sv
+          vvp build/rtl/tb_steal_warp_scheduler
       - name: Simulate RF bank arbiter
         run: |
           iverilog -g2012 -s tb_rf_bank_arbiter \
@@ -43,6 +49,11 @@ jobs:
           set -o pipefail
           yosys -p 'read_verilog -sv rtl/vtile/global_warp_scheduler.sv; synth -top vektor_global_warp_scheduler; stat' 2>&1 \
             | tee build/rtl/global_warp_scheduler_yosys.log
+      - name: Generic synthesis — limited work-stealing scheduler
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/steal_warp_scheduler.sv; synth -top vektor_steal_warp_scheduler; stat' 2>&1 \
+            | tee build/rtl/steal_warp_scheduler_yosys.log
       - name: Generic synthesis — RF bank arbiter
         run: |
           set -o pipefail
