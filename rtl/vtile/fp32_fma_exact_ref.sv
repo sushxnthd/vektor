@@ -200,7 +200,9 @@ module vektor_fp32_fma_exact_ref (
                         fflags[2] = 1'b1;
                         fflags[0] = 1'b1;
                     end else begin
-                        result = {sign_r, (unbiased_exp + 127), rounded_sig[22:0]};
+                        result[31] = sign_r;
+                        result[30:23] = unbiased_exp + 127;
+                        result[22:0] = rounded_sig[22:0];
                         if (inexact)
                             fflags[0] = 1'b1;
                     end
