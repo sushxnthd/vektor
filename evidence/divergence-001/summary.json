@@ -1,0 +1,61 @@
+{
+  "milestone": "divergence-001",
+  "status": "simulated_upper_bound",
+  "source_commit": "7153bed73e258fd886866a11ed8a0e1f48e43dd7",
+  "github_actions_run": 37109012485,
+  "artifact": {
+    "name": "divergence-results",
+    "id": 11268419148,
+    "sha256": "20c08f67efcef28e35f4ab744af84c7d6867063c6b9cfc3b03df98142d1f3a16"
+  },
+  "ci": {
+    "deterministic_tests_passed": 19,
+    "vtile_benchmark_passed": true,
+    "memory_benchmark_passed": true,
+    "divergence_benchmark_passed": true,
+    "artifact_upload_passed": true
+  },
+  "representative_results_window8_overhead4": {
+    "coherent": {
+      "baseline_issue_slots": 512,
+      "naive_compaction_issue_slots": 528,
+      "oracle_issue_slots": 512,
+      "naive_speedup_proxy": 0.9696969696969697,
+      "oracle_speedup_proxy": 1.0
+    },
+    "balanced_16_16": {
+      "baseline_issue_slots": 1024,
+      "naive_compaction_issue_slots": 528,
+      "oracle_issue_slots": 528,
+      "naive_speedup_proxy": 1.9393939393939394,
+      "baseline_lane_utilization": 0.5,
+      "compacted_lane_utilization": 1.0
+    },
+    "minority_31_1": {
+      "baseline_issue_slots": 1024,
+      "naive_compaction_issue_slots": 592,
+      "oracle_issue_slots": 592,
+      "naive_speedup_proxy": 1.7297297297297298,
+      "compacted_lane_utilization": 0.8888888888888888
+    },
+    "random_4_path_seed7": {
+      "baseline_issue_slots": 1024,
+      "naive_compaction_issue_slots": 336,
+      "oracle_issue_slots": 336,
+      "naive_speedup_proxy": 3.0476190476190474,
+      "baseline_lane_utilization": 0.25,
+      "compacted_lane_utilization": 0.8
+    }
+  },
+  "adversarial_short_region": {
+    "scenario": "short_balanced",
+    "window_warps": 2,
+    "overhead_issue_slots_per_window": 16,
+    "baseline_issue_slots": 64,
+    "naive_speedup_proxy": 0.2222222222222222,
+    "oracle_speedup_proxy": 1.0,
+    "interpretation": "Forced compaction is catastrophically worse when branch regions are too short to amortize regrouping overhead; an adequacy gate must bypass such regions."
+  },
+  "prior_art_boundary": "Dynamic Warp Formation, Thread Block Compaction, CAPRI-style adequacy prediction, and Shader Execution Reordering are established prior art. Cross-warp compaction and generic compaction gating are not Vektor novelty claims.",
+  "claim_boundary": "Synthetic issue-slot accounting over reorder-safe regions. The oracle gate has perfect future knowledge and is an upper bound. The model does not yet include register migration energy/timing, cache-locality disruption, memory timing under reordering, synchronization/barrier semantics, starvation, physical timing, area, power, or RTL."
+}
