@@ -14,24 +14,35 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y iverilog yosys
-      - name: Simulate wave scheduler
+      - name: Simulate fixed-partition wave scheduler
         run: |
           mkdir -p build/rtl
           iverilog -g2012 -s tb_warp_scheduler \
             -o build/rtl/tb_warp_scheduler \
             rtl/vtile/warp_scheduler.sv verification/rtl/tb_warp_scheduler.sv
           vvp build/rtl/tb_warp_scheduler
+      - name: Simulate global wave scheduler
+        run: |
+          iverilog -g2012 -s tb_global_warp_scheduler \
+            -o build/rtl/tb_global_warp_scheduler \
+            rtl/vtile/global_warp_scheduler.sv verification/rtl/tb_global_warp_scheduler.sv
+          vvp build/rtl/tb_global_warp_scheduler
       - name: Simulate RF bank arbiter
         run: |
           iverilog -g2012 -s tb_rf_bank_arbiter \
             -o build/rtl/tb_rf_bank_arbiter \
             rtl/vtile/rf_bank_arbiter.sv verification/rtl/tb_rf_bank_arbiter.sv
           vvp build/rtl/tb_rf_bank_arbiter
-      - name: Generic synthesis — wave scheduler
+      - name: Generic synthesis — fixed wave scheduler
         run: |
           set -o pipefail
           yosys -p 'read_verilog -sv rtl/vtile/warp_scheduler.sv; synth -top vektor_warp_scheduler; stat' 2>&1 \
             | tee build/rtl/warp_scheduler_yosys.log
+      - name: Generic synthesis — global wave scheduler
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/global_warp_scheduler.sv; synth -top vektor_global_warp_scheduler; stat' 2>&1 \
+            | tee build/rtl/global_warp_scheduler_yosys.log
       - name: Generic synthesis — RF bank arbiter
         run: |
           set -o pipefail
