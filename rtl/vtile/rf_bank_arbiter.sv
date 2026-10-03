@@ -1,42 +1,46 @@
-module vektor_rf_bank_arbiter #(
-    parameter integer ISSUE_WIDTH = 4,
-    parameter integer NUM_BANKS = 16,
-    parameter integer BANK_ID_WIDTH = 4,
-    parameter integer READ_PORTS_PER_BANK = 2
-) (
-    input  logic [ISSUE_WIDTH-1:0] request_valid,
-    input  logic [ISSUE_WIDTH-1:0][BANK_ID_WIDTH-1:0] src0_bank,
-    input  logic [ISSUE_WIDTH-1:0][BANK_ID_WIDTH-1:0] src1_bank,
-    output logic [ISSUE_WIDTH-1:0] grant
+module vektor_rf_bank_arbiter (
+    input  wire [3:0]  request_valid,
+    input  wire [15:0] src0_bank_flat,
+    input  wire [15:0] src1_bank_flat,
+    output reg  [3:0]  grant
 );
 
-    integer reads [0:NUM_BANKS-1];
+    reg [2:0] reads [0:15];
     integer slot;
     integer bank;
+    integer b0;
+    integer b1;
     integer ok;
 
-    always_comb begin
-        grant = '0;
-        for (bank = 0; bank < NUM_BANKS; bank = bank + 1)
-            reads[bank] = 0;
+    always @* begin
+        grant = 4'b0000;
+        for (bank = 0; bank < 16; bank = bank + 1)
+            reads[bank] = 3'd0;
 
-        for (slot = 0; slot < ISSUE_WIDTH; slot = slot + 1) begin
+        for (slot = 0; slot < 4; slot = slot + 1) begin
+            case (slot)
+                0: begin b0 = src0_bank_flat[3:0];   b1 = src1_bank_flat[3:0];   end
+                1: begin b0 = src0_bank_flat[7:4];   b1 = src1_bank_flat[7:4];   end
+                2: begin b0 = src0_bank_flat[11:8];  b1 = src1_bank_flat[11:8];  end
+                default: begin b0 = src0_bank_flat[15:12]; b1 = src1_bank_flat[15:12]; end
+            endcase
+
             ok = 1;
             if (request_valid[slot]) begin
-                if (src0_bank[slot] == src1_bank[slot]) begin
-                    if ((reads[src0_bank[slot]] + 2) > READ_PORTS_PER_BANK)
+                if (b0 == b1) begin
+                    if ((reads[b0] + 2) > 2)
                         ok = 0;
                 end else begin
-                    if ((reads[src0_bank[slot]] + 1) > READ_PORTS_PER_BANK)
+                    if ((reads[b0] + 1) > 2)
                         ok = 0;
-                    if ((reads[src1_bank[slot]] + 1) > READ_PORTS_PER_BANK)
+                    if ((reads[b1] + 1) > 2)
                         ok = 0;
                 end
 
                 if (ok != 0) begin
                     grant[slot] = 1'b1;
-                    reads[src0_bank[slot]] = reads[src0_bank[slot]] + 1;
-                    reads[src1_bank[slot]] = reads[src1_bank[slot]] + 1;
+                    reads[b0] = reads[b0] + 1'b1;
+                    reads[b1] = reads[b1] + 1'b1;
                 end
             end
         end
