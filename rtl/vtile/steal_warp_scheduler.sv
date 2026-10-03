@@ -3,6 +3,7 @@ module vektor_steal_warp_scheduler (
     input  wire        rst_n,
     input  wire [31:0] wave_valid,
     input  wire [31:0] wave_ready,
+    input  wire [3:0]  issue_accept,
     output reg  [3:0]  issue_valid,
     output reg  [4:0]  issue_wave0,
     output reg  [4:0]  issue_wave1,
@@ -15,7 +16,6 @@ module vektor_steal_warp_scheduler (
     reg [3:0] b0, b1, b2, b3;
     reg [7:0] e0, e1, e2, e3;
     reg [7:0] r0, r1, r2, r3;
-    reg bu0, bu1, bu2, bu3;
 
     function [3:0] pick_ready;
         input [7:0] eligible;
@@ -57,9 +57,6 @@ module vektor_steal_warp_scheduler (
         if (p2[3]) r2[p2[2:0]] = 1'b0;
         if (p3[3]) r3[p3[2:0]] = 1'b0;
 
-        // Each partition exposes at most one backup candidate. This is the
-        // low-state compromise between rigid 4x8 partitioning and a full
-        // 32-wave four-wide global arbiter.
         b0 = pick_ready(r0, rr0);
         b1 = pick_ready(r1, rr1);
         b2 = pick_ready(r2, rr2);
@@ -70,39 +67,39 @@ module vektor_steal_warp_scheduler (
         issue_wave1 = 5'd8  + {2'b00, p1[2:0]};
         issue_wave2 = 5'd16 + {2'b00, p2[2:0]};
         issue_wave3 = 5'd24 + {2'b00, p3[2:0]};
-        bu0 = 1'b0;
-        bu1 = 1'b0;
-        bu2 = 1'b0;
-        bu3 = 1'b0;
 
-        // Backups steal otherwise-idle issue slots. Donor order is fixed here;
-        // later experiments can add donor fairness only if this mechanism earns it.
+        // Each partition may donate one backup candidate into an otherwise
+        // idle issue slot. Selection is combinational; fairness state changes
+        // only when downstream logic asserts issue_accept for that slot.
         if (b0[3]) begin
-            if (!issue_valid[0]) begin issue_valid[0] = 1'b1; issue_wave0 = {2'b00, b0[2:0]}; bu0 = 1'b1; end
-            else if (!issue_valid[1]) begin issue_valid[1] = 1'b1; issue_wave1 = {2'b00, b0[2:0]}; bu0 = 1'b1; end
-            else if (!issue_valid[2]) begin issue_valid[2] = 1'b1; issue_wave2 = {2'b00, b0[2:0]}; bu0 = 1'b1; end
-            else if (!issue_valid[3]) begin issue_valid[3] = 1'b1; issue_wave3 = {2'b00, b0[2:0]}; bu0 = 1'b1; end
+            if (!issue_valid[0]) begin issue_valid[0] = 1'b1; issue_wave0 = {2'b00, b0[2:0]}; end
+            else if (!issue_valid[1]) begin issue_valid[1] = 1'b1; issue_wave1 = {2'b00, b0[2:0]}; end
+            else if (!issue_valid[2]) begin issue_valid[2] = 1'b1; issue_wave2 = {2'b00, b0[2:0]}; end
+            else if (!issue_valid[3]) begin issue_valid[3] = 1'b1; issue_wave3 = {2'b00, b0[2:0]}; end
         end
         if (b1[3]) begin
-            if (!issue_valid[0]) begin issue_valid[0] = 1'b1; issue_wave0 = 5'd8 + {2'b00, b1[2:0]}; bu1 = 1'b1; end
-            else if (!issue_valid[1]) begin issue_valid[1] = 1'b1; issue_wave1 = 5'd8 + {2'b00, b1[2:0]}; bu1 = 1'b1; end
-            else if (!issue_valid[2]) begin issue_valid[2] = 1'b1; issue_wave2 = 5'd8 + {2'b00, b1[2:0]}; bu1 = 1'b1; end
-            else if (!issue_valid[3]) begin issue_valid[3] = 1'b1; issue_wave3 = 5'd8 + {2'b00, b1[2:0]}; bu1 = 1'b1; end
+            if (!issue_valid[0]) begin issue_valid[0] = 1'b1; issue_wave0 = 5'd8 + {2'b00, b1[2:0]}; end
+            else if (!issue_valid[1]) begin issue_valid[1] = 1'b1; issue_wave1 = 5'd8 + {2'b00, b1[2:0]}; end
+            else if (!issue_valid[2]) begin issue_valid[2] = 1'b1; issue_wave2 = 5'd8 + {2'b00, b1[2:0]}; end
+            else if (!issue_valid[3]) begin issue_valid[3] = 1'b1; issue_wave3 = 5'd8 + {2'b00, b1[2:0]}; end
         end
         if (b2[3]) begin
-            if (!issue_valid[0]) begin issue_valid[0] = 1'b1; issue_wave0 = 5'd16 + {2'b00, b2[2:0]}; bu2 = 1'b1; end
-            else if (!issue_valid[1]) begin issue_valid[1] = 1'b1; issue_wave1 = 5'd16 + {2'b00, b2[2:0]}; bu2 = 1'b1; end
-            else if (!issue_valid[2]) begin issue_valid[2] = 1'b1; issue_wave2 = 5'd16 + {2'b00, b2[2:0]}; bu2 = 1'b1; end
-            else if (!issue_valid[3]) begin issue_valid[3] = 1'b1; issue_wave3 = 5'd16 + {2'b00, b2[2:0]}; bu2 = 1'b1; end
+            if (!issue_valid[0]) begin issue_valid[0] = 1'b1; issue_wave0 = 5'd16 + {2'b00, b2[2:0]}; end
+            else if (!issue_valid[1]) begin issue_valid[1] = 1'b1; issue_wave1 = 5'd16 + {2'b00, b2[2:0]}; end
+            else if (!issue_valid[2]) begin issue_valid[2] = 1'b1; issue_wave2 = 5'd16 + {2'b00, b2[2:0]}; end
+            else if (!issue_valid[3]) begin issue_valid[3] = 1'b1; issue_wave3 = 5'd16 + {2'b00, b2[2:0]}; end
         end
         if (b3[3]) begin
-            if (!issue_valid[0]) begin issue_valid[0] = 1'b1; issue_wave0 = 5'd24 + {2'b00, b3[2:0]}; bu3 = 1'b1; end
-            else if (!issue_valid[1]) begin issue_valid[1] = 1'b1; issue_wave1 = 5'd24 + {2'b00, b3[2:0]}; bu3 = 1'b1; end
-            else if (!issue_valid[2]) begin issue_valid[2] = 1'b1; issue_wave2 = 5'd24 + {2'b00, b3[2:0]}; bu3 = 1'b1; end
-            else if (!issue_valid[3]) begin issue_valid[3] = 1'b1; issue_wave3 = 5'd24 + {2'b00, b3[2:0]}; bu3 = 1'b1; end
+            if (!issue_valid[0]) begin issue_valid[0] = 1'b1; issue_wave0 = 5'd24 + {2'b00, b3[2:0]}; end
+            else if (!issue_valid[1]) begin issue_valid[1] = 1'b1; issue_wave1 = 5'd24 + {2'b00, b3[2:0]}; end
+            else if (!issue_valid[2]) begin issue_valid[2] = 1'b1; issue_wave2 = 5'd24 + {2'b00, b3[2:0]}; end
+            else if (!issue_valid[3]) begin issue_valid[3] = 1'b1; issue_wave3 = 5'd24 + {2'b00, b3[2:0]}; end
         end
     end
 
+    // Advance a partition only for work that actually passed downstream
+    // admission. If two accepted slots came from the same partition, the
+    // later slot deterministically sets the next round-robin position.
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             rr0 <= 3'd0;
@@ -110,10 +107,38 @@ module vektor_steal_warp_scheduler (
             rr2 <= 3'd0;
             rr3 <= 3'd0;
         end else begin
-            if (bu0) rr0 <= b0[2:0] + 3'd1; else if (p0[3]) rr0 <= p0[2:0] + 3'd1;
-            if (bu1) rr1 <= b1[2:0] + 3'd1; else if (p1[3]) rr1 <= p1[2:0] + 3'd1;
-            if (bu2) rr2 <= b2[2:0] + 3'd1; else if (p2[3]) rr2 <= p2[2:0] + 3'd1;
-            if (bu3) rr3 <= b3[2:0] + 3'd1; else if (p3[3]) rr3 <= p3[2:0] + 3'd1;
+            if (issue_valid[0] && issue_accept[0]) begin
+                case (issue_wave0[4:3])
+                    2'd0: rr0 <= issue_wave0[2:0] + 3'd1;
+                    2'd1: rr1 <= issue_wave0[2:0] + 3'd1;
+                    2'd2: rr2 <= issue_wave0[2:0] + 3'd1;
+                    2'd3: rr3 <= issue_wave0[2:0] + 3'd1;
+                endcase
+            end
+            if (issue_valid[1] && issue_accept[1]) begin
+                case (issue_wave1[4:3])
+                    2'd0: rr0 <= issue_wave1[2:0] + 3'd1;
+                    2'd1: rr1 <= issue_wave1[2:0] + 3'd1;
+                    2'd2: rr2 <= issue_wave1[2:0] + 3'd1;
+                    2'd3: rr3 <= issue_wave1[2:0] + 3'd1;
+                endcase
+            end
+            if (issue_valid[2] && issue_accept[2]) begin
+                case (issue_wave2[4:3])
+                    2'd0: rr0 <= issue_wave2[2:0] + 3'd1;
+                    2'd1: rr1 <= issue_wave2[2:0] + 3'd1;
+                    2'd2: rr2 <= issue_wave2[2:0] + 3'd1;
+                    2'd3: rr3 <= issue_wave2[2:0] + 3'd1;
+                endcase
+            end
+            if (issue_valid[3] && issue_accept[3]) begin
+                case (issue_wave3[4:3])
+                    2'd0: rr0 <= issue_wave3[2:0] + 3'd1;
+                    2'd1: rr1 <= issue_wave3[2:0] + 3'd1;
+                    2'd2: rr2 <= issue_wave3[2:0] + 3'd1;
+                    2'd3: rr3 <= issue_wave3[2:0] + 3'd1;
+                endcase
+            end
         end
     end
 
