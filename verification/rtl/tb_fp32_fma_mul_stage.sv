@@ -18,6 +18,12 @@ module tb_fp32_fma_mul_stage;
    $fatal(1,"subnormal/zero classification mismatch");
   drive(32'h7f800000,32'h00000000,32'h7f800001);
   if(class_a!==3'b010||class_b!==3'b000||class_c!==3'b100) $fatal(1,"special classification mismatch");
+  drive(32'h7f7fffff,32'hff7fffff,32'h00800000);
+  if(sign_p!==1'b1||sig_p!==48'hfffffe000001||exp_p!==208||sig_c!==24'h800000||exp_c!==-149)
+   $fatal(1,"max-finite product contract mismatch");
+  drive(32'h7fc00001,32'h3f800000,32'h7f800000);
+  if(class_a!==3'b011||class_b!==3'b001||class_c!==3'b010)
+   $fatal(1,"qNaN/finite/inf classification mismatch");
   $display("bounded FMA multiply stage tests passed"); $finish;
  end
 endmodule
