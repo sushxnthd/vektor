@@ -1,0 +1,21 @@
+{
+  "experiment": "ROOFLINE-023",
+  "classification": "DISCRIMINATION",
+  "evidence_type": "analytic_model",
+  "config": {
+    "tiles": 160,
+    "fp32_lanes_per_tile": 128,
+    "clock_ghz_target": 2.56,
+    "fp32_flop_per_lane_cycle": 2,
+    "memory_bus_bits_target": 512,
+    "memory_pin_gbps_target": 28.0
+  },
+  "result": {
+    "fp32_peak_target_tflops": 104.8576,
+    "external_bandwidth_target_gbs": 1792.0,
+    "fp32_ridge_flop_per_byte": 58.51428571428572
+  },
+  "interpretation": "Under Vektor-1A target peaks, kernels below ~58.51 FP32 FLOP/byte are first-order external-bandwidth limited absent cache/reuse effects; above it the configured FP32 peak becomes the roof. This is a target-derived analytic boundary, not measured performance.",
+  "prediction": "A cycle/memory model with negligible cache reuse should show the utilization transition near the same arithmetic intensity once request overhead is non-binding.",
+  "next_discriminator": "Generate deterministic streaming FMA kernels spanning 32-96 FLOP/byte in the cycle-level memory model, then perturb L1/L2 reuse independently to measure boundary displacement."
+}
