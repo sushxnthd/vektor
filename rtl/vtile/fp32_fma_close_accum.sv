@@ -16,7 +16,7 @@ module vektor_fp32_fma_close_accum (
     prod_lead_exp = $signed(prod_lsb_exp) + lp;
     c_lead_exp = $signed(c_lsb_exp) + lc;
     lead_delta = prod_lead_exp - c_lead_exp;
-    close_path = (lp >= 0) && (lc >= 0) && (lead_delta >= -1) && (lead_delta <= 1);
+    // CLOSE is cancellation-only: the 49-bit exact bound does not cover same-sign carry growth.\n    close_path = (lp >= 0) && (lc >= 0) && (prod_sign != c_sign) &&\n                 (lead_delta >= -1) && (lead_delta <= 1);
     common_lsb_exp = (prod_lsb_exp < c_lsb_exp) ? prod_lsb_exp : c_lsb_exp;
     p = {1'b0,prod_sig}; c = {25'b0,c_sig};
     if (close_path) begin
