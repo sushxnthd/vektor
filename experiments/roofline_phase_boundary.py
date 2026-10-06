@@ -18,7 +18,7 @@ class Config:
     mem_pin_gbps: float = 28.0
 
 def evaluate(c: Config):
-    fp32_tflops = c.tiles*c.fp32_lanes_per_tile*c.clock_ghz*c.fp32_flop_per_lane_cycle
+    fp32_tflops = c.tiles*c.fp32_lanes_per_tile*c.clock_ghz*c.fp32_flop_per_lane_cycle/1000.0
     bandwidth_gbs = c.mem_bus_bits/8*c.mem_pin_gbps
     ridge = fp32_tflops*1000/bandwidth_gbs
     probes=[]
