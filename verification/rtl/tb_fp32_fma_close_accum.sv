@@ -1,22 +1,24 @@
 module tb_fp32_fma_close_accum;
   logic ps, cs; logic signed [10:0] pe, ce; logic [47:0] pm; logic [23:0] cm;
   logic close, ss, z; logic signed [10:0] base; logic [48:0] sm;
+  integer fd, rc, n; integer ipe, ice; reg [48:0] esm; reg ess, ez;
   vektor_fp32_fma_close_accum dut(.prod_sign(ps),.c_sign(cs),.prod_lsb_exp(pe),.c_lsb_exp(ce),
     .prod_sig(pm),.c_sig(cm),.close_path(close),.common_lsb_exp(base),.sum_sign(ss),.sum_mag(sm),.exact_zero(z));
-  task check(input logic ips, ics, input integer ipe, ice, input logic [47:0] ipm, input logic [23:0] icm,
-             input logic eclose, ess, ez, input logic [48:0] esm);
-    begin ps=ips;cs=ics;pe=ipe;ce=ice;pm=ipm;cm=icm; #1;
-      if (close!==eclose || (eclose && (ss!==ess || z!==ez || sm!==esm))) begin
-        $display("FAIL d=%0d close=%b sign=%b zero=%b mag=%h",ipe-ice,close,ss,z,sm); $fatal;
+  initial begin
+    fd=$fopen("build/rtl/close_vectors.txt","r"); if (!fd) $fatal(1,"missing close vectors");
+    n=0;
+    while (!$feof(fd)) begin
+      rc=$fscanf(fd,"%h %h %d %d %h %h %h %h %h\n",ps,cs,ipe,ice,pm,cm,ess,ez,esm);
+      if (rc==9) begin
+        pe=ipe; ce=ice; #1; n=n+1;
+        if (!close || ss!==ess || z!==ez || sm!==esm) begin
+          $display("FAIL n=%0d pe=%0d ce=%0d pm=%h cm=%h close=%b got=%h exp=%h sign=%b/%b zero=%b/%b",
+            n,ipe,ice,pm,cm,close,sm,esm,ss,ess,z,ez); $fatal;
+        end
       end
     end
-  endtask
-  initial begin
-    check(0,1,0,0,48'h000000800000,24'h800000,1,0,1,49'h0);
-    check(0,1,1,0,48'h000000800000,24'h800000,1,0,0,49'h0800000);
-    check(1,0,0,1,48'h000000800000,24'h800000,1,0,0,49'h0800000);
-    check(0,0,0,0,48'hffffffffffff,24'hffffff,1,0,0,49'h10000fffffe);
-    check(0,1,2,0,48'h800000,24'h800000,0,0,0,49'h0);
-    $display("PASS close accumulator directed tests"); $finish;
+    $fclose(fd);
+    if (n<20000) $fatal(1,"insufficient vectors %0d",n);
+    $display("PASS close accumulator %0d real-FP32 cancellation vectors",n); $finish;
   end
 endmodule
