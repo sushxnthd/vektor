@@ -81,6 +81,10 @@ jobs:
           set -o pipefail
           yosys -p 'read_verilog -sv rtl/vtile/steal_warp_scheduler.sv rtl/vtile/rf_bank_arbiter.sv rtl/vtile/issue_control.sv; synth -top vektor_issue_control; stat' 2>&1 \
             | tee build/rtl/issue_control_yosys.log
+      - name: Verify and synthesize bounded FP32 CLOSE path
+        run: |
+          set -o pipefail
+          bash verification/fp32/run_close_gate.sh
       - name: Generic synthesis — exact FP32 FMA reference
         run: |
           set -o pipefail
