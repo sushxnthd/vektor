@@ -2,7 +2,23 @@
 from __future__ import annotations
 import random
 from pathlib import Path
-from sim.vektor.fp32_stage_contract import classify, sig24, qexp
+
+# Keep this gate self-contained so it runs identically from a clean CI checkout.
+def classify(bits: int) -> str:
+    exp=(bits>>23)&0xFF; frac=bits&0x7FFFFF
+    if exp==0xFF:
+        if frac==0: return "inf"
+        return "qnan" if (frac>>22)&1 else "snan"
+    if exp==0 and frac==0: return "zero"
+    return "finite"
+
+def sig24(bits: int) -> int:
+    exp=(bits>>23)&0xFF; frac=bits&0x7FFFFF
+    return frac if exp==0 else (1<<23)|frac
+
+def qexp(bits: int) -> int:
+    exp=(bits>>23)&0xFF
+    return -149 if exp==0 else exp-150
 
 N=20000
 SEED=0xC105E5090
