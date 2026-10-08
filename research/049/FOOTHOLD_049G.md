@@ -1,0 +1,3 @@
+# 049G model-level liveness foothold
+
+Held-out 2,592 paired synthetic configurations: RR zero-service cases 150; oldest-instruction-first RF read scheduling zero-service cases 0. Mean Jain fairness 0.95964 -> 0.99922; mean IPC 0.359579 -> 0.359765. Individual IPC regressions: 896. Exact Python/C++ replication 264 cases, zero disagreements. No RTL, synthesis, hardware, novelty or RTX 5090-class claim. Full 049E/F/G reproducibility artifacts remain in the research package; GitHub's connected write restrictions blocked integration of these additional files. Next: differential RTL and equal-budget synthesis.
