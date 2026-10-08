@@ -8,7 +8,7 @@ Reviewed `rtl/vtile/steal_warp_scheduler.sv`, `rtl/vtile/rf_bank_arbiter.sv`, an
 ## Preregistered predictions and outcomes
 - P1: In all-same-bank, all-ready, dual-read contention, fixed slot priority issues only partition 0, while rotation spreads issue across partitions at identical 1.0 IPC. **SUPPORTED in cycle model:** 24/32 waves never issue with fixed priority; 0/32 starve with rotation, Jain fairness 0.25 -> 1.00.
 - P2: Rotation can reduce modeled IPC. **SUPPORTED:** 23 losses, 26 wins, 95 ties in 144 paired equal-budget configurations. Largest loss -0.246875 modeled IPC in periodic four-hot regime. Do not claim universal throughput improvement.
-- P3: Bank admission remains feasible. **SUPPORTED:** 40,000 deterministic randomized comparisons and 16,384 exhaustive reduced-bank comparisons; 0 mismatches.
+- P3: Bank admission remains feasible. **SUPPORTED:** 35,426 valid randomized comparisons (40,000 draws; duplicate-wave candidates excluded) and 16,384 exhaustive reduced-bank comparisons; 0 mismatches.
 - P4: Rotation alone does not guarantee fairness under arbitrary downstream replay. **SUPPORTED by adversarial counterexample.**
 
 ## Selective-replay counterexample
