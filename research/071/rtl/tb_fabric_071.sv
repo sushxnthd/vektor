@@ -35,15 +35,15 @@ module tb_fabric_071;
    do_ready=1; tick(); do_ready=0;
    if(dcount!=0 || d_deliver!=1) $fatal(1,"second copy delivery");
    ai=1; ac=1; auid=0; tick(); ai=0; ac=0;
-   closed=1; if(q || acount!=2) $fatal(1,"premature fence");
+   closed=1; #1; if(q || acount!=2) $fatal(1,"premature fence");
    ao_ready=1; tick(); ao_ready=0;
    if(q || acount!=1) $fatal(1,"first ACK cannot certify drain");
    ao_stall=1; repeat(3) tick();
    if(q || acount!=1) $fatal(1,"stalled ACK copy lost");
    ao_stall=0; ao_drop=1; tick(); ao_drop=0;
    if(!q || a_terminal!=2 || a_deliver!=1) $fatal(1,"quiescence conservation");
-   external=1; if(q) $fatal(1,"external packet must block fence");
-   external=0; if(!q) $fatal(1,"external fence release");
+   external=1; #1; if(q) $fatal(1,"external packet must block fence");
+   external=0; #1; if(!q) $fatal(1,"external fence release");
    $display("PASS Vektor-071 bounded physical-copy accounting");
    $finish;
  end
