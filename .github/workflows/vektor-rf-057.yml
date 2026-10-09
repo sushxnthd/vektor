@@ -1,0 +1,30 @@
+name: Vektor-057 RF return arbiter verification
+on:
+  push:
+    branches: ['research/rf-return-age-057']
+  pull_request:
+    paths: ['research/057/**', '.github/workflows/vektor-rf-057.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open RTL tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog yosys
+      - name: RTL differential and generic synthesis
+        run: bash research/057/run_rtl_057.sh
+      - name: Upload verification logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vektor-057-return-selector
+          path: |
+            research/057/results/yosys_p*_057.log
+            research/057/build/vectors_p*.txt
+          retention-days: 30
