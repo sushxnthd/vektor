@@ -1,0 +1,27 @@
+name: Vektor-065 quiescence verification
+on:
+  push:
+    branches: ['research/fabric-quiescence-065']
+  pull_request:
+    paths: ['research/065/**', '.github/workflows/vektor-065.yml']
+jobs:
+  model-and-rtl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open RTL tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog yosys
+      - name: Deterministic model and exhaustive test
+        run: |
+          python3 research/065/tests/quiescence_065.py
+          python3 research/065/tests/check_replica_065.py
+          python3 research/065/tests/capacity_law_065.py
+          python3 research/065/tests/variance_cliff_065.py
+      - name: Simulate synthesizable tracker
+        run: |
+          iverilog -g2012 -s tb_quiescence_tracker_065 -o /tmp/vektor065.vvp research/065/rtl/quiescence_tracker_065.sv research/065/rtl/tb_quiescence_tracker_065.sv
+          vvp /tmp/vektor065.vvp
+      - name: Generic Yosys synthesis (NOT physical PPA)
+        run: |
+          yosys -Q -p 'read_verilog research/065/rtl/quiescence_tracker_065.sv; hierarchy -top quiescence_tracker_065; proc; opt; techmap; opt; stat' | tee /tmp/vektor065_yosys.log
