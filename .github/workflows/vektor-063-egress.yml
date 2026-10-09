@@ -1,28 +1,14 @@
-name: Vektor-063 egress model and RTL
-on:
-  push:
-    branches:
-      - research/fence-egress-contention-063
-  workflow_dispatch:
+name: Vektor 063 validation
+on: [push, workflow_dispatch]
 jobs:
-  verify:
+  test:
+    if: github.ref == 'refs/heads/research/fence-egress-contention-063'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Software-model capacity and conservation
-        run: |
-          python3 research/063/tests/conservation_063.py
-          python3 research/063/tests/egress_ci_063.py
-      - name: Install open RTL tools
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y iverilog yosys
-      - name: RTL ready-valid differential assertions
-        run: |
-          iverilog -g2012 -s tb_fence_egress_063 -o /tmp/v063.vvp research/063/rtl/fence_egress_arbiter_063.sv research/063/rtl/tb_fence_egress_063.sv
-          vvp /tmp/v063.vvp
-      - name: Generic Yosys synthesis
-        run: |
-          yosys -Q -p 'read_verilog -sv research/063/rtl/fence_egress_arbiter_063.sv; hierarchy -top fence_egress_arbiter_063; proc; opt; techmap; opt; stat' | tee /tmp/v063_synthesis.log
+      - run: python3 research/063/tests/conservation_063.py
+      - run: python3 research/063/tests/egress_ci_063.py
+      - run: python3 research/063/tests/batch4_ci.py
+      - run: sudo apt-get update -qq && sudo apt-get install -y iverilog yosys
+      - run: iverilog -g2012 -s tb_fence_egress_063 -o /tmp/v063.vvp research/063/rtl/fence_egress_arbiter_063.sv research/063/rtl/tb_fence_egress_063.sv && vvp /tmp/v063.vvp
+      - run: yosys -Q -p 'read_verilog -sv research/063/rtl/fence_egress_arbiter_063.sv; hierarchy -top fence_egress_arbiter_063; proc; opt; techmap; opt; stat'

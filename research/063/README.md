@@ -1,13 +1,11 @@
-# Vektor-063: return-lane contention
+# Vektor-063: return-lane contention and ACK packing
 
-**Discovery class:** DISCRIMINATION / CAPABILITY-BUILDING.
+Status: software-model foothold, RTL execution pending. Research class: DISCRIMINATION / EXPLOITATION / CAPABILITY-BUILDING.
 
-Hypothesis: Vektor-062's independent quiescence-ack path is optimistic when data and acknowledgments share one return lane.
+Vektor-062's strong quiescence ACK was assumed to use an independent return path. Charging ACKs to the same one-flit/cycle link as data changes the no-replay capacity ceiling from about 1.0 to 0.5 transactions/cycle. Packing up to four ACK tags into one fixed-width flit can raise the shared-link ceiling to 0.8.
 
-Preregistered: one data response plus one acknowledgment per transaction imposes a shared-lane capacity ceiling near 0.5 transactions/cycle without replays. With mean replay count p, ceiling approaches 1/(2+p). Dedicated acknowledgments instead permit a data-lane ceiling 1/(1+p).
+Reproducible synthetic outcomes at 64 tags, no replay, 16,000 cycles: independent ACK 0.999750, shared unbatched ACK 0.499958, shared batch4 ACK 0.799896 transactions/cycle. Packing improves modeled throughput 60.0% relative to unbatched shared return. Negative result: at two tags batching regresses 1.63% due to delayed tag reclamation.
 
-Synthetic model result: 108 paired configurations, 18 holdout checks, and 96 independent C++ comparisons. At 64 tags without replays, the shared ACK-first policy modeled about 0.500 transactions/cycle versus 1.000 for dedicated acknowledgments.
+144 structured software simulations, 18 minimally guided probes, 18 holdout checks, 128 independent C++/Python comparisons. Synthesizable arbitration RTL, testbench, and GitHub Actions workflow are committed but no successful RTL run is confirmed. Strong fabric quiescence and ACK packing physical feasibility are unverified.
 
-This is software modeling, not silicon or GPU-level evidence. A strong quiescence acknowledgment remains a fabric contract to implement.
-
-Next: test synthesizable egress arbitration with backpressure, then implement fabric-side acknowledgment generation and timing/area comparisons.
+See WORLD_MODEL.md, BATCH4.md and TARGET_LEDGER.md. Next decisive action: verify fabric-side strong ACK producer and compare mapped timing/area under equal-width shared, batched and dedicated links. No RTX 5090-class equivalence or novelty claim.
