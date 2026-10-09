@@ -1,6 +1,6 @@
 # Vektor-065 — Discovery Protocol V2 world model
 
-Date: 2026-10-09. **All throughput numbers are synthetic software-model results.** The small RTL module is experimental; physical PPA, full GPU benchmarks, and chip equivalence remain unverified.
+Date: 2026-10-09. **All throughput numbers are synthetic software-model results.** The small RTL module passed directed Icarus Verilog simulation and Yosys generic synthesis on GitHub Actions run 37965611241 (2026-10-09). Physical PPA, full GPU benchmarks, and chip equivalence remain unverified.
 
 ## Mechanism, preregistration, outcomes, residuals
 
@@ -40,7 +40,13 @@ Date: 2026-10-09. **All throughput numbers are synthetic software-model results.
 
 ## UNTESTED
 
-- Icarus/Yosys CI results (until confirmed); unbounded formal proof; ACK loss/replay, reset, cancellation, retransmission, real NoC replication ownership, multi-tile scaling, compiler workloads, PPA, GPU performance.
+- Unbounded formal proof; ACK loss/replay, reset, cancellation, retransmission, real NoC replication ownership, multi-tile scaling, compiler workloads, physical PPA, GPU performance.
+
+## VERIFIED RTL AND SYNTHESIS (component only)
+
+- GitHub Actions: https://github.com/sushxnthd/vektor/actions/runs/37965611241 — model, independent replication, capacity tests, directed RTL testbench and generic Yosys synthesis all **PASS** at branch commit 70c4890bb7f3bf6e17c58c34886e540d547a8618.
+- Yosys default-parameter tracker: **166 generic cells**, including 28 flip-flop-type cells. Generic gate count is **not** mapped physical area, timing, frequency or power. No formal proof is claimed.
+- RTL checks are directed, not exhaustive: queue/fabric integration, ACK loss, reset fencing and replay remain unverified.
 
 ## Adversarial roles and prior art
 
