@@ -1,0 +1,21 @@
+name: Vektor-055 RTL
+on:
+  push:
+    branches: ['research/rf-masked-ptx-055*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog yosys
+      - run: python3 research/055/tests/run_055.py
+      - run: bash research/055/run_055.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vektor-055-evidence
+          path: research/055/results/
