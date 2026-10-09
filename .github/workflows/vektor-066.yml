@@ -1,0 +1,26 @@
+name: Vektor-066 ACK replay identity
+on:
+  push:
+    paths: ['research/066/**', '.github/workflows/vektor-066.yml']
+  pull_request:
+    paths: ['research/066/**', '.github/workflows/vektor-066.yml']
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free RTL tools
+        run: sudo apt-get update -qq && sudo apt-get install -y iverilog yosys
+      - name: Run deterministic replay experiments
+        run: python3 research/066/fabric_066.py
+      - name: Independent identity oracle
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -pedantic research/066/independent_066.cpp -o /tmp/independent066
+          /tmp/independent066
+      - name: RTL replay and backpressure
+        run: |
+          iverilog -g2012 -s tb_ack_uid_guard_066 -o /tmp/ack066.vvp research/066/rtl/*.sv
+          vvp /tmp/ack066.vvp
+      - name: Generic synthesis only (not PPA)
+        run: |
+          yosys -Q -T -p 'read_verilog -sv research/066/rtl/ack_uid_guard_066.sv; hierarchy -top ack_uid_guard_066; proc; opt; techmap; opt; stat' | tee /tmp/066-yosys.txt
