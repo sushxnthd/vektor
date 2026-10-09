@@ -1,51 +1,35 @@
 # Vektor-054 — Discovery Protocol V2 world model
 
-**Date:** 2026-10-09. **Classification:** CAPABILITY-BUILDING / DISCRIMINATION / EXPLOITATION.
-**Evidence type:** deterministic Python transaction simulation and an independently coded packed-state interpreter. RTL candidate and testbench exist; **RTL simulation and synthesis are pending**.
+**Date:** 2026-10-09. **Class:** CAPABILITY-BUILDING / DISCRIMINATION / EXPLOITATION. Evidence: Python reference, independent packed-state model, 24 Icarus RTL differential simulations, generic Yosys synthesis.
 
-## Evolving claims
-
-| State | Claim and scope |
+| State | Claim |
 |---|---|
-| KNOWN (model) | 24 independent trace comparisons, 60,000 cycles, zero reference/replica mismatches; zero-alias controls exactly equal for three seeds. |
-| KNOWN (model) | Tagged returns preserve correct source data in the tested two-slot model with out-of-order returns and variable backpressure. One intentionally invalid response per trace is detected by a sticky error bit. |
-| BELIEVED | Tagged source dedup/fanout can reduce read demand when same-instruction physical register aliases occur, subject to implementation cost and compiler statistics. |
-| CONFLICTING | The 053 idealized 100%-alias read reduction was 66.7%, but this 054 model's *total* reads fall only 51% because more instructions complete. Normalize per instruction before interpreting traffic. |
-| FALSIFIED | Reducing per-instruction read count by 3x necessarily triples throughput: 100%-alias case improves modeled completions only 47.22% because two collector slots, response latency and backpressure become limiting. |
-| ANOMALOUS | Across seeds the 25% alias regime improves modeled completions only 5.77% while physical read demand per completed instruction decreases approximately 16.7%; suggests occupancy/latency bottleneck migration. |
-| UNTESTED | RTL compile, differential simulation, generic synthesis, critical path, area, power, physical bank mapping, real compiler alias rates, shader/ML traces, tensor/graphics/ray performance. |
+| KNOWN (software model) | 24 traces, 60,000 cycles, zero reference/replica disagreements; zero-alias controls exactly match. |
+| KNOWN (RTL simulation) | 24/24 RTL differential tests passed in GitHub Actions run 37880347241; malformed response is detected. |
+| KNOWN (generic synthesis) | DEDUP=1: 2323 generic cells; DEDUP=0: 2139; +8.60% overhead in this two-slot prototype, same 272 flip-flop cells. |
+| BELIEVED | Tagged source dedup can reduce read demand under physical-register aliasing, but actual compiler alias rates are unknown. |
+| CONFLICTING | Total reads drop 51% at 100% alias because more instructions complete; reads per completed instruction fall about 66.7%. Different denominators. |
+| FALSIFIED | A 3x reduction in reads/instruction guarantees 3x throughput: 100%-alias modeled completions rise only 47.22%. |
+| FALSIFIED | Same-instruction dedup/fanout has zero hardware-control cost: generic synthesis shows +184 cells. |
+| ANOMALOUS | 25% alias yields only +5.77% modeled completions despite about 16.7% fewer reads per completion, indicating bottleneck migration. |
+| UNTESTED | Technology-mapped area/timing/power, RF banks, real compiler traces, V-Tile/GPU performance, novelty. |
 
-## Experiment 054A: tagged two-slot fanout (CAPABILITY-BUILDING / DISCRIMINATION)
+## Experiment 054A/B
 
-**Mechanism.** Issue instruction (tag, 3 physical source IDs); collect each distinct ID once when DEDUP=1, or all three logical operands when DEDUP=0. Every return carries tag, operand index, source ID, and value. Return fanout is restricted to matching source IDs **within the same live instruction**. A completion may retire only after all three operands are received.
+Mechanism: two instruction slots, 3 source IDs, one request port, tagged out-of-order returns, duplicate read suppression, source-ID fanout. Equal-budget DEDUP=0 control. No bank arbitration, scoreboard or execution pipeline.
 
-**Predictions:** exact 0% alias control; fewer read requests under aliases; no instruction-identity mixing; invalid/stale return rejected. See PREREGISTERED_054.md for timing caveat.
+Predictions: zero-alias equality, fewer reads with alias, no cross-instruction operand mixing, malformed response rejected. Prediction document was finalized after local model grid and is not independently timestamped preregistration.
 
-**Outcome:** 24 x 2500-cycle traces, three seeds and four alias levels, each with DEDUP on/off. A separate packed-state Python model matched all 60,000 expected cycle outputs. Three 0%-alias pairs have exactly equal accepted instructions, reads and completions. At 25%, 50%, 100% alias, modeled completion gains are +5.77%, +16.35%, +47.22%. One deliberately invalid response per trace sets the sticky error. The 100%-alias regime is not an empirical workload estimate.
+Outcome: 24 x 2500-cycle software reference/replica comparisons, 24 x 2500-cycle Icarus RTL differential simulations, 2 generic Yosys syntheses. All correctness tests pass; generic cells 2139 vs 2323 (+8.60% overhead). Baseline modeled completions 936 across three seeds; dedup 936/990/1089/1378 at 0/25/50/100% alias. All synthetic, not GPU IPC.
 
-**Residual:** zero mismatches against independent software interpreter, zero difference in 0%-alias controls. No RTL residual is available because HDL tools could not run locally. **Uncertainty:** synthetic offered instruction stream, deterministic pseudo-random return/backpressure, only two collector slots, one request port, no banks, no scoreboard or execution pipeline. The independent replica shares the architectural specification, so common-mode specification errors remain possible.
+Residual: 0 RTL differential mismatches in 60,000 cycles; +184 generic cells. Uncertainty: 2 slots, synthetic alias rates, no bank ports, latency randomization, no physical PPA. Yosys flattened unpacked arrays to registers but reported 0 check errors.
 
-**Assumptions weakened/falsified:** per-instruction RF traffic alone does not determine completion rate. Two-slot occupancy and response latency can dominate. **Competing explanations:** head-of-line blocking, completion backpressure, outstanding return distribution, and synthetic alias rates. The current design cannot distinguish all of them.
+Assumptions weakened: RF traffic reduction alone does not determine IPC; extra comparator/fanout logic is not free. Competing explanations for non-proportional gains: occupancy, return latency, completion backpressure and request-port bottleneck.
 
-**Cheapest discriminating experiment:** run Icarus differential RTL vectors, then equal-budget Yosys generic synthesis with DEDUP 0/1; separately add 4/8/16 collector slots to the software model to isolate occupancy from read-port pressure. Extract compiler-derived source-register traces before any claim of real GPU benefit.
+Adversarial roles: Explorer—tagged fanout; Skeptic—realistic traces and timing; Experimentalist—equal controls and invalid returns; Analyst—counts and limits; Anomaly Hunter—bottleneck migration; Prior-Art Auditor—GPGPU-Sim; Replicator—independent Python and RTL differential; Theorist—read bandwidth is only one ceiling.
 
-## Adversarial roles
+**Foothold:** verified RTL correctness for this bounded two-slot contract and measured generic synthesis cost. Not a GPU-performance breakthrough. Prior negative branches from 047-053 retained. All RTX 5090-class gates INCONCLUSIVE.
 
-Explorer: source-ID dedup and tag-qualified return fanout as testable mechanism.
-Skeptic: questions synthetic alias rates, two-slot representativeness, area/frequency overhead and absence of bank contention.
-Experimentalist: equal instruction streams and zero-alias controls; malformed response injection; 24 deterministic traces.
-Analyst: reports both total reads and completions, not only selected speedups.
-Anomaly Hunter: identifies 100%-alias non-triple throughput and 25%-alias weak throughput gains as bottleneck migration.
-Prior-Art Auditor: GPGPU-Sim and existing operand collectors predate Vektor; no novelty claim.
-Replicator: separately coded packed-state model; 60,000 cycle-level comparisons.
-Theorist: the read-port ceiling is bounded by distinct source count, but achievable instruction rate also depends on collector occupancy, return latency and completion backpressure.
+**Single next action:** realistic compiler-derived alias traces and multi-slot, finite-bank PPA/IPC comparisons; technology-mapped timing before frequency claims.
 
-## Bottleneck cluster and branches
-
-Vektor-047 to -054 repeatedly expose coupled RF credit, partial operand collection, wave occupancy, and return bandwidth. First-grant RR and phase-dither scheduling are retained as conditional/negative branches, not forgotten. The priority is tagged collector correctness and PPA, not another scheduler-only sweep.
-
-## Foothold assessment
-
-**Capability-building foothold (software only):** deterministic tagged-return and source-alias reference harness with an independently checked 60,000-cycle suite. No hardware-performance foothold or 5090-class gate advancement until RTL verification and synthesis succeed.
-
-**Single next decisive action:** differential RTL simulation and equal-budget generic synthesis of tagged DEDUP=0 and DEDUP=1.
+CI: https://github.com/sushxnthd/vektor/actions/runs/37880347241
