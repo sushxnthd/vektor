@@ -1,0 +1,16 @@
+{
+  "model": "finite abstract protocol, maximum two physical DATA copies, two physical ACK copies, and two queued ACKs",
+  "states": 114,
+  "transitions": 6064,
+  "retirable_states": 1,
+  "legal_late_ack_transitions": 16,
+  "legacy_guard_false_error_witness": {
+    "before": {"d":0,"a":1,"q":0,"dc":true,"ac":true,"seen":false},
+    "event": [0,0,0,0,0,0,0,1,1,0],
+    "after": {"d":0,"a":0,"q":0,"dc":true,"ac":true,"seen":true}
+  },
+  "independent_replica": "C++17 exact agreement on states, transitions, retirable states, late ACK transitions",
+  "rtl_simulation": "pending",
+  "synthesis": "pending",
+  "physical_ppa": "not measured"
+}
