@@ -1,0 +1,9 @@
+name: Vektor 068 verification
+on: [push, workflow_dispatch]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 research/068/exhaustive_068.py
+      - run: g++ -std=c++17 -O2 research/068/replica_068.cpp -o /tmp/vektor068 && /tmp/vektor068
