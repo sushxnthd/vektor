@@ -1,0 +1,31 @@
+name: Vektor-070 bounded receiver verification
+on:
+  push:
+    branches:
+      - research/bounded-receiver-fence-070
+  pull_request:
+    paths:
+      - 'research/070/**'
+      - '.github/workflows/vektor-070.yml'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free HDL tools
+        run: sudo apt-get update && sudo apt-get install -y iverilog yosys
+      - name: Synthetic model and holdout
+        run: |
+          python3 research/070/sim_070.py
+          python3 research/070/holdout_070.py
+      - name: Receiver RTL directed test
+        run: |
+          iverilog -g2012 -s tb_receiver_070 -o /tmp/rx070 research/070/rtl/receiver_dedup_070.sv research/070/rtl/tb_receiver_070.sv
+          vvp /tmp/rx070
+      - name: Sender/receiver integration directed test
+        run: |
+          iverilog -g2012 -s tb_integrated_070 -o /tmp/int070 research/070/rtl/receiver_dedup_070.sv research/070/rtl/reliable_sender_069.sv research/070/rtl/tb_integrated_070.sv
+          vvp /tmp/int070
+      - name: Generic synthesis, not physical PPA
+        run: |
+          yosys -Q -p 'read_verilog -sv research/070/rtl/receiver_dedup_070.sv; hierarchy -top receiver_dedup_070; proc; opt; synth -top receiver_dedup_070; stat'
