@@ -1,0 +1,35 @@
+name: Vektor RF differential 052-053
+
+on:
+  push:
+    branches:
+      - research/rf-rtl-ci-053
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+          iverilog -V | head -n 2 || true
+          yosys -V
+      - name: RTL differential and generic synthesis
+        run: bash research/052/run_052.sh
+      - name: Archive reproducibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rf-differential-synthesis
+          path: |
+            research/052/build/
+            research/052/results/
+          retention-days: 30
+          if-no-files-found: warn
