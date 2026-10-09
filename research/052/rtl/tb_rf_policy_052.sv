@@ -25,7 +25,9 @@ module tb_rf_policy_052;
       $fatal(1,"missing +VECTORS=file");
     fd=$fopen(vector_path,"r");
     if (!fd) $fatal(1,"cannot open vector file");
-    #2; rst_n=1;
+    #1; rst_n=1;
+    #1; rst_n=0;
+    #1; rst_n=1;
     while (!$feof(fd)) begin
       r=$fscanf(fd,"%h %h %h %h %h %h %h\n",
         pending_mask,accepted_mask,bank_ids,free_slots,
