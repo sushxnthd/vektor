@@ -14,7 +14,7 @@ Reference: NVIDIA GeForce RTX 5090 official specifications, https://www.nvidia.c
 | Power | NVIDIA 575 W TGP | <=575 W target | INCONCLUSIVE |
 | Area | official product page does not specify die area | <=750 mm2 hypothesis | INCONCLUSIVE |
 | Software | CUDA compute capability 12.0, Vulkan 1.4, DX12 Ultimate on NVIDIA | KPX open ISA/compiler proposal | INCONCLUSIVE |
-| RF collector | NVIDIA internal design not inferred | experimental tagged fanout, two slots | Python-model checks only; RTL and synthesis pending |
+| RF collector | NVIDIA internal design not inferred | experimental tagged fanout, two slots | 24/24 RTL differential tests pass; Yosys generic synthesis 2323 vs 2139 cells (+8.60%); physical PPA pending |
 | Overall | broad comparable capability across all workloads | not achieved | INCONCLUSIVE |
 
 Do not compare 3,352 AI TOPS to an unqualified Vektor tensor FLOPS estimate. No graphics/ray/physical feasibility equivalence is supported.
