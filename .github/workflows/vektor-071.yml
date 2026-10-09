@@ -15,6 +15,11 @@ jobs:
         run: |
           python3 research/071/model/model_071.py
           python3 research/071/model/throughput_071.py
+      - name: Independent C++ trace replay
+        run: |
+          python3 research/071/model/make_trace_071.py
+          g++ -std=c++17 -O2 -Wall -Wextra research/071/model/replicate_071.cpp -o /tmp/replicate071
+          /tmp/replicate071 research/071/model/trace_071.csv
       - name: Router directed RTL test
         run: |
           iverilog -g2012 -s tb_fabric_071 -o /tmp/fabric071 research/071/rtl/bounded_fabric_071.sv research/071/rtl/tb_fabric_071.sv
