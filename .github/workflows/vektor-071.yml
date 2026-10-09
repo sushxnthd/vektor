@@ -12,7 +12,9 @@ jobs:
       - name: Install open HDL tools
         run: sudo apt-get update && sudo apt-get install -y iverilog yosys
       - name: Independent model regression
-        run: python3 research/071/model/model_071.py
+        run: |
+          python3 research/071/model/model_071.py
+          python3 research/071/model/throughput_071.py
       - name: Router directed RTL test
         run: |
           iverilog -g2012 -s tb_fabric_071 -o /tmp/fabric071 research/071/rtl/bounded_fabric_071.sv research/071/rtl/tb_fabric_071.sv
