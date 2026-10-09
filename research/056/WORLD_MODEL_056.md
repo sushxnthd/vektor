@@ -3,7 +3,7 @@
 KNOWN (software): zero-alias controls agree; fewer reads need not raise IPC.
 BELIEVED: return bandwidth and collector occupancy dominate many regimes.
 CONFLICTING: large synthetic alias gains versus low static PTX reuse.
-FALSIFIED: dedup always improves IPC (20 exploratory regressions).
+FALSIFIED: dedup always improves IPC (30 exploratory regressions).
 ANOMALOUS: all regressions occurred at two collector slots.
 UNTESTED: dynamic physical aliases, RTL PPA, full GPU capability.
 
