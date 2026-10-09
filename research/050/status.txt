@@ -1,0 +1,1 @@
+Model-only: 2592 held-out configurations. Clock RR zero-service=150; accepted-clock RR=0; oldest=0. Mean IPC: 0.359579 / 0.359762 / 0.359765. Mean Jain: 0.95964 / 0.97584 / 0.99922. No RTL evidence.
