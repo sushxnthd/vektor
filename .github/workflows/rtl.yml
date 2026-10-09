@@ -79,3 +79,11 @@ jobs:
         with:
           name: issue-fp32-001-rtl
           path: build/rtl/
+
+      - name: Vektor-068 producer-closure RTL simulation
+        run: |
+          iverilog -g2012 -s tb_ack_closure_068 -o /tmp/v068.vvp research/068/rtl/*.sv
+          vvp /tmp/v068.vvp
+      - name: Vektor-068 producer-closure generic synthesis
+        run: |
+          yosys -Q -T -p 'read_verilog -sv research/068/rtl/ack_closure_068.sv; hierarchy -check -top ack_closure_068; proc; opt; techmap; opt; check; stat'
