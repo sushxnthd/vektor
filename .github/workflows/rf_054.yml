@@ -1,0 +1,28 @@
+name: research-054-tagged-rf
+on:
+  push:
+    branches: [research/rf-tagged-fanout-054]
+  pull_request:
+    paths:
+      - 'research/054/**'
+      - '.github/workflows/rf_054.yml'
+jobs:
+  differential-and-generic-synthesis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free open-source HDL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Run deterministic model, 24 RTL traces, and equal-budget synthesis
+        run: bash research/054/run_054.sh
+      - name: Preserve verification and synthesis evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vektor-054-rf-evidence
+          path: |
+            research/054/results/
+            research/054/build/*.vec
