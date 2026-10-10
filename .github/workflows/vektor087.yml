@@ -1,7 +1,7 @@
 name: Vektor-087 fair reservation RTL
 on:
   push:
-    branches: [research/wb-fairness-087]
+    branches: ["research/wb-fairness-087*"]
   pull_request:
 jobs:
   fair-calendar:
@@ -18,6 +18,11 @@ jobs:
           mkdir -p build/087
           python3 experiments/reservation_reference_087.py build/087/p1.vec
           python3 experiments/reservation_reference_087.py build/087/p2.vec --banks 3 --reqs 6 --max-latency 5 --ports 2 --cycles 2048 --seed 20261011
+      - name: Independently replicate in C++17
+        run: |
+          g++ -O2 -Wall -Wextra -std=c++17 experiments/replicate_087.cpp -o build/087/replicate
+          build/087/replicate build/087/p1.vec 4 4 4 1
+          build/087/replicate build/087/p2.vec 3 6 5 2
       - name: RTL simulation (default)
         run: |
           iverilog -g2012 -s tb_rf_wb_reservation_087 -o build/087/tb1 rtl/vtile/rf_wb_reservation_087.sv verification/rtl/tb_rf_wb_reservation_087.sv
