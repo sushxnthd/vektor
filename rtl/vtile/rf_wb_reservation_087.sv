@@ -21,28 +21,39 @@ module rf_wb_reservation_087 #(
     reg [COUNT_W-1:0] slots [0:MAX_LATENCY][0:BANKS-1];
     reg [PTR_W-1:0] rr_ptr [0:MAX_LATENCY-1][0:BANKS-1];
     reg [PTR_W-1:0] next_ptr [0:MAX_LATENCY-1][0:BANKS-1];
-    integer b, l, k, idx, used;
+    integer b, l, k, used;
     always @* begin
         req_grant = {REQS{1'b0}};
-        idx = 0;
         used = 0;
         for (b=0; b<BANKS; b=b+1) begin
             for (l=1; l<=MAX_LATENCY; l=l+1) begin
                 used = slots[l][b];
                 next_ptr[l-1][b] = rr_ptr[l-1][b];
+                // Static-index two-pass scan avoids dynamic client multiplexers.
                 for (k=0; k<REQS; k=k+1) begin
-                    idx = rr_ptr[l-1][b] + k;
-                    if (idx >= REQS) idx = idx - REQS;
-                    if (rst_n && req_valid[idx] &&
-                        req_bank[idx*BANK_W +: BANK_W] == b &&
-                        req_latency[idx*LAT_W +: LAT_W] == l &&
+                    if (k >= rr_ptr[l-1][b] && rst_n && req_valid[k] &&
+                        req_bank[k*BANK_W +: BANK_W] == b &&
+                        req_latency[k*LAT_W +: LAT_W] == l &&
                         used < WB_PORTS_PER_BANK) begin
-                        req_grant[idx] = 1'b1;
+                        req_grant[k] = 1'b1;
                         used = used + 1;
-                        if (idx == REQS-1)
+                        if (k == REQS-1)
                             next_ptr[l-1][b] = {PTR_W{1'b0}};
                         else
-                            next_ptr[l-1][b] = idx + 1;
+                            next_ptr[l-1][b] = k + 1;
+                    end
+                end
+                for (k=0; k<REQS; k=k+1) begin
+                    if (k < rr_ptr[l-1][b] && rst_n && req_valid[k] &&
+                        req_bank[k*BANK_W +: BANK_W] == b &&
+                        req_latency[k*LAT_W +: LAT_W] == l &&
+                        used < WB_PORTS_PER_BANK) begin
+                        req_grant[k] = 1'b1;
+                        used = used + 1;
+                        if (k == REQS-1)
+                            next_ptr[l-1][b] = {PTR_W{1'b0}};
+                        else
+                            next_ptr[l-1][b] = k + 1;
                     end
                 end
             end
