@@ -11,6 +11,8 @@ jobs:
       - uses: actions/checkout@v4
       - run: python3 -m unittest discover -s tests -p 'test_089.py' -v
       - run: python3 experiments/wb_cancel_aba_089.py > /tmp/results_089.json
+      - run: python3 experiments/exhaustive_089.py
+      - run: python3 experiments/boundary_089.py
       - run: python3 experiments/trace_089.py
       - run: g++ -O2 -std=c++17 experiments/replicate_089.cpp -o /tmp/replicate_089
       - run: /tmp/replicate_089 experiments/trace_089.csv
