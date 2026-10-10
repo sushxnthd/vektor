@@ -1,0 +1,25 @@
+name: Vektor-085 RF grant smoke
+on:
+  push:
+    branches: [research/rf-writeback-085]
+  pull_request:
+    paths:
+      - 'rtl/vtile/rf_shared_arbiter_085.sv'
+      - 'rtl/vtile/tb_rf_shared_arbiter_085.sv'
+      - '.github/workflows/vektor085.yml'
+jobs:
+  rtl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Directed simulation
+        run: |
+          iverilog -g2012 -s tb_rf_shared_arbiter_085 -o /tmp/vektor085_tb rtl/vtile/rf_shared_arbiter_085.sv rtl/vtile/tb_rf_shared_arbiter_085.sv
+          vvp /tmp/vektor085_tb
+      - name: Generic-gate synthesis smoke (not PPA)
+        run: |
+          yosys -p 'read_verilog -sv rtl/vtile/rf_shared_arbiter_085.sv; hierarchy -top rf_shared_arbiter_085; proc; opt; techmap; opt; stat'
