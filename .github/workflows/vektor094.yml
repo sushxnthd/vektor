@@ -1,0 +1,30 @@
+name: Vektor-094 final-return verification
+on:
+  push:
+    branches: ['research/final-return-094']
+  pull_request:
+    paths:
+      - 'research/094/**'
+      - 'rtl/vtile/wb_*094.sv'
+      - 'verification/rtl/tb_wb_*094.sv'
+      - '.github/workflows/vektor094.yml'
+jobs:
+  software-rtl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free open RTL tools
+        run: sudo apt-get update && sudo apt-get install -y iverilog yosys
+      - name: Python bounded protocol tests
+        run: cd research/094 && python3 -m unittest -v test_final_return.py
+      - name: Packetizer simulation
+        run: iverilog -g2012 -s tb_wb_return_packetizer_094 -o /tmp/packet rtl/vtile/wb_return_packetizer_094.sv verification/rtl/tb_wb_return_packetizer_094.sv && vvp /tmp/packet
+      - name: Coalescer simulation
+        run: iverilog -g2012 -s tb_wb_return_coalescer_094 -o /tmp/coalescer rtl/vtile/wb_return_coalescer_094.sv verification/rtl/tb_wb_return_coalescer_094.sv && vvp /tmp/coalescer
+      - name: Consumer simulation
+        run: iverilog -g2012 -s tb_wb_final_consumer_094 -o /tmp/consumer rtl/vtile/wb_final_consumer_094.sv verification/rtl/tb_wb_final_consumer_094.sv && vvp /tmp/consumer
+      - name: Generic Yosys synthesis (not physical PPA)
+        run: |
+          yosys -Q -T -p 'read_verilog -sv rtl/vtile/wb_return_packetizer_094.sv; hierarchy -top wb_return_packetizer_094; proc; opt; techmap; opt; stat'
+          yosys -Q -T -p 'read_verilog -sv rtl/vtile/wb_return_coalescer_094.sv; hierarchy -top wb_return_coalescer_094; proc; opt; techmap; opt; stat'
+          yosys -Q -T -p 'read_verilog -sv rtl/vtile/wb_final_consumer_094.sv; hierarchy -top wb_final_consumer_094; proc; opt; techmap; opt; stat'
