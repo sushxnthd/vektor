@@ -1,0 +1,12 @@
+name: Vektor-088 synthetic fairness regression
+on:
+  push:
+    branches: ["research/wb-age-guard-088"]
+  pull_request:
+    paths: ["experiments/wb_age_guard_088.py", "research/088/**"]
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 experiments/wb_age_guard_088.py
