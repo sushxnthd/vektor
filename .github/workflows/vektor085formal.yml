@@ -1,0 +1,15 @@
+name: Vektor-085 formal RF arbiter equivalence
+on:
+  push:
+    branches: [research/rf-writeback-085]
+jobs:
+  equivalence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys
+      - name: Prove default-parameter combinational equivalence
+        run: |
+          yosys -p 'read_verilog -sv rtl/vtile/rf_shared_arbiter_085.sv rtl/vtile/rf_shared_arbiter_085b.sv; proc; opt; equiv_make rf_shared_arbiter_085 rf_shared_arbiter_085b equiv; hierarchy -top equiv; equiv_simple; equiv_status -assert'

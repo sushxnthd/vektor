@@ -1,0 +1,66 @@
+{
+  "experiment": "Vektor-089",
+  "date": "2026-10-10",
+  "type": "synthetic software simulation",
+  "grid_cases": 432,
+  "surprise_cases": 54,
+  "total_cases": 486,
+  "cycles_per_case": 2000,
+  "results": {
+    "unsafe": {
+      "false_accept": 26432,
+      "correct": 250041,
+      "tag_stalls": 0,
+      "admitted": 487199
+    },
+    "quarantine": {
+      "false_accept": 0,
+      "correct": 234992,
+      "tag_stalls": 96106,
+      "admitted": 421996
+    },
+    "boundary": {
+      "false_accept": 0,
+      "correct": 241726,
+      "tag_stalls": 73683,
+      "admitted": 435360
+    },
+    "oracle": {
+      "false_accept": 0,
+      "correct": 255584,
+      "tag_stalls": 0,
+      "admitted": 477604
+    }
+  },
+  "bounded_exhaustive": {
+    "tag_bits": 1,
+    "D": 3,
+    "horizon": 6,
+    "traces": 262144,
+    "unsafe_bad_traces": 14976,
+    "quarantine_bad_traces": 0,
+    "boundary_bad_traces": 0
+  },
+  "independent_cpp_python": {
+    "comparisons": 524288,
+    "mismatches": 0
+  },
+  "boundary_sweep": {
+    "configurations": 190,
+    "false_accepts": 0,
+    "no_stall_cases_when_N_ge_D": 41
+  },
+  "negative_control": {
+    "D": 2,
+    "callbacks_up_to": 4,
+    "cycles": 20000,
+    "quarantine_false_accepts": 2895
+  },
+  "local_tests": {
+    "passed": 7,
+    "failed": 0
+  },
+  "rtl": "not run",
+  "synthesis": "not run",
+  "cost_usd": 0
+}

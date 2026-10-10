@@ -1,0 +1,24 @@
+name: Vektor-086 bounded sequential safety proof
+on:
+  push:
+    branches: [research/wb-calendar-086]
+jobs:
+  bounded-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Yosys
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys
+      - name: Prove bank-calendar capacity for 10 cycles from zero state
+        run: |
+          mkdir -p build/086
+          yosys -p 'read_verilog -formal -sv -D FORMAL rtl/vtile/rf_wb_reservation_086.sv; prep -top rf_wb_reservation_086; async2sync; dffunmap; sat -seq 10 -set-init-zero -prove-asserts -verify' > build/086/formal.log
+          tail -45 build/086/formal.log
+      - name: Preserve proof log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vektor-086-bounded-proof
+          path: build/086/formal.log

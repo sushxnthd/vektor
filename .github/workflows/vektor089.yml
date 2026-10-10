@@ -1,0 +1,18 @@
+name: Vektor 089 cancellation regression
+on:
+  push:
+    branches: ['research/wb-cancel-aba-089']
+  pull_request:
+    paths: ['experiments/*089*', 'tests/test_089.py', 'research/089/**']
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -p 'test_089.py' -v
+      - run: python3 experiments/wb_cancel_aba_089.py > /tmp/results_089.json
+      - run: python3 experiments/exhaustive_089.py
+      - run: python3 experiments/boundary_089.py
+      - run: python3 experiments/trace_089.py
+      - run: g++ -O2 -std=c++17 experiments/replicate_089.cpp -o /tmp/replicate_089
+      - run: /tmp/replicate_089 experiments/trace_089.csv

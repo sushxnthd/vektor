@@ -1,0 +1,19 @@
+name: Vektor-085b bank-major RTL discrimination
+on:
+  push:
+    branches: [research/rf-writeback-085]
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Directed 10000-vector equivalence
+        run: |
+          iverilog -g2012 -s tb_rf_equiv_085b -o /tmp/equiv085b rtl/vtile/rf_shared_arbiter_085.sv rtl/vtile/rf_shared_arbiter_085b.sv rtl/vtile/tb_rf_equiv_085b.sv
+          vvp /tmp/equiv085b
+      - name: Generic gate synthesis (not area/timing)
+        run: |
+          yosys -p 'read_verilog -sv rtl/vtile/rf_shared_arbiter_085b.sv; hierarchy -top rf_shared_arbiter_085b; proc; opt; techmap; opt; stat'
