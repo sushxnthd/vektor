@@ -1,0 +1,42 @@
+name: Vektor-087 fair reservation RTL
+on:
+  push:
+    branches: [research/wb-fairness-087]
+  pull_request:
+jobs:
+  fair-calendar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys g++
+      - name: Generate independent oracle vectors
+        run: |
+          mkdir -p build/087
+          python3 experiments/reservation_reference_087.py build/087/p1.vec
+          python3 experiments/reservation_reference_087.py build/087/p2.vec --banks 3 --reqs 6 --max-latency 5 --ports 2 --cycles 2048 --seed 20261011
+      - name: RTL simulation (default)
+        run: |
+          iverilog -g2012 -s tb_rf_wb_reservation_087 -o build/087/tb1 rtl/vtile/rf_wb_reservation_087.sv verification/rtl/tb_rf_wb_reservation_087.sv
+          vvp build/087/tb1 +VEC=build/087/p1.vec
+      - name: RTL simulation (two ports)
+        run: |
+          iverilog -g2012 -s tb_rf_wb_reservation_087 -Ptb_rf_wb_reservation_087.BANKS=3 -Ptb_rf_wb_reservation_087.REQS=6 -Ptb_rf_wb_reservation_087.MAX_LATENCY=5 -Ptb_rf_wb_reservation_087.WB_PORTS_PER_BANK=2 -Ptb_rf_wb_reservation_087.CYCLES=2048 -o build/087/tb2 rtl/vtile/rf_wb_reservation_087.sv verification/rtl/tb_rf_wb_reservation_087.sv
+          vvp build/087/tb2 +VEC=build/087/p2.vec
+      - name: Generic synthesis (not PPA)
+        run: |
+          yosys -p 'read_verilog -sv rtl/vtile/rf_wb_reservation_087.sv; synth -top rf_wb_reservation_087; stat' > build/087/synth.log
+          tail -40 build/087/synth.log
+      - name: Bounded capacity and pointer safety
+        run: |
+          yosys -p 'read_verilog -formal -sv -D FORMAL rtl/vtile/rf_wb_reservation_087.sv; prep -top rf_wb_reservation_087; async2sync; dffunmap; sat -seq 6 -set-init-zero -prove-asserts -verify' > build/087/formal.log
+          tail -30 build/087/formal.log
+      - name: Preserve reproducibility logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vektor-087-fairness-evidence
+          path: build/087/
