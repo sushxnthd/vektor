@@ -17,6 +17,17 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y iverilog yosys
       - name: Python bounded protocol tests
         run: cd research/094 && python3 -m unittest -v test_final_return.py
+      - name: Independent C++/Python replication
+        run: cd research/094 && python3 replicate.py
+      - name: Reproduce preregistered sweeps and holdout
+        run: cd research/094 && python3 sweep.py && python3 holdout_c.py
+      - name: Upload synthetic results (not GPU performance)
+        uses: actions/upload-artifact@v4
+        with:
+          name: vektor094-simulated-results
+          path: |
+            research/094/results.json
+            research/094/holdout_c.json
       - name: Packetizer simulation
         run: iverilog -g2012 -s tb_wb_return_packetizer_094 -o /tmp/packet rtl/vtile/wb_return_packetizer_094.sv verification/rtl/tb_wb_return_packetizer_094.sv && vvp /tmp/packet
       - name: Coalescer simulation
