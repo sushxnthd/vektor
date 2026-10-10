@@ -1,7 +1,7 @@
 """Bounded invariants for Vektor-083; stdlib-only."""
 from decoupled import simulate, simulate_jobs, make_jobs
 
-def main():
+def test_bounded_fifo():
     checks = 0
     for c in (1, 4, 16, 24):
         for q in (0, 1, 2, 4):
@@ -16,12 +16,8 @@ def main():
                     if q > 0:
                         assert r["throughput"] <= q
                     checks += 1
-    # With one hot bank, k operands per instruction require at least k/p cycles.
     for k in (1, 2, 4):
         r = simulate(collectors=20, fifo=4, src_count=k, ports=1,
                      pattern="hot", instructions=1000)
         assert r["throughput"] <= 1/k
-    print(f"PASS {checks + 3} deterministic tests")
-
-if __name__ == "__main__":
-    main()
+    print(f"PASS {checks + 3} deterministic configurations")
