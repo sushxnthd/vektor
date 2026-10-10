@@ -13,6 +13,8 @@ GitHub Actions [run 38055424976](https://github.com/sushxnthd/vektor/actions/run
 - Yosys 0.33 generic synthesis: **694 generic cells**, including **16 flip-flops** at default parameters. This is not mapped ASIC area, clock speed, power, or timing.
 - Existing simulator and RTL workflows also ran on the research branch. No main-branch changes.
 
+- Bounded Yosys SAT safety proof: [run 38055585967](https://github.com/sushxnthd/vektor/actions/runs/38055585967) proves slot counts <= bank write ports for ten steps from a zero-initialized state. **Not** an unbounded or liveness proof. Current branch head includes the formal assertions behind `FORMAL`.
+
 ## Reproduce without paid resources
 
 ```sh
@@ -24,6 +26,7 @@ vvp build/086/tb1 +VEC=build/086/p1.vec
 iverilog -g2012 -s tb_rf_wb_reservation_086 -Ptb_rf_wb_reservation_086.BANKS=3 -Ptb_rf_wb_reservation_086.REQS=6 -Ptb_rf_wb_reservation_086.MAX_LATENCY=5 -Ptb_rf_wb_reservation_086.WB_PORTS_PER_BANK=2 -Ptb_rf_wb_reservation_086.CYCLES=2048 -o build/086/tb2 rtl/vtile/rf_wb_reservation_086.sv verification/rtl/tb_rf_wb_reservation_086.sv
 vvp build/086/tb2 +VEC=build/086/p2.vec
 yosys -p 'read_verilog -sv rtl/vtile/rf_wb_reservation_086.sv; synth -top rf_wb_reservation_086; stat'
+yosys -p 'read_verilog -formal -sv -D FORMAL rtl/vtile/rf_wb_reservation_086.sv; prep -top rf_wb_reservation_086; async2sync; dffunmap; sat -seq 10 -set-init-zero -prove-asserts -verify'
 ```
 
 ## Design constraints

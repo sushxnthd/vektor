@@ -22,14 +22,18 @@
 
 **Preregistered prediction:** fixed request-index priority can starve lower-index clients. **Outcome (PYTHON-MODELED):** four persistent requests for bank 0, latency 1, one port: grant counts over 1,000 cycles **[1000, 0, 0, 0]**. The same holds for latencies 2 and 4. **Residual:** none; this is a counterexample, not an empirical throughput law. **Assumption falsified:** correctness of capacity scheduling implies acceptable fairness. **Competing explanation:** a real upstream scheduler might rotate request mapping, but no such guarantee exists in this module. **Next discriminator:** fair round-robin vs fixed priority, same reservation capacity, synthetic and compiler-derived traces.
 
+## Experiment 086-D: bounded sequential capacity proof
+
+**Preregistered/added after 086-A:** prove the bank-slot capacity assertions in the actual RTL with Yosys SAT from a zero-initialized state, with arbitrary requests and reset over **10 cycles**. **Outcome (BOUNDED FORMAL): PASS**; SAT reports `no model found: SUCCESS` in [run 38055585967](https://github.com/sushxnthd/vektor/actions/runs/38055585967), commit `806b02660d0f4f098c8d6b8e8f410a7ede282406`. **Residual:** zero bounded counterexamples. **Limitation:** not an unbounded inductive proof, fairness/liveness proof, or proof of architectural register values. **Next discriminator:** unbounded inductive invariant and tagged variable-latency cancellation protocol.
+
 ## Evolving world model
 
-- **KNOWN:** 086-A exact oracle agreement for two bounded RTL traces; 086-B generic synthesis success; fixed-priority starvation in the independent model.
+- **KNOWN:** 086-A exact oracle agreement for two bounded RTL traces; 086-B generic synthesis success; 086-D ten-cycle bounded capacity proof; fixed-priority starvation in the independent model.
 - **BELIEVED:** reservations can avoid some modeled future writeback queue stalls in workloads like Vektor-085, conditional on accurate completion timing.
 - **CONFLICTING:** Vektor-085 reservation holdout had 47 wins, 17 losses, 32 ties; it is not universally beneficial.
 - **FALSIFIED:** 079 large scheduler anomalies survived realistic coherence (no); 082 uncapped collector throughput as execution throughput (no); 083 equal-storage FIFO universal win (no); 084 elastic bypass sustained throughput win (no).
 - **ANOMALOUS:** persistent request-index starvation despite correct per-cycle bank capacity; investigate scheduler fairness and mapping sensitivity.
-- **UNTESTED:** formal sequential safety proof; age/generation tags; cancellation; variable-latency completions; coherent RAW/WAW integration; matrix/vector arbitration; physical PPA; compiler-driven workloads; GPU-level capabilities.
+- **UNTESTED:** unbounded inductive safety proof; age/generation tags; cancellation; variable-latency completions; coherent RAW/WAW integration; matrix/vector arbitration; physical PPA; compiler-driven workloads; GPU-level capabilities.
 
 ## Adversarial review
 
