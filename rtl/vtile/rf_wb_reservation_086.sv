@@ -72,4 +72,13 @@ module rf_wb_reservation_086 #(
     generate for (g=0; g<BANKS; g=g+1) begin : due_outputs
         assign due_count[g*COUNT_W +: COUNT_W] = slots[0][g];
     end endgenerate
+// Bounded model-checking assertions; excluded from synthesis by default.
+`ifdef FORMAL
+    integer fb, fl;
+    always @(posedge clk) begin
+        for (fb=0; fb<BANKS; fb=fb+1)
+            for (fl=0; fl<=MAX_LATENCY; fl=fl+1)
+                assert(slots[fl][fb] <= WB_PORTS_PER_BANK);
+    end
+`endif
 endmodule
