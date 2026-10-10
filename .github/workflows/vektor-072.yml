@@ -1,0 +1,8 @@
+name: Vektor 072
+on: [push]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 research/072/model/formal_072.py
