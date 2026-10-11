@@ -1,0 +1,13 @@
+name: v107-cache-repro
+on:
+  push:
+    branches: [research/cache-stage-107]
+  pull_request:
+    paths: ['research/107/**']
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 research/107/cache_repro.py
