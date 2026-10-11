@@ -1,0 +1,34 @@
+name: Vektor-102 joint-cost replication
+on:
+  push:
+    branches: ["research/joint-rf-divergence-102"]
+  workflow_dispatch:
+jobs:
+  model-and-replication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Unit tests and independent C++ replication
+        run: |
+          cd research/102
+          python3 -m unittest -v test_joint_cost.py
+          python3 replicate.py
+          python3 prediction_holdout.py
+      - name: Reproduce discovery and holdouts
+        run: |
+          cd research/102
+          python3 sweep.py discovery
+          python3 sweep.py surprise
+          python3 sweep.py holdout
+      - name: Archive raw synthetic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: vektor102-synthetic-service-costs
+          path: |
+            research/102/discovery.json
+            research/102/surprise.json
+            research/102/holdout.json
+            research/102/prediction_holdout.json
