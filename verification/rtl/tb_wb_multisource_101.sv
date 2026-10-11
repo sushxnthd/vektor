@@ -18,6 +18,7 @@ module tb_wb_multisource_101;
  integer t,grants=0,finals=0,races=0,beats=0,completions_new=0,stales_new=0;
  integer old_completions=0, stalls=0, immediate_reuses=0;
  reg expected_race;
+ reg [TAG_BITS-1:0] sampled_return_tag;
  reg stalled=0;
  reg [TAG_BITS-1:0] stalled_tag;
  reg [IDX_BITS-1:0] stalled_source;
@@ -32,6 +33,7 @@ module tb_wb_multisource_101;
   .complete(complete_old),.stale_drop(stale_old),.tag_stall(tag_stall_old),.grant_pulse(grant_old),.launch_fire(launch_old),.return_fire(fire_old),
   .return_final(final_old),.return_tag(tag_old),.return_source(src_old),.pending_mask(pending_old),.launch_occupancy(launch_occ_old),.return_occupancies(ret_occ_old));
  always @(posedge clk) if(cold_rst_n) begin
+  sampled_return_tag=tag_new;
   expected_race=fire_new && final_new && race_enable && dut.live_mask[tag_new] && pending_new[tag_new] && !soft_reset;
   if(stalled && (!dut.arb_valid || tag_new !== stalled_tag || src_new !== stalled_source || final_new !== stalled_final))
    $fatal(1,"stall-stability violation");
@@ -52,7 +54,7 @@ module tb_wb_multisource_101;
    races=races+1;
    if(complete_new !== 0 || stale_new !== 1 || complete_old !== 1 || stale_old !== 0)
     $fatal(1,"cancel-wins classification mismatch");
-   if(grant_new && dut.grant_tag==tag_new)immediate_reuses=immediate_reuses+1;
+   if(grant_new && dut.grant_tag==sampled_return_tag)immediate_reuses=immediate_reuses+1;
   end
  end
  initial begin

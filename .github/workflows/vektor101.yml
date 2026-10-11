@@ -29,12 +29,13 @@ jobs:
                rtl/vtile/wb_multisource_composed_098.sv
                rtl/vtile/wb_multisource_composed_100.sv
                verification/rtl/tb_wb_multisource_101.sv)
-          for params in "4 4 3" "2 4 3" "8 4 3" "4 8 3" "4 4 1"; do
-            read -r sources depth copies <<< "$params"
+          for params in "4 4 3 3" "2 4 3 3" "8 4 3 3" "4 8 3 3" "4 4 1 3" "2 4 3 1"; do
+            read -r sources depth copies tags <<< "$params"
             iverilog -g2012 -s tb_wb_multisource_101 \
               -Ptb_wb_multisource_101.SOURCES="$sources" \
               -Ptb_wb_multisource_101.DEPTH="$depth" \
               -Ptb_wb_multisource_101.COPIES="$copies" \
+              -Ptb_wb_multisource_101.TAG_BITS="$tags" \
               -o /tmp/v101 "${src[@]}"
             vvp /tmp/v101
           done
