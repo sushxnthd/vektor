@@ -1,0 +1,1 @@
+Vektor-108: no RTX 5090-class gate passed. Compute, memory, graphics, tensor, ray, power, area, frequency and software capability remain inconclusive.
