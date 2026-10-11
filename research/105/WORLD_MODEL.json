@@ -1,10 +1,1 @@
-{
-  "date":"2026-10-11",
-  "KNOWN":["Synthetic controlled coalescing boundary","1368/1368 independent C++ sector/migration counts matched","8/8 Python tests passed locally","lane/path conservation"],
-  "BELIEVED":["address-locality packing could help eligible memory-bound workloads if future address hints and migration are affordable"],
-  "CONFLICTING":["11 holdout line-saving cases but only 8 total cycle wins; two line-saving cycle regressions"],
-  "FALSIFIED":["fewer sectors always means fewer model cycles","path-only cross-warp compaction is universally best"],
-  "ANOMALOUS":["discovery case 19: 385 to 110 sectors but 103 to 112 cycles","holdout case 17: 240 to 120 sectors but 178 to 188 cycles"],
-  "UNTESTED":["real compiler traces","barrier/atomic/shuffle legality","independent timing model","RTL","synthesis","GPU performance and PPA"],
-  "next_decisive_action":"Real Vortex/KPX trace legality and independent timing without future-address oracle"
-}
+{"date":"2026-10-11","KNOWN":["1368/1368 C++ grouping/sector checks","8/8 Python tests","q=.25 null-channel confirmation 32/32 seeds"],"BELIEVED":["address-hint mutual information matters more than raw accuracy"],"CONFLICTING":["offline sector packing helps selected synthetic memory-bound cases but may regress under RF/cache/migration"],"FALSIFIED":["fewer sectors guarantees faster modeled execution","sector-hint accuracy monotonically determines coalescing gain"],"ANOMALOUS":["q=0 always-wrong synthetic hints outperform q=.25 uninformative hints","discovery case 19: fewer sectors yet slower"],"UNTESTED":["real compiler traces","cross-warp legality","independent timing model","RTL/synthesis","GPU-level performance and PPA"],"next_decisive_action":"Collect real compiler address-hint and legality traces without future-address oracle."}
