@@ -59,7 +59,7 @@ def main():
     cta_new = patch_cta(cta.read_text())
     lsu.write_text(lsu_new)
     cta.write_text(cta_new)
-    shutil.copyfile(HERE / "vektor_lsu_probe.h", header)
+    shutil.copyfile(HERE.parent / "113" / "probe.h", header)
     print(f"V114 pinned dual-site source patch applied: {sha}")
 
 if __name__ == "__main__":
