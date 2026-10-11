@@ -1,0 +1,37 @@
+name: Vektor-115 MMU provenance verification
+on:
+  push:
+    branches: ['research/mmu-provenance-115']
+  workflow_dispatch:
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deterministic host-model regressions
+        run: |
+          cd research/115
+          python3 test.py -v
+          python3 trace_model.py
+      - name: Independent exhaustive C++ verifier
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror research/115/replica.cpp -o /tmp/v115_replica
+          /tmp/v115_replica
+      - name: Compile probe header in isolation
+        run: |
+          cat >/tmp/v115_header.cpp <<'EOF'
+          #include "vektor_mmu_probe.h"
+          int main() { vektor_mmu_probe::emit(1,2,3,4,4096,8192,'T'); }
+          EOF
+          g++ -std=c++17 -Wall -Wextra -Werror -Iresearch/115 /tmp/v115_header.cpp -o /tmp/v115_header
+          VEKTOR_MMU_TRACE=/tmp/v115_probe.csv /tmp/v115_header
+          test "$(wc -l </tmp/v115_probe.csv)" -eq 1
+      - name: Pinned Vortex source anchor audit and patch
+        run: |
+          git clone --filter=blob:none https://github.com/vortexgpgpu/vortex.git /tmp/vortex
+          git -C /tmp/vortex checkout 7fe19369587c087f902c3e2bc2add612aa910a95
+          python3 research/115/patch_vortex.py /tmp/vortex
+          grep -q 'vektor_mmu_probe::emit' /tmp/vortex/sim/simx/mem/mmu.cpp
+          test "$(grep -c 'vektor_mmu_probe::emit' /tmp/vortex/sim/simx/mem/mmu.cpp)" -eq 4
+          echo "Source patch anchors passed; full SimX compile/run NOT verified"

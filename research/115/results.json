@@ -1,0 +1,5 @@
+[
+  {"seed":115001,"configurations":256,"reordered":221,"naive_misattributed_records":972,"coalesced_cases":256,"paired_misattributed_records":0,"experimental_class":"DISCRIMINATION"},
+  {"seed":115002,"configurations":128,"reordered":115,"naive_misattributed_records":476,"coalesced_cases":128,"paired_misattributed_records":0,"experimental_class":"DISCRIMINATION"},
+  {"seed":115003,"configurations":48,"reordered":44,"naive_misattributed_records":215,"coalesced_cases":48,"paired_misattributed_records":0,"experimental_class":"SURPRISE"}
+]
