@@ -1,0 +1,29 @@
+name: Vektor099 cancel FINAL race
+on:
+  push:
+    branches: [research/cancel-final-race-099]
+  pull_request:
+    paths:
+      - 'rtl/vtile/wb_final_consumer_099.sv'
+      - 'verification/rtl/tb_cancel_final_099.sv'
+      - 'research/099/**'
+      - '.github/workflows/vektor099.yml'
+jobs:
+  reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 research/099/cancel_race_reference.py
+      - run: g++ -std=c++17 -O2 -Wall -Wextra -Werror research/099/replicate.cpp -o /tmp/replicate && /tmp/replicate
+  rtl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open RTL tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog yosys
+      - name: Directed RTL negative control and fixed module
+        run: |
+          iverilog -g2012 -s tb_cancel_final_099 -o /tmp/v099 rtl/vtile/wb_final_consumer_094.sv rtl/vtile/wb_final_consumer_099.sv verification/rtl/tb_cancel_final_099.sv
+          vvp /tmp/v099
+      - name: Generic synthesis only (not PPA)
+        run: yosys -p 'read_verilog -sv rtl/vtile/wb_final_consumer_099.sv; synth -top wb_final_consumer_099; stat'
