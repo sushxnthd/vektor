@@ -1,0 +1,1 @@
+Predictions registered before testing: full-cache miss equality for read-only SGEMM; illegal producer-consumer reordering changes read value; conservative dependency graph preserves SC replay; coalescer savings may lose on a service proxy. Seeds: 1082026 discovery (96), 1089001 holdout (48), 1083333 surprise (20).
