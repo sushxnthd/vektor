@@ -25,5 +25,5 @@ jobs:
         run: |
           iverilog -g2012 -s tb_cancel_final_099 -o /tmp/v099 rtl/vtile/wb_final_consumer_094.sv rtl/vtile/wb_final_consumer_099.sv verification/rtl/tb_cancel_final_099.sv
           vvp /tmp/v099
-      - name: Generic synthesis only (not PPA)
-        run: yosys -p 'read_verilog -sv rtl/vtile/wb_final_consumer_099.sv; synth -top wb_final_consumer_099; stat'
+      - name: Equal-parameter generic synthesis baseline and sensitivity
+        run: bash research/099/ppa_sweep.sh
