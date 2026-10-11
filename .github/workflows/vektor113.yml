@@ -1,0 +1,38 @@
+name: Vektor-113 CTA lifetime source audit
+on:
+  push:
+    branches: ['research/cta-lifetime-113']
+  workflow_dispatch:
+jobs:
+  host-model-and-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run fail-closed CTA lifecycle directed tests
+        run: python research/113/lifetime.py
+      - name: Verify pinned Vortex CTA reuse source
+        run: |
+          git clone --filter=blob:none https://github.com/vortexgpgpu/vortex.git /tmp/vortex
+          git -C /tmp/vortex checkout 7fe19369587c087f902c3e2bc2add612aa910a95
+          python research/113/source_audit.py /tmp/vortex
+      - name: Compile optional probe header in isolation
+        run: |
+          cat >/tmp/v113_probe.cpp <<'EOF'
+          #include "probe.h"
+          int main() {
+            vektor_lsu_probe::emit({0,0,0,0,0,0,0,0,'B','U'});
+            vektor_lsu_probe::emit({1,2,4096,0,0,1,2,4,'L','G'});
+            vektor_lsu_probe::emit({0,0,0,0,0,0,0,0,'E','U'});
+          }
+          EOF
+          g++ -std=c++17 -Wall -Wextra -Werror -Iresearch/113 /tmp/v113_probe.cpp -o /tmp/v113_probe
+          VEKTOR_LSU_TRACE=/tmp/v113_probe.csv /tmp/v113_probe
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/v113_probe.csv')
+          lines=p.read_text().strip().splitlines()
+          assert len(lines)==3 and lines[0].startswith('0,') and lines[2].startswith('2,')
+          print('Probe formatter smoke test: PASS')
+          PY
+# Does NOT claim full patched SimX compile, execution, physical traffic or retirement.
