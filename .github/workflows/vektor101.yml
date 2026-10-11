@@ -1,0 +1,47 @@
+name: Vektor101 composed return RTL
+on:
+  push:
+    branches:
+      - research/composed-rtl-101
+  pull_request:
+    paths:
+      - 'rtl/vtile/wb_*.sv'
+      - 'verification/rtl/tb_wb_multisource_101.sv'
+      - 'research/101/**'
+      - '.github/workflows/vektor101.yml'
+jobs:
+  differential-and-synthesis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog yosys
+      - name: Directed multi-producer RTL differential verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          src=(rtl/vtile/wb_final_consumer_094.sv
+               rtl/vtile/wb_final_consumer_099.sv
+               rtl/vtile/wb_elastic_fifo_095.sv
+               rtl/vtile/wb_return_packetizer_094.sv
+               rtl/vtile/wb_return_stable_arbiter_097.sv
+               rtl/vtile/wb_multisource_composed_098.sv
+               rtl/vtile/wb_multisource_composed_100.sv
+               verification/rtl/tb_wb_multisource_101.sv)
+          for params in "4 4 3" "2 4 3" "8 4 3" "4 8 3" "4 4 1"; do
+            read -r sources depth copies <<< "$params"
+            iverilog -g2012 -s tb_wb_multisource_101 \
+              -Ptb_wb_multisource_101.SOURCES="$sources" \
+              -Ptb_wb_multisource_101.DEPTH="$depth" \
+              -Ptb_wb_multisource_101.COPIES="$copies" \
+              -o /tmp/v101 "${src[@]}"
+            vvp /tmp/v101
+          done
+      - name: Generic synthesis (no timing, area, or power claims)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for top in wb_multisource_composed_098 wb_multisource_composed_100; do
+            yosys -Q -T -p "read_verilog -sv rtl/vtile/wb_final_consumer_094.sv rtl/vtile/wb_final_consumer_099.sv rtl/vtile/wb_elastic_fifo_095.sv rtl/vtile/wb_return_packetizer_094.sv rtl/vtile/wb_return_stable_arbiter_097.sv rtl/vtile/wb_multisource_composed_098.sv rtl/vtile/wb_multisource_composed_100.sv; hierarchy -check -top $top; proc; opt; flatten; techmap; opt; stat" | tee "/tmp/${top}.log"
+          done
