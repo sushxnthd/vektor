@@ -1,0 +1,15 @@
+name: Vektor097 RTL
+on:
+  push:
+    branches: [research/ready-valid-097]
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog yosys
+      - run: python3 research/097/exhaustive.py && python3 research/097/gen_vectors.py
+      - run: iverilog -g2012 -s tb_return_stable_097 -Ptb_return_stable_097.SOURCES=4 -Ptb_return_stable_097.GUARD=4 -o /tmp/v97 rtl/vtile/wb_return_stable_arbiter_097.sv research/097/tb_return_stable_097.sv
+      - run: vvp /tmp/v97 +VECTORS=research/097/vectors_s4_g4_seed1097.txt
+      - run: yosys -p 'read_verilog -sv rtl/vtile/wb_return_stable_arbiter_097.sv; synth -top wb_return_stable_arbiter_097; stat'

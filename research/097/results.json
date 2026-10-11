@@ -1,0 +1,16 @@
+{
+  "study": "Vektor-097 backpressure-stable return arbiter",
+  "date": "2026-10-11",
+  "evidence": "locally executed Python exhaustive and deterministic models; C++ replay",
+  "bounded_legal_traces": 32768,
+  "legacy_stability_violations": 9088,
+  "sticky_stability_violations": 0,
+  "legacy_acceptances": 72172,
+  "sticky_acceptances": 72172,
+  "always_ready_equivalence_cycles": 20000,
+  "random_vector_cycles": 16384,
+  "independent_cpp_matched_cycles": 16384,
+  "rtl_simulation": "pending GitHub Actions",
+  "generic_synthesis": "pending GitHub Actions",
+  "scope": "component protocol correctness, not GPU performance"
+}
