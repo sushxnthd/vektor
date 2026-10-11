@@ -23,7 +23,7 @@ module wb_return_stable_arbiter_097 #(
   else begin
    for(k=0;k<SOURCES;k=k+1) begin
     j=rr+k;if(j>=SOURCES)j=j-SOURCES;
-    if(src_valid[j] && age[j]>=GUARD && age[j]>best) begin
+    if(src_valid[j] && age[j]>=GUARD && (choice<0 || age[j]>best)) begin
      best=age[j];choice=j;
     end
    end
