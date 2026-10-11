@@ -1,0 +1,23 @@
+name: Vektor-112 trace identity and pinned source probe
+on:
+  push:
+    branches: ['research/trace-identity-112']
+  pull_request:
+  workflow_dispatch:
+jobs:
+  identity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Composite identity and independent C++ oracle
+        run: |
+          PYTHONPATH=research/112 python research/112/experiment.py
+          PYTHONPATH=research/112 python -m unittest discover -s research/112 -p test.py
+      - name: Verify pinned upstream Vortex anchors
+        run: |
+          git clone --filter=blob:none https://github.com/vortexgpgpu/vortex.git /tmp/vortex
+          git -C /tmp/vortex checkout 7fe19369587c087f902c3e2bc2add612aa910a95
+          python research/112/patch_vortex.py /tmp/vortex
+          git -C /tmp/vortex diff --check
+          grep -q 'vektor_lsu_probe::emit' /tmp/vortex/sim/simx/lsu_unit.cpp
+# Does NOT claim that the patched upstream simulator compiles or executes.
