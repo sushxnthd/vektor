@@ -1,0 +1,31 @@
+{
+  "run": "Vektor-108",
+  "date": "2026-10-11",
+  "KNOWN": [
+    "Conservative SC dependency and epoch model preserved tested host-trace outcomes",
+    "Two-warp SGEMM control: 88 versus 72 coalescer sectors, equal 20 full-cache read misses",
+    "Illegal producer-consumer reorder changes read result and is rejected"
+  ],
+  "BELIEVED": [
+    "Compiler-visible locality may have a profitable regime if migration/occupancy costs are low"
+  ],
+  "CONFLICTING": [
+    "Fewer coalescer sectors but higher service proxy in 74 strict and 62 packed sampled configurations"
+  ],
+  "FALSIFIED": [
+    "Unrestricted locality grouping is semantically safe",
+    "Coalescer sector savings guarantee external miss or proxy improvements",
+    "Packed locality never increases wave count"
+  ],
+  "ANOMALOUS": [
+    "Packed locality increases waves in 30/164 sampled cases",
+    "Finite-cache replacement order can reverse misses"
+  ],
+  "UNTESTED": [
+    "Real Vortex traces",
+    "GPU memory model and lane-state migration",
+    "Full-GPU frequency, area, power, tensor, raster, ray, compiler stack"
+  ],
+  "foothold": "Correctness and regime-boundary evidence only; no novel GPU performance claim",
+  "next_decisive_action": "Capture pinned Vortex SimX effective-address traces and calibrate migration/occupancy/cache timing"
+}
