@@ -79,6 +79,7 @@ module tb_wb_multisource_101;
    $fatal(1,"race residual=%0d",old_completions-completions_new-races);
   if(beats!=COPIES*finals)$fatal(1,"beat conservation failed");
   if(stalls<10)$fatal(1,"insufficient stall coverage");
+  if(immediate_reuses<1)$fatal(1,"no same-cycle cancel/FINAL tag-reuse coverage");
   $display("PASS V101 sources=%0d depth=%0d copies=%0d grants=%0d finals=%0d races=%0d reuses=%0d stalls=%0d",SOURCES,DEPTH,COPIES,grants,finals,races,immediate_reuses,stalls);
   $finish;
  end
