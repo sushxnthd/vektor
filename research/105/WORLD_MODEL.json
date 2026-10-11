@@ -1,0 +1,10 @@
+{
+  "date":"2026-10-11",
+  "KNOWN":["Synthetic controlled coalescing boundary","1368/1368 independent C++ sector/migration counts matched","8/8 Python tests passed locally","lane/path conservation"],
+  "BELIEVED":["address-locality packing could help eligible memory-bound workloads if future address hints and migration are affordable"],
+  "CONFLICTING":["11 holdout line-saving cases but only 8 total cycle wins; two line-saving cycle regressions"],
+  "FALSIFIED":["fewer sectors always means fewer model cycles","path-only cross-warp compaction is universally best"],
+  "ANOMALOUS":["discovery case 19: 385 to 110 sectors but 103 to 112 cycles","holdout case 17: 240 to 120 sectors but 178 to 188 cycles"],
+  "UNTESTED":["real compiler traces","barrier/atomic/shuffle legality","independent timing model","RTL","synthesis","GPU performance and PPA"],
+  "next_decisive_action":"Real Vortex/KPX trace legality and independent timing without future-address oracle"
+}

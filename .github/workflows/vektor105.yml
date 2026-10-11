@@ -1,0 +1,16 @@
+name: Vektor-105 sector conservation
+on:
+  push:
+    branches: ['research/sector-coalescing-105']
+  pull_request:
+    paths: ['research/105/**']
+jobs:
+  sector:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check group conservation and sector lower bound
+        run: python3 research/105/sector_incidence.py
