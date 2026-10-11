@@ -1,0 +1,16 @@
+name: Vektor-111 scoped-memory checks
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'research/111/**'
+      - 'rtl/111/**'
+      - 'verification/111/**'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y iverilog
+      - run: python3 research/111/quickcheck.py
+      - run: iverilog -g2012 -s tb -o /tmp/v111_tb rtl/111/scoped_byte_hazard.v verification/111/tb_scoped_byte_hazard.sv && vvp /tmp/v111_tb
