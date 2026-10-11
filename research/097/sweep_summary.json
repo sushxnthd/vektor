@@ -1,0 +1,15 @@
+{
+  "experiment": "Vektor-097 equal-budget compact arbitration sweep",
+  "scope": "synthetic source-ready arbitration, not GPU execution",
+  "configurations": 256,
+  "minimally_guided_probes": 32,
+  "cycles_per_configuration": 1500,
+  "legacy_output_stability_violations": 6070,
+  "locked_output_stability_violations": 0,
+  "legacy_accepted_beats": 207059,
+  "locked_accepted_beats": 207059,
+  "locked_improvements": 0,
+  "ties": 256,
+  "locked_regressions": 0,
+  "caveat": "legacy violates ready/valid protocol, so acceptance equality is not a hardware throughput equivalence"
+}
