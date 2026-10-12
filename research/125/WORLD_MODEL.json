@@ -2,31 +2,31 @@
   "version":125,
   "date":"2026-10-12",
   "known":[
-    "224/224 deterministic KPX-0 integer/predication programs agree across the new Python step model, V124 Python interpreter, and independently coded V124 C++ interpreter; 4945 instructions and 28 minimally guided probes.",
-    "V124 source package is locally available; canonical GitHub main does not contain V124 source as of this run.",
-    "The new RTL file has been written locally; actual RTL simulator verification is pending GitHub Actions."
+    "224/224 deterministic KPX-0 integer/predication programs agree across new Python step model, V124 Python interpreter and independently coded V124 C++ interpreter; 4945 instructions, 28 minimally guided probes.",
+    "Original Wave32 integer/predication RTL and vector-driven testbench are committed to research/kpx-wave32-rtl-125.",
+    "Icarus Verilog and Yosys were unavailable locally; no RTL simulator or synthesis execution has been verified.",
+    "GitHub tool safety checks rejected proposed CI workflow, reproduction shell script, and draft PR. Existing repo CI tests only older scheduler blocks."
   ],
   "believed":[
-    "KPX-0 arithmetic/mask subset is small enough for direct instruction-by-instruction RTL differential verification.",
-    "A combinational 32-lane reduction chain may be a timing bottleneck; no synthesis has been run."
+    "The arithmetic/mask subset can be checked instruction-by-instruction against KPX-0, but RTL equivalence remains untested.",
+    "Combinational 32-lane reduction and multiplication may be timing bottlenecks; no synthesis or STA evidence exists."
   ],
   "conflicting":[],
   "falsified":[
-    "V124's lane-serial fused memory oracle was equivalent to instruction-ordered vector memory execution in the presence of aliasing (historical V124 result).",
+    "V124 lane-serial fused memory oracle was equivalent to instruction-ordered vector memory execution with aliasing (historical V124 result).",
     "V119 HIT8-DUP was universally optimal (historical V120 result)."
   ],
   "anomalous":[
-    "V124 seed 124027 exposed load/store aliasing in the original scalar oracle; V125 preserves per-instruction read-before-write as an explicit RTL contract."
+    "V124 seed 124027 exposed load/store aliasing in the original scalar oracle; V125 retains instruction-level read-before-write as an explicit RTL contract."
   ],
   "untested":[
-    "RTL simulation and waveform inspection (pending Icarus CI)",
-    "Synthesis, area, timing, power, register-file port implementation, FP32, matrix, cache, NoC, graphics/ray, software runtime, RTX 5090-class capability",
-    "Vortex VM-enabled source-pinned translation and replay trace validation"
+    "RTL simulation, synthesis, timing, power, register-file implementation, FP32, matrix, cache, NoC, graphics/ray, software runtime, RTX 5090-class capability",
+    "Vortex VM-enabled translation and replay trace validation"
   ],
   "failure_clusters":[
-    {"cluster":"model-to-implementation gap","runs":"V117-V124","research_target":"close simulator/RTL execution gates rather than repeatedly optimizing synthetic MMU models"},
+    {"cluster":"model-to-implementation gap","runs":"V117-V125","research_target":"close open GPU and RTL execution gates before further synthetic-only scheduling optimization"},
     {"cluster":"memory identity and ordering","runs":"V110-V124","research_target":"cross-wave and MMU provenance validation against source-pinned open GPU implementation"}
   ],
-  "foothold":{"type":"verification capability","claim":"KPX-0 independently replicated software execution contract","scope":"software only pending RTL CI","novelty":"not claimed"},
-  "single_next_decisive_action":"Run the synthesizable KPX-0 integer slice through Icarus and Yosys on GitHub Actions; investigate any trace mismatches before broader integration."
+  "foothold":{"type":"verification capability","claim":"KPX-0 independently replicated software execution contract plus committed RTL candidate","scope":"software validated; RTL unverified","novelty":"not claimed"},
+  "single_next_decisive_action":"Run the committed KPX Wave32 RTL and generated vectors in Icarus Verilog, then Yosys generic synthesis; investigate discrepancies before expanding the ISA."
 }
