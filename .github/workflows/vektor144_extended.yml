@@ -1,0 +1,14 @@
+name: Vektor-144 extended Wave32 RTL
+on:
+  push:
+    branches:
+      - 'research/fp32-rf-response-144-validated'
+jobs:
+  rtl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y iverilog yosys
+      - run: |
+          iverilog -g2012 -s tb_wave32_rf_dual_response -o /tmp/v144tb research/v144/rtl/wave32_rf_dual_response.sv research/v144/verification/tb_wave32_rf_dual_response.sv
+          vvp /tmp/v144tb
