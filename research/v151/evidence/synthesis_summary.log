@@ -1,0 +1,9 @@
+Yosys 0.33, generic techmap of vektor_fp32_bounded_tail (W=64):
+AND 3631
+MUX 6094
+NOT 757
+OR 2449
+XOR 1528
+Total 14459 generic cells
+0 check problems
+Not mapped to technology library; not area.

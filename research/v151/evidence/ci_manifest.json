@@ -1,0 +1,18 @@
+{
+  "run_id": 38449191043,
+  "commit": "f2fd0a7a38f756a5bb9bae28d91c868d82e1fd79",
+  "conclusion": "success",
+  "artifact_id": 11838604766,
+  "vector_count": 24220,
+  "vector_mismatches": 0,
+  "wave32_transactions": 5,
+  "rtl_gate": "pass",
+  "synth_gate": "pass",
+  "generic_cells": 14459,
+  "logic_depth_levels": 383,
+  "corpus_sha256": "18f8f27a5aac0309776b576b281368dff522820512f46019af9fbec78b2d8a71",
+  "mapped_timing": null,
+  "physical_area": null,
+  "power": null,
+  "scientific_novelty": "not established"
+}

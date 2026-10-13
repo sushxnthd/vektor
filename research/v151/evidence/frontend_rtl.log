@@ -1,0 +1,2 @@
+V151 PASS: 5 full-Wave32 collector->multiplier->bounded-FMA transactions and stalls
+research/v151/verification/tb_bounded_frontend.sv:67: $finish called at 680 (1s)

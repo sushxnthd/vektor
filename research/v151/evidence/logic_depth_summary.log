@@ -1,0 +1,4 @@
+Yosys 0.33 ltp -noff, vektor_fp32_bounded_tail (W=64):
+Longest topological path length=383 generic logic levels.
+Starts at product[0] and ends at result[30].
+Not a frequency, delay, or power measurement.
