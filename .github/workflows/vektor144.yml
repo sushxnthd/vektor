@@ -1,0 +1,31 @@
+name: Vektor-144 dual-bank response datapath
+on:
+  push:
+    branches:
+      - 'research/fp32-rf-response-144'
+  workflow_dispatch:
+jobs:
+  rtl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open HDL tools
+        run: sudo apt-get update && sudo apt-get install -y iverilog yosys
+      - name: Simulate dual-response router
+        run: |
+          mkdir -p build/v144
+          iverilog -g2012 -s tb_wave32_rf_dual_response -o build/v144/tb research/v144/rtl/wave32_rf_dual_response.sv research/v144/verification/tb_wave32_rf_dual_response.sv
+          vvp build/v144/tb | tee build/v144/simulation.log
+      - name: Synthesize dual, single, and triple response networks
+        run: |
+          yosys -Q -p 'read_verilog -sv research/v144/rtl/wave32_rf_dual_response.sv; synth -top vektor_wave32_rf_dual_response; stat; ltp -noff' | tee build/v144/synth_dual.log
+          yosys -Q -p 'read_verilog -sv research/v143/rtl/wave32_rf_single_response.sv; synth -top vektor_wave32_rf_single_response; stat; ltp -noff' | tee build/v144/synth_single.log
+          yosys -Q -p 'read_verilog -sv research/v143/rtl/wave32_rf_read_coalescer.sv; synth -top vektor_wave32_rf_read_coalescer; stat; ltp -noff' | tee build/v144/synth_triple.log
+      - name: Archive raw outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v144-rtl-synthesis
+          path: build/v144/
+          if-no-files-found: ignore
