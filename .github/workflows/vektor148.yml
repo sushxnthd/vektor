@@ -1,0 +1,24 @@
+name: V148 FP32 multiplication gate
+on:
+  push:
+    branches: ['research/fp32-mul-exec-slice-148']
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free HDL tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog yosys
+      - name: Run V148 gate
+        run: bash research/v148/CI.sh
+      - name: Preserve results even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v148-generic-hdl
+          path: build/v148/
+          if-no-files-found: warn
