@@ -1,0 +1,23 @@
+name: Vektor-143 RF duplicate-read coalescer
+on:
+  push:
+    branches:
+      - 'research/fp32-rf-coalescing-143'
+  workflow_dispatch:
+jobs:
+  rf_coalescing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free HDL tools
+        run: sudo apt-get update && sudo apt-get install -y iverilog yosys
+      - name: Run independent abstract checks, Wave32 RTL and generic synthesis
+        run: bash research/v143/CI.sh
+      - name: Preserve reproducibility logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v143-rf-coalescer-logs
+          path: build/v143/
+          if-no-files-found: ignore
