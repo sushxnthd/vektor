@@ -1,0 +1,15 @@
+name: Vektor-144 independent selector replication
+on:
+  push:
+    branches:
+      - 'research/fp32-rf-response-144-validated'
+jobs:
+  selector:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python exhaustive and C++ replication
+        run: |
+          python3 research/v144/verification/check_arbiter.py
+          c++ -std=c++17 -O2 -Wall -Wextra research/v144/verification/reproduce_selector.cpp -o /tmp/v144_selector
+          /tmp/v144_selector research/v144/verification/selector_vectors.csv
