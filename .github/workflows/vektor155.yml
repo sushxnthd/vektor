@@ -1,0 +1,20 @@
+name: V155 Mapped Buffered Control
+on:
+  push:
+    branches: ['research/fp32-mapped-buffered-control-155']
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y iverilog yosys curl
+      - run: bash research/v155/CI.sh
+      - name: Preserve success and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v155-raw
+          path: build/v155/
+          if-no-files-found: warn
