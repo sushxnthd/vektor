@@ -23,3 +23,9 @@ Falsification: any arithmetic/retirement mismatch, unequal bank populations, or 
 Uncertainty: model assumes one RF response/bank/cycle, 2 global buses, one instruction collector, two-slot FMA execution queue, no cache, physical wires, fetch or measured power. Masked lanes do not shorten FMA latency. V138's oracle was independently checked against 34000 glibc fmaf cases; this run compares full state to a sequential reference sharing the oracle. No independent complete cycle model or RTL test this run.
 
 Next decisive experiment: independently reimplement RF response timing, synthesize low-bit/XOR bank decode and complete collector; integrate FMA RTL with scoreboard. Do not claim scientific novelty or RTX 5090 capability.
+
+## Verified CI gate (2026-10-13)
+- Simulator workflow run 38417325539: SUCCESS. It executed the V147 holdout pytest and native libm differential oracle test. V147 software results are reproducible on free GitHub Actions.
+- RTL workflow run 38417325551, job 115365121157: SUCCESS. Explicit V146 collector instantiation in the existing issue-control testbench logged: `V146 PASS: cycles=1200 completed=205 conflicts=82 bypasses=86 stalls=61 duplicate_cycles=291`.
+- Evidence class: Icarus HDL simulation for collector only; software simulation for FMA/scoreboard; existing unrelated Yosys synthesis does not synthesize collector. No full tile RTL or mapped PPA evidence.
+- Scientific novelty remains NOT ESTABLISHED.
