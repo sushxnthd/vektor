@@ -1,0 +1,40 @@
+{
+  "evidence_class": "synthetic cycle simulation, one representative FP32 lane per wave; no physical PPA",
+  "protocol": "v145 fixed discovery 96 / holdout 96 / wildcard 22; 2 global Wave32 response buses; one response/bank; parity-fixed vs fully flexible; same ports/collectors/issue, oldest-ready; equal RF traffic; equal final FP32 state; seed 1455090",
+  "discovery": {
+    "n": 96,
+    "fixed_worse": 96,
+    "ties": 0,
+    "fixed_better": 0,
+    "mean_ratio": 1.30375,
+    "max_ratio": 1.920266,
+    "by_kind": {
+      "accum": 1.18144,
+      "dup2": 1.16131,
+      "even_hot": 1.68865,
+      "parity_mix": 1.18359
+    }
+  },
+  "holdout": {
+    "n": 96,
+    "fixed_worse": 76,
+    "ties": 20,
+    "fixed_better": 0,
+    "mean_ratio": 1.26332,
+    "max_ratio": 1.914773,
+    "by_kind": {
+      "dup3": 1.02466,
+      "gemm": 1.26219,
+      "odd_hot": 1.70449,
+      "reduction": 1.06193
+    }
+  },
+  "wildcard": {
+    "n": 22,
+    "fixed_worse": 21,
+    "ties": 1,
+    "fixed_better": 0,
+    "mean_ratio": 1.15093,
+    "max_ratio": 1.892157
+  }
+}

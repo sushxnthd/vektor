@@ -1,0 +1,23 @@
+name: Vektor-145 parity RF response falsification
+on:
+  push:
+    branches:
+      - 'research/fp32-response-parity-falsification-145'
+  workflow_dispatch:
+jobs:
+  rtl-synth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open HDL tools
+        run: sudo apt-get update && sudo apt-get install -y iverilog yosys
+      - name: Run differential RTL, selector and synthesis
+        run: bash research/v145/CI.sh
+      - name: Archive raw outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v145-parity-router-evidence
+          path: build/v145/
+          if-no-files-found: ignore
