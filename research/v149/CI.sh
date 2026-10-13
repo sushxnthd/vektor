@@ -17,4 +17,8 @@ for tb in tb_close_round tb_close_frontend; do
 done
 timeout 240s yosys -Q -p "read_verilog -sv research/v149/rtl/fp32_fma_close_accum.sv research/v149/rtl/fp32_close_round.sv; synth -top vektor_fp32_close_round; stat" > build/v149/synth_close_round.log 2>&1
 tail -n 24 build/v149/synth_close_round.log
+grep -i 'topological' build/v149/synth_close_round.log | tail -n 4 || true
+timeout 240s yosys -Q -p "read_verilog -sv $RTL; hierarchy -top vektor_wave32_close_frontend -chparam LANES 1; synth -top vektor_wave32_close_frontend; stat; ltp -noff" > build/v149/synth_front_lane1.log 2>&1
+tail -n 24 build/v149/synth_front_lane1.log
+grep -i 'topological' build/v149/synth_front_lane1.log | tail -n 4 || true
 echo 'V149 bounded RNE close integration and generic synthesis PASS'

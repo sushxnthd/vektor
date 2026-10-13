@@ -28,3 +28,7 @@ These are generated operand streams, not real GPU traces. Zero eligibility for s
 **Not passed:** full IEEE-754 FMA, general FAR and NaN/Inf/zero cases, scoreboard, writeback, full-tile timing/area/power, RTX 5090-class gates.
 
 **Scientific novelty:** not established. CLOSE/FAR specialization is prior art; generic cells are not silicon area.
+
+## Reproduced CI and frozen corpus
+
+Run 38431443467 passed all existing tests and saved raw artifact 11831750427. SHA256 of the 3072-vector corpus: 0415e5e4230da07b0dbe5623488b335163d3e22fb899a9516adf9e349c3dae3f. Next CI adds one-lane integrated synthesis and logic-depth reporting; those results are pending.
