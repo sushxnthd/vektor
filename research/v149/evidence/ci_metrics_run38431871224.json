@@ -1,0 +1,21 @@
+{
+  "research": "v149",
+  "date": "2026-10-13",
+  "commit": "9b258764ef849175ec66b8593c89e89c6558e1f4",
+  "run_id": 38431871224,
+  "artifact_id": 11832125652,
+  "status": "success",
+  "tools": {"iverilog": "12.0", "yosys": "0.33"},
+  "oracle": {"cases": 3072, "mismatches": 0, "seed": 149, "vector_sha256": "0415e5e4230da07b0dbe5623488b335163d3e22fb899a9516adf9e349c3dae3f"},
+  "wave32_directed_transactions": 2,
+  "workload_seed": 149901,
+  "generic_synthesis": {
+    "close_round_cells": 5708,
+    "flattened_integrated_lane1_cells": 10542,
+    "flattened_integrated_lane1_topological_depth": 233,
+    "combinational_loops": 0,
+    "check_assert": "pass"
+  },
+  "evidence_class": "RTL simulated, generic synthesized, modeled workload",
+  "unproven": ["complete IEEE FMA", "technology mapped timing", "area mm2", "power", "full 32-lane synthesis", "GPU throughput", "RTX 5090 class"]
+}

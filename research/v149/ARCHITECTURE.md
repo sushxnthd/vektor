@@ -13,3 +13,7 @@
 ## Architecture pivot (frozen workload probe)
 
 CLOSE-eligible fractions were 0% positive vector, 12.72% synthetic GEMM, 26.36% signed vector and 25.39% divergent active lanes; cancellation-only control was 100%. Therefore Vektor must implement FAR/special arithmetic as its default complete FMA path. The bounded CLOSE packer may remain a selective optimization only if its additional area, timing and selection logic are justified by equal-budget workload throughput/energy. Do not treat 5708 generic CLOSE cells as a winning GPU architecture.
+
+## Flattened PPA-proxy gate (run 38431871224)
+
+The full one-lane collector->24x24 multiply->bounded CLOSE-RNE frontend synthesized to 10542 generic Yosys cells and a 233-level topological path after flattening. check -assert found no combinational loops. This is not a clock-frequency or physical-area result. The unpipelined cancellation normalization/rounding cone is a material architecture bottleneck candidate. Next integrate a complete public full-FMA baseline and pipeline at arithmetic boundaries; compare equal-resource throughput and physical mapping before retaining a separate CLOSE bypass. See PRIOR_ART.md.

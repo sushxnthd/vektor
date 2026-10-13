@@ -36,3 +36,11 @@ Run 38431443467 passed all existing tests and saved raw artifact 11831750427. SH
 ## Timing-proxy caution
 
 Run 38431668216 passed generic synthesis and arithmetic tests, but hierarchical Yosys ltp reported repeated loops at the top-level mr ready connection. Hierarchical path-length output (close rounder 145, close accumulator 95, multiplier 41) is NOT a clock-frequency estimate. Next run flattens the integrated design, applies check -assert, and recomputes ltp to distinguish hierarchy artifacts from a genuine combinational cycle. Do not promote the timing gate until that passes.
+
+## Final flattened synthesis gate
+
+Commit 9b258764ef849175ec66b8593c89e89c6558e1f4, GitHub Actions run 38431871224: SUCCESS. Raw evidence artifact 11832125652. Full-Wave32 directed RTL and 3072/3072 bit-exact accepted CLOSE vectors passed again. One-lane CLOSE finisher: 5708 generic Yosys cells. Flattened one-lane collector+multiplier+CLOSE frontend: 10542 generic cells, longest topological path 233 generic gate levels. Yosys check -assert passed and no combinational loops remained after flattening; earlier hierarchical ltp loop warnings were analysis artifacts. These counts/depths are NOT process-mapped area or clock timing. Internal pipelining is a high-priority engineering hypothesis.
+
+## Isolated GEMM-depth wildcard
+
+Seed 149902: CLOSE-eligible fraction peaked at K=8 (19.60%) and fell to K=512 (4.65%); last-half-of-reduction eligibility at K=512 was 1.88%. Synthetic streams only; no universal law claim. Raw CSV-equivalent JSON and reproduction script are preserved.

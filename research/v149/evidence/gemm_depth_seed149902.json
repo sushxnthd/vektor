@@ -1,0 +1,15 @@
+{
+  "seed": 149902,
+  "evidence": "modeled synthetic GEMM accumulator stream",
+  "results": [
+    {"K":2,"active":8192,"close":907,"fraction":0.110718,"last_half_fraction":0.221436},
+    {"K":4,"active":8192,"close":1423,"fraction":0.173706,"last_half_fraction":0.229004},
+    {"K":8,"active":8192,"close":1606,"fraction":0.196045,"last_half_fraction":0.209961},
+    {"K":16,"active":8192,"close":1524,"fraction":0.186035,"last_half_fraction":0.173096},
+    {"K":32,"active":8192,"close":1370,"fraction":0.167236,"last_half_fraction":0.145508},
+    {"K":64,"active":8192,"close":986,"fraction":0.120361,"last_half_fraction":0.087891},
+    {"K":128,"active":8192,"close":884,"fraction":0.10791,"last_half_fraction":0.092285},
+    {"K":256,"active":8192,"close":617,"fraction":0.075317,"last_half_fraction":0.047119},
+    {"K":512,"active":8192,"close":381,"fraction":0.046509,"last_half_fraction":0.018799}
+  ]
+}

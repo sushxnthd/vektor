@@ -10,6 +10,13 @@ x=json.load(open('build/v149/workload_probe.json'))['workloads']
 assert {k:v['close_eligible'] for k,v in x.items()} == {'vector_positive':0,'vector_signed':2159,'gemm_fragments':1042,'cancellation_control':8192,'divergent_active':2081}
 print('V149 workload probe frozen counts PASS')
 PY
+python3 research/v149/verification/gemm_depth_probe.py | tee build/v149/gemm_depth.json
+python3 - <<'PY'
+import json
+x=json.load(open('build/v149/gemm_depth.json'))['results']
+assert [(v['K'],v['close']) for v in x] == [(2,907),(4,1423),(8,1606),(16,1524),(32,1370),(64,986),(128,884),(256,617),(512,381)]
+print('V149 GEMM-depth wildcard frozen counts PASS')
+PY
 RTL="research/v144/rtl/wave32_rf_dual_response.sv research/v146/rtl/wave32_operand_collector.sv research/v148/rtl/fp32_mul_lane.sv research/v148/rtl/wave32_mul_slice.sv research/v148/rtl/wave32_mul_frontend.sv research/v149/rtl/fp32_fma_close_accum.sv research/v149/rtl/fp32_close_round.sv research/v149/rtl/wave32_close_slice.sv research/v149/rtl/wave32_close_frontend.sv"
 for tb in tb_close_round tb_close_frontend; do
  iverilog -g2012 -s "$tb" -o "build/v149/$tb" $RTL "research/v149/verification/$tb.sv"

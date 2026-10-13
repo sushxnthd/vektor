@@ -19,3 +19,7 @@ Evidence class: RTL CANDIDATE; independent software oracle checked locally; HDL 
 ## Evidence update: workload applicability boundary
 
 Frozen seed-149901 software streams show CLOSE eligibility 0% positive vector, 12.72% evolving-accumulator GEMM, 26.36% signed vector, 25.39% masked signed stream, 100% cancellation control. This falsifies the implicit architectural premise that CLOSE-only hardware could execute general FP32 FMA workloads. It does **not** falsify correctness of the specialized close path or establish novel scientific mechanism. Active kernel pivots to the equal-resource benefit (or cost) of a complete FAR/CLOSE/special finisher with optional cancellation bypass. No further standalone CLOSE micro-optimizations without a full general-path comparator.
+
+## Isolated wildcard: GEMM reduction depth
+
+Synthetic FP32 dot-product fragments with fixed 8192 FMA observations per depth, seed 149902: CLOSE eligibility peaks at K=8 (19.60%), then falls to K=512 (4.65%). In the last half of each reduction, K=512 eligibility was 1.88%. This is exploratory workload-mix evidence, not an independently validated universal law. It reinforces the decision to implement the general FMA first and to benchmark any optional CLOSE bypass on representative accumulator depths.
