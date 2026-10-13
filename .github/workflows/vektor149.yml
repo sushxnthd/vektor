@@ -1,0 +1,11 @@
+name: V149 Close Gate
+on:
+  push:
+    branches: ['research/fp32-wave32-close-round-149']
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y iverilog yosys
+      - run: bash research/v149/CI.sh
