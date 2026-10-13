@@ -1,0 +1,1 @@
+V144 verification: dual-response bank collision and multicast checks. RTL simulation is pending GitHub Actions.
