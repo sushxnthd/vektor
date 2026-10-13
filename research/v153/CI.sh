@@ -8,3 +8,7 @@ sha256sum build/v151/full_vectors.txt > build/v153/corpus.sha256
 iverilog -g2012 -s tb_cutset_pipe -o build/v153/tb research/v151/rtl/fp32_bounded_tail.sv research/v153/rtl/fp32_cutset_stages.sv research/v153/rtl/wave32_cutset_pipe.sv research/v153/verification/tb_cutset_pipe.sv
 vvp build/v153/tb > build/v153/rtl.log
 cat build/v153/rtl.log
+
+timeout 240s yosys -Q -p 'read_verilog -sv research/v151/rtl/fp32_bounded_tail.sv; hierarchy -top vektor_fp32_bounded_tail; proc; opt; techmap; opt; stat; check -assert; ltp -noff' > build/v153/baseline_synth.log 2>&1
+timeout 240s yosys -Q -p 'read_verilog -sv research/v153/rtl/fp32_cutset_stages.sv; hierarchy -top vektor_fp32_bounded_prepare; proc; opt; techmap; opt; stat; check -assert; ltp -noff' > build/v153/prepare_synth.log 2>&1
+timeout 240s yosys -Q -p 'read_verilog -sv research/v153/rtl/fp32_cutset_stages.sv; hierarchy -top vektor_fp32_bounded_finish; proc; opt; techmap; opt; stat; check -assert; ltp -noff' > build/v153/finish_synth.log 2>&1

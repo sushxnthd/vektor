@@ -1,7 +1,7 @@
 name: V153 FP32 Cutset Pipeline
 on:
   push:
-    branches: ['research/fp32-cutset-pipeline-153-ci']
+    branches: ['research/fp32-cutset-pipeline-154']
   workflow_dispatch:
 jobs:
   verify:
