@@ -21,4 +21,4 @@
 
 **Kill condition:** three substantive runs without an improved physical gate, mechanism boundary or new architectural constraint; replace with the next highest-information bottleneck.
 
-**Evidence class:** V150 reference: RTL simulated. V151 Python bounded prototype: locally modeled (116,916 exact-oracle comparisons for W>=50; not independent RTL evidence). V151 RTL/generic synthesis: pending CI. The prior-art claim remains NOT NOVEL.
+**Evidence class:** V150 reference: RTL simulated. V151 Python bounded prototype: locally modeled (116,916 exact-oracle comparisons for W>=50; not independent RTL evidence). V151 RTL: 24,220/24,220 exact-oracle vectors passed; 5 Wave32 integrated directed transactions passed. Generic synthesis: 14,459 cells, 383 logic levels. Mapped PPA remains open. The prior-art claim remains NOT NOVEL. ARCH HDL (2026) reports a formally verified bounded 98-bit FMA with mapped timing; CVFPU/HardFloat are public baselines. No equal-resource superiority claim.

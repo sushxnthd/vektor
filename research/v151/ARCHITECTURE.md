@@ -7,8 +7,8 @@ Decision under test: substitute a bounded general finisher after the Wave32 sign
 Current gates:
 - V148 collector and multiplier: previously verified independently.
 - V150 full-range standalone reference: verified.
-- V151 bounded finisher: CI pending.
-- Full Wave32 integration, scoreboard and architectural writeback: open.
+- V151 bounded finisher: PASS, 24,220/24,220 RTL vectors; 14,459 generic cells and 383 generic logic levels.
+- Full Wave32 collector->multiplier->bounded-FMA directed gate: PASS, 5 transactions. Scoreboard and architectural writeback: open.
 - Mapped timing, physical area, power, tensor, memory, compiler and complete GPU: open.
 
 Negative control: fixed-bank response routing was rejected in V145. This experiment does not revisit that result.
