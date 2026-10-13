@@ -1,1 +1,1 @@
-// Buffered two-stage FP32 reference will be implemented here.
+module vektor_wave32_buffered_baseline(input wire clk); endmodule
