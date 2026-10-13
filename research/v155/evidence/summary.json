@@ -1,0 +1,13 @@
+{
+  "evidence_class": "library-mapped synthesis, not STA",
+  "rtl_oracle_passes_per_candidate": 24220,
+  "rtl_cycles_per_candidate": 34986,
+  "mapped_library_blob": "90e4afb274cfc6514c587c434c77903d554117d1",
+  "lanes": 1,
+  "baseline": {"cells": 6427, "dffr_x1": 161, "cell_area_units": 8043.574},
+  "cutset": {"cells": 6205, "dffr_x1": 161, "cell_area_units": 8029.210},
+  "cutset_area_delta_percent": -0.1786,
+  "mapped_delay": null,
+  "scientific_novelty": false,
+  "run_id": 38466588630
+}
