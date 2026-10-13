@@ -11,4 +11,13 @@ vvp build/v151/tb_bounded_tail | tee build/v151/rtl.log
 # Synthesis is a generic gate-level proxy, NOT mapped silicon PPA.
 timeout 240s yosys -Q -p 'read_verilog -sv research/v151/rtl/fp32_bounded_tail.sv; hierarchy -top vektor_fp32_bounded_tail; proc; opt; techmap; opt; stat; check -assert' > build/v151/generic_synth.log 2>&1
 tail -n 35 build/v151/generic_synth.log
-echo 'V151 correctness PASS; PPA/tile gates still open'
+
+# Full Wave32 collector -> multiplier -> bounded FMA integration (directed gate).
+RTL="research/v144/rtl/wave32_rf_dual_response.sv research/v146/rtl/wave32_operand_collector.sv research/v148/rtl/fp32_mul_lane.sv research/v148/rtl/wave32_mul_slice.sv research/v148/rtl/wave32_mul_frontend.sv research/v151/rtl/fp32_bounded_tail.sv research/v151/rtl/wave32_bounded_slice.sv research/v151/rtl/wave32_bounded_frontend.sv"
+iverilog -g2012 -s tb_bounded_frontend -o build/v151/tb_bounded_frontend $RTL research/v151/verification/tb_bounded_frontend.sv
+vvp build/v151/tb_bounded_frontend | tee build/v151/frontend_rtl.log
+# Generic combinational-depth proxy, NOT a clock-frequency measurement.
+timeout 120s yosys -Q -p 'read_verilog -sv research/v151/rtl/fp32_bounded_tail.sv; hierarchy -top vektor_fp32_bounded_tail; proc; opt; techmap; opt; ltp -noff' > build/v151/logic_depth.log 2>&1
+tail -n 15 build/v151/logic_depth.log
+
+echo 'V151 bounded FMA and Wave32 directed integration PASS; mapped PPA still open'
