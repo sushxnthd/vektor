@@ -1,0 +1,26 @@
+name: V156 OpenSTA Matched Timing
+on:
+  push:
+    branches: ['research/fp32-opensta-timing-156']
+  workflow_dispatch:
+jobs:
+  timing:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog yosys opensta curl python3
+      - name: Matched mapped timing and oracle regressions
+        run: bash research/v156/CI.sh
+      - name: Preserve every outcome including failed plumbing
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v156-matched-sta-evidence
+          path: |
+            build/v155/
+            build/v156/
+          if-no-files-found: warn
