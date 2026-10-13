@@ -2,7 +2,7 @@
 
 **Affected block:** Wave32 FP32 FMA finisher following the V148 multiplier and V151 collector integration.
 
-**Decision:** retain V151 as correctness reference. Test balanced leading-one encoding as a drop-in combinational alternative; do not select it for silicon without technology-mapped area/delay. Both designs use the same functional I/O and 64-bit arithmetic window. A clocked FMA pipeline and tagged scoreboard/writeback are still missing.
+**Decision (verified V152): REJECT balanced leading-one replacement.** It preserved correctness but increased generic cells from 14,459 to 19,981 (+38.19%) and generic longest path from 383 to 439 (+14.62%) with identical tool flow and I/O. Retain V151 as functional baseline. This is a decisive generic-synthesis falsification, not physical timing evidence. Next highest-information action: inspect actual Yosys critical path and test one register boundary / fixed-shift subpath before any further encoder redesign. A clocked FMA pipeline and tagged scoreboard/writeback are still missing.
 
 **Build vs research:** full-range RTL correctness and generic synthesis are build gates. The balanced-priority experiment is research into a bottleneck, not a scientific law or claim of improved GPU throughput. Compare raw Yosys logs before advancing the design.
 

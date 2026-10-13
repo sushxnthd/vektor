@@ -1,0 +1,35 @@
+{
+  "run_utc": "2026-10-13T18:59:36Z",
+  "branch": "research/fp32-balanced-lod-152",
+  "candidate_commit": "d653eab6a4a2e3256a157ed3098a6caf80d25576",
+  "ci_run": 38450952077,
+  "ci_url": "https://github.com/sushxnthd/vektor/actions/runs/38450952077",
+  "artifact_id": 11840199049,
+  "artifact_url": "https://github.com/sushxnthd/vektor/actions/runs/38450952077/artifacts/11840199049",
+  "rtl_differential_oracle_vectors": {
+    "passed": 24220,
+    "failed": 0
+  },
+  "independent_leading_one_probes": {
+    "passed": 165540,
+    "failed": 0
+  },
+  "same_tool_generic_yosys": {
+    "baseline": {
+      "cells": 14459,
+      "longest_path_levels": 383
+    },
+    "candidate": {
+      "cells": 19981,
+      "longest_path_levels": 439
+    }
+  },
+  "relative_changes_pct": {
+    "cells": 38.19074624801162,
+    "path_levels": 14.621409921671024
+  },
+  "result": "FALSIFIED as generic-area-and-depth improvement",
+  "physical_ppa": "NOT MEASURED",
+  "scientific_novelty": "NOT ESTABLISHED",
+  "architectural_decision": "retain V151, reject naive binary-search LOD"
+}
