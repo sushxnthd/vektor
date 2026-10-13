@@ -1,0 +1,19 @@
+{
+  "source": "GitHub Actions 38395830852, job 115290676650, 2026-10-13",
+  "commit": "02e6a29ea909e738b3fb047e8c65e81bc780a576",
+  "rtl_vectors_passed": 1600,
+  "exhaustive_bank_tuples_passed": 4096,
+  "selector_strict_flexible_advantage": 1008,
+  "yosys_version": "0.33 (git sha1 2584903a060)",
+  "flexible_dual": {
+    "generic_cells": 6238,
+    "logic_depth": 8
+  },
+  "parity_fixed": {
+    "generic_cells": 8296,
+    "logic_depth": 10
+  },
+  "fixed_cell_increase_pct": 32.9913,
+  "fixed_depth_increase_pct": 25,
+  "evidence_class": "RTL simulation + generic Yosys synthesis; no technology mapping or physical PPA"
+}
