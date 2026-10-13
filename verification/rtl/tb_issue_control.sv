@@ -1,6 +1,11 @@
+`include "research/v144/rtl/wave32_rf_dual_response.sv"
+`include "research/v146/rtl/wave32_operand_collector.sv"
+`include "research/v146/verification/tb_wave32_operand_collector.sv"
 `timescale 1ns/1ps
 
 module tb_issue_control;
+    // V147: run V146's actual full-Wave32 HDL test inside the existing RTL CI job.
+    tb_wave32_operand_collector v147_collector_hdl_gate();
     logic clk = 1'b0;
     logic rst_n = 1'b0;
     logic [31:0] wave_valid;
@@ -105,7 +110,8 @@ module tb_issue_control;
         if (issue_valid !== 4'b1101)
             $fatal(1, "expected slot1 rejection with slots0/2/3 accepted, got %b", issue_valid);
 
-        $display("issue control tests passed");
+        $display("issue control tests passed; waiting for V146 collector HDL gate");
+        repeat (1300) @(posedge clk);
         $finish;
     end
 endmodule
