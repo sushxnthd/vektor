@@ -1,0 +1,13 @@
+{
+  "accepted_rf": 16872,
+  "blocked_same_bank": 2823,
+  "cycles": 50000,
+  "dispatch_stalls": 2952,
+  "duplicate_jobs": 4099,
+  "matched": 50000,
+  "resets": 5,
+  "retired": 8739,
+  "seed": 146,
+  "wb_cycles": 17351,
+  "evidence_class": "independent software-model differential; NOT RTL simulation"
+}

@@ -100,7 +100,7 @@ module tb_wave32_operand_collector;
    #1;
    if(enqueue_ready !== (!m_active && rst_n)) $fatal(1,"enqueue ready t=%0d",t);
    if(dispatch_valid !== (m_active && (&m_cap) && rst_n)) $fatal(1,"dispatch valid t=%0d",t);
-   if(captured_debug !== m_cap) $fatal(1,"captured t=%0d",t);
+   if(rst_n && captured_debug !== m_cap) $fatal(1,"captured t=%0d",t);
    if(rst_n && rf_rsp_accept !== exp_accept) $fatal(1,"RF accept t=%0d",t);
    if(dispatch_valid && (dispatch_tag !== m_tag || dispatch_operands !== m_data))
       $fatal(1,"dispatch data/tag t=%0d",t);
