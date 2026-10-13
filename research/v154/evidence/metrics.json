@@ -1,0 +1,39 @@
+{
+  "run_id": 38459477252,
+  "artifact_id": 11845560121,
+  "branch": "research/fp32-cutset-pipeline-154",
+  "commit": "e0cf61af42be271249e627303202923efd688c17",
+  "status": "success",
+  "evidence_class": [
+    "RTL-simulated",
+    "generic-synthesized"
+  ],
+  "yosys": "0.33 (2584903a060)",
+  "vectors": 24220,
+  "cycles": 34986,
+  "corpus_sha256": "18f8f27a5aac0309776b576b281368dff522820512f46019af9fbec78b2d8a71",
+  "modules": {
+    "baseline": {
+      "cells": 14459,
+      "path": 383,
+      "log_sha256": "c41ee3f2d0472b24538722c78efa1739c2d86fd21109e34bb985ca43dae940bb"
+    },
+    "prepare": {
+      "cells": 7318,
+      "path": 195,
+      "log_sha256": "252cf141f774b6fb7bf327f19a993c4ee40c284e06a7d0a8c5481ab4d7661f80"
+    },
+    "finish": {
+      "cells": 8086,
+      "path": 215,
+      "log_sha256": "bb4d7c835e07b80345bc336571d901db41aed2a37db75c75d6ef964a589a9aa5"
+    }
+  },
+  "limitations": [
+    "unmapped logic depth",
+    "register overhead excluded from cell sum",
+    "no physical PPA",
+    "no realistic workload IPC",
+    "no scientific novelty"
+  ]
+}
