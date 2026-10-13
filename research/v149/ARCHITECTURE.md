@@ -9,3 +9,7 @@
 **Next:** run CI and preserve raw outputs; fix any HDL failures. Then build far/special path and merge with close stage, implement per-register scoreboard/writeback, and run KPX vector FMA/reduction/GEMM with realistic backpressure. Compare general vs specialized finishers at equal area/ports.
 
 **RTX 5090 reference:** full FP32 execution gate FAIL/incomplete; matrix, memory, software, physical PPA, graphics and ray INCONCLUSIVE. No equivalence claim. Zero personal spend.
+
+## Architecture pivot (frozen workload probe)
+
+CLOSE-eligible fractions were 0% positive vector, 12.72% synthetic GEMM, 26.36% signed vector and 25.39% divergent active lanes; cancellation-only control was 100%. Therefore Vektor must implement FAR/special arithmetic as its default complete FMA path. The bounded CLOSE packer may remain a selective optimization only if its additional area, timing and selection logic are justified by equal-budget workload throughput/energy. Do not treat 5708 generic CLOSE cells as a winning GPU architecture.

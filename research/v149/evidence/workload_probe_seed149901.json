@@ -1,0 +1,11 @@
+{
+  "seed": 149901,
+  "evidence": "software modeled operand streams, not GPU traces",
+  "workloads": {
+    "vector_positive": {"active_fma": 8192, "close_eligible": 0, "fraction": 0.0},
+    "vector_signed": {"active_fma": 8192, "close_eligible": 2159, "fraction": 0.26355},
+    "gemm_fragments": {"active_fma": 8192, "close_eligible": 1042, "fraction": 0.127197},
+    "cancellation_control": {"active_fma": 8192, "close_eligible": 8192, "fraction": 1.0},
+    "divergent_active": {"active_fma": 8197, "close_eligible": 2081, "fraction": 0.253873}
+  }
+}

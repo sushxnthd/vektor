@@ -15,3 +15,7 @@ Evidence class: RTL CANDIDATE; independent software oracle checked locally; HDL 
 - **Wildcard:** later measure cancellation frequency on GEMM/reduction/divergent workloads; do not open unrelated research branches.
 
 **Limitations:** RNE only, cancellation-only, NaN/Inf/zero-input cases not supported. out_supported=0 must never retire as a valid FP32 result. Generic synthesis is not silicon. No RTX 5090-class claim.
+
+## Evidence update: workload applicability boundary
+
+Frozen seed-149901 software streams show CLOSE eligibility 0% positive vector, 12.72% evolving-accumulator GEMM, 26.36% signed vector, 25.39% masked signed stream, 100% cancellation control. This falsifies the implicit architectural premise that CLOSE-only hardware could execute general FP32 FMA workloads. It does **not** falsify correctness of the specialized close path or establish novel scientific mechanism. Active kernel pivots to the equal-resource benefit (or cost) of a complete FAR/CLOSE/special finisher with optional cancellation bypass. No further standalone CLOSE micro-optimizations without a full general-path comparator.
