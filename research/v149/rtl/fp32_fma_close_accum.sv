@@ -10,7 +10,7 @@ module vektor_fp32_fma_close_accum (
   logic [48:0] p, c;
 
   always_comb begin
-    lp = -1; lc = -1;
+    lp = -1; lc = -1; sh = 0;
     for (i=0; i<48; i=i+1) if (prod_sig[i]) lp=i;
     for (i=0; i<24; i=i+1) if (c_sig[i]) lc=i;
     prod_lead_exp = $signed(prod_lsb_exp) + lp;
