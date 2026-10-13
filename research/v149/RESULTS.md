@@ -32,3 +32,7 @@ These are generated operand streams, not real GPU traces. Zero eligibility for s
 ## Reproduced CI and frozen corpus
 
 Run 38431443467 passed all existing tests and saved raw artifact 11831750427. SHA256 of the 3072-vector corpus: 0415e5e4230da07b0dbe5623488b335163d3e22fb899a9516adf9e349c3dae3f. Next CI adds one-lane integrated synthesis and logic-depth reporting; those results are pending.
+
+## Timing-proxy caution
+
+Run 38431668216 passed generic synthesis and arithmetic tests, but hierarchical Yosys ltp reported repeated loops at the top-level mr ready connection. Hierarchical path-length output (close rounder 145, close accumulator 95, multiplier 41) is NOT a clock-frequency estimate. Next run flattens the integrated design, applies check -assert, and recomputes ltp to distinguish hierarchy artifacts from a genuine combinational cycle. Do not promote the timing gate until that passes.
