@@ -1,0 +1,20 @@
+name: V152 Balanced Leading-One FP32
+on:
+  push:
+    branches: ['research/fp32-balanced-lod-152']
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y iverilog yosys
+      - run: bash research/v152/CI.sh
+      - name: Preserve raw results including failed gates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v152-fp32-lod-evidence
+          path: build/v152/
+          if-no-files-found: warn
