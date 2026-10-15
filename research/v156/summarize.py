@@ -10,8 +10,10 @@ out = {"evidence_class": "unplaced library-mapped OpenSTA timing (not routed PPA
        "lanes": 1, "matched_latency_cycles": 2, "candidates": {}}
 for name in ("control", "cutset"):
     log = (base / f"{name}_sta.log").read_text()
+    if re.search(r"^Error:", log, flags=re.M):
+        raise SystemExit(f"OpenSTA parse error in {name}; reject partial timing report")
     vals = [float(v) for v in re.findall(
-        r"^\s*slack\s+\((?:MET|VIOLATED)\)\s+(-?\d+(?:\.\d+)?)",
+        r"^\s*(-?\d+(?:\.\d+)?)\s+slack\s+\((?:MET|VIOLATED)\)",
         log, flags=re.M)]
     if not vals:
         raise SystemExit(f"Missing valid path slack in {name} STA; inspect raw log")
