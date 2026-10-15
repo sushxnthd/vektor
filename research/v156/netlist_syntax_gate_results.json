@@ -1,0 +1,28 @@
+{
+  "source": "preserved V156 second-failure artifact, GitHub Actions run 38795100007",
+  "evidence_class": "static analysis of mapped Verilog text, NOT STA",
+  "checker": "research/v156/netlist_syntax_gate.py",
+  "results": [
+    {
+      "path": "v156/control_mapped.v",
+      "lines": 39823,
+      "hazard_count": 0,
+      "hazards": [],
+      "passes_known_opensta_lhs_gate": true
+    },
+    {
+      "path": "v156/cutset_mapped.v",
+      "lines": 40284,
+      "hazard_count": 1,
+      "hazards": [
+        {
+          "line": 40278,
+          "kind": "concatenated_assignment_lhs",
+          "lhs": "{ \\lane[0].pre.result [29:23], \\lane[0].pre.result [21:0] }"
+        }
+      ],
+      "passes_known_opensta_lhs_gate": false
+    }
+  ],
+  "claim": "Cutset STA result invalid because OpenSTA reported a parse error at line 40278. The checker reproduces the known syntax hazard; it cannot establish that eliminating this hazard alone makes the full netlist parseable."
+}
