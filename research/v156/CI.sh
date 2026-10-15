@@ -15,11 +15,15 @@ for mode in control cutset; do
     TOP=vektor_wave32_cutset_pipe
     FILES="research/v153/rtl/fp32_cutset_stages.sv research/v153/rtl/wave32_cutset_pipe.sv"
   fi
-  timeout 900s yosys -Q -p "read_verilog -sv $FILES; chparam -set LANES 1 $TOP; hierarchy -check -top $TOP; synth -top $TOP -flatten -noabc; check -assert; dfflibmap -liberty $LIB; abc -liberty $LIB; clean; write_verilog -noattr -noexpr build/v156/${mode}_mapped.v; stat -liberty $LIB" > build/v156/${mode}_synth.log 2>&1
+  timeout 900s yosys -Q -p "read_verilog -sv $FILES; chparam -set LANES 1 $TOP; hierarchy -check -top $TOP; synth -top $TOP -flatten -noabc; check -assert; dfflibmap -liberty $LIB; abc -liberty $LIB; clean; write_verilog -noattr -noexpr -simple-lhs build/v156/${mode}_mapped.v; stat -liberty $LIB" > build/v156/${mode}_synth.log 2>&1
   export VEKTOR_NETLIST="build/v156/${mode}_mapped.v"
   export VEKTOR_TOP="$TOP"
   export VEKTOR_LIB="$LIB"
   timeout 300s sta -exit research/v156/timing.tcl > build/v156/${mode}_sta.log 2>&1
+  if grep -q '^Error:' build/v156/${mode}_sta.log; then
+    tail -n 50 build/v156/${mode}_sta.log
+    exit 1
+  fi
   grep -q 'Startpoint:' build/v156/${mode}_sta.log
   grep -q 'Endpoint:' build/v156/${mode}_sta.log
 done
