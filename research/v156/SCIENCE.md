@@ -15,3 +15,7 @@
 - **Evidence class:** V156 uses open standard-cell Liberty timing before placement, not physical routed silicon.
 
 **Decision remains pending until V156 CI results are inspected.** No RTX 5090-class claim.
+
+## V156 follow-up: measurement validity (2026-10-16)
+
+The original OpenSTA script failed due unsupported Tcl options. On the corrected-Tcl rerun, the buffered control netlist parsed and yielded -2.93 ns worst slack at a 10 ns constraint; the cutset netlist produced a Verilog parser error on line 40278 (`assign { ... } = ...`), so its displayed +1.65 ns slack is **not valid evidence**. The subsequent `-simple-lhs` workaround failed because Yosys 0.9 does not recognize that option. The next discriminating run must normalize the cutset mapped Verilog using Yosys `splitnets` and require both logs to parse without errors before comparing delay. These are infrastructure failures, not hypothesis falsification. The V155 mapped-area ranking reversed across Yosys versions, so a single-toolchain area result is insufficient for a robust claim. The original mechanism prediction remains open; the scientific novelty threshold remains unmet.
