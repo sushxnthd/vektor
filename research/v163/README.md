@@ -1,0 +1,3 @@
+# V163: RTL-informed response-storage discriminator
+
+V162's 4,900-bit response FIFO was hypothetical; V155/V153 actually have a single 1,225-bit output register. The real V155 upstream stage is 3,401 logical bits; V153 is 4,457 bits. In the idealized 20/20 antiphase queue model, U=1, B=1,225, k=8, dense completes 2 waves/period versus 4 for ideal sparse storage (2x), not V162's 3x at B=4,900. Gain disappears for k>=16 active lanes. These are model predictions, not measured RTL or physical PPA. V156 OpenSTA remains blocked by mapped-netlist parser compatibility. SCIENCE: novelty not established. ARCHITECTURE: require a synthesized matched-area multi-entry response buffer and dense control before adopting compaction.
