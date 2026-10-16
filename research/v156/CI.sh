@@ -15,7 +15,13 @@ for mode in control cutset; do
     TOP=vektor_wave32_cutset_pipe
     FILES="research/v153/rtl/fp32_cutset_stages.sv research/v153/rtl/wave32_cutset_pipe.sv"
   fi
-  timeout 900s yosys -Q -p "read_verilog -sv $FILES; chparam -set LANES 1 $TOP; hierarchy -check -top $TOP; synth -top $TOP -flatten -noabc; check -assert; dfflibmap -liberty $LIB; abc -liberty $LIB; clean; write_verilog -noattr -noexpr -simple-lhs build/v156/${mode}_mapped.v; stat -liberty $LIB" > build/v156/${mode}_synth.log 2>&1
+  timeout 900s yosys -Q -p "read_verilog -sv $FILES; chparam -set LANES 1 $TOP; hierarchy -check -top $TOP; synth -top $TOP -flatten -noabc; check -assert; dfflibmap -liberty $LIB; abc -liberty $LIB; clean; write_verilog -noattr -noexpr build/v156/${mode}_mapped_raw.v; stat -liberty $LIB" > build/v156/${mode}_synth.log 2>&1
+  if [ "$mode" = cutset ]; then
+    python3 research/v156/normalize_known_concat_lhs.py build/v156/cutset_mapped_raw.v build/v156/cutset_mapped.v --audit build/v156/cutset_normalization_audit.json
+  else
+    cp build/v156/control_mapped_raw.v build/v156/control_mapped.v
+  fi
+  python3 research/v156/netlist_syntax_gate.py "build/v156/${mode}_mapped.v" > "build/v156/${mode}_syntax_gate.json"
   export VEKTOR_NETLIST="build/v156/${mode}_mapped.v"
   export VEKTOR_TOP="$TOP"
   export VEKTOR_LIB="$LIB"
