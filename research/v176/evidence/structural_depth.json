@@ -1,0 +1,51 @@
+{
+  "date_utc": "2026-10-17",
+  "evidence_class": "exact structural depth from archived V156 mapped netlists; not STA or physical timing",
+  "reference_action_run": "https://github.com/sushxnthd/vektor/actions/runs/38969084092",
+  "source_sha256": {
+    "control_mapped.v": "72df5650770c666b0a2da17ac31703106614203660b7a4b1d0dc00647919aeb7",
+    "cutset_mapped.v": "c92635fa5fa1bcbf222b76cceddfd6b32255c5389f2f8dbc2d22fd2bc0c4f6ab"
+  },
+  "control": {
+    "combinational_gates": 5789,
+    "flops": 162,
+    "max_gate_depth_to_flop": 148,
+    "source_classes": {
+      "flop": {
+        "endpoints": 162,
+        "max_depth": 148
+      }
+    }
+  },
+  "cutset": {
+    "combinational_gates": 5857,
+    "flops": 195,
+    "max_gate_depth_to_flop": 111,
+    "source_classes": {
+      "input": {
+        "endpoints": 112,
+        "max_depth": 111
+      },
+      "flop": {
+        "endpoints": 83,
+        "max_depth": 111
+      }
+    }
+  },
+  "max_depth_reduction_pct": 25,
+  "independent_checker": "iterative topological relaxation agrees with recursive memoized traversal for every flop D input",
+  "parser_integrity": {
+    "undriven_internal_nets": 0,
+    "combinational_cycles": 0,
+    "multiple_drivers": 0
+  },
+  "claim": "V153 has balanced 111-gate maximum combinational depths from input and register sources, compared with 148-gate maximum register-to-register depth in V151. This is a structural property only.",
+  "unverified": [
+    "V173 seven-point OpenSTA sweep",
+    "placement/routing",
+    "matched dynamic power",
+    "Wave32 integration",
+    "independent synthesis replay"
+  ],
+  "scientific_novelty": "not established"
+}
