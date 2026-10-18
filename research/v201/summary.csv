@@ -1,0 +1,9 @@
+regime,exchange_vs_greedy_pct,exchange_vs_distinct_pct
+compute_hot2,5.919,28.443
+compute_hot4,3.563,11.952
+compute_hot8,0.006,1.925
+compute_uniform16,-0.104,-0.194
+memory_hot4,0.208,0.665
+memory_uniform16,0.011,0.057
+divergent_hot4,-0.172,0.500
+divergent_uniform16,-0.006,-0.017
