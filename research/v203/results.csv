@@ -1,0 +1,10 @@
+name,banks,alias_prob,ready_prob,seed,baseline_issued,candidate_issued,baseline_rf_reads,candidate_rf_reads,gain_pct
+compute_hot_alias,4,0.75,1.0,2301,10070,14156,20140,17610,40.576
+compute_hot_low_alias,4,0.15,1.0,2302,10081,11043,20162,20422,9.543
+compute_distributed,16,0.75,1.0,2303,14478,16202,28956,20244,11.908
+memory_sparse,16,0.10,0.35,2304,5609,5656,11218,10752,0.838
+divergent_hot,4,0.65,0.55,2305,6799,8340,13598,11262,22.665
+divergent_distributed,16,0.25,0.55,2306,8558,8921,17116,15638,4.242
+unseen_hot_win,2,0.85,0.95,99111,6607,10945,13214,12567,65.658
+unseen_no_alias,2,0.0,0.95,99112,6560,6560,13120,13120,0
+unseen_memory_no_win,16,0.0,0.2,99113,3249,3249,6498,6498,0
