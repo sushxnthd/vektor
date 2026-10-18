@@ -1,4 +1,40 @@
+// V211: comparator-count RF arbitration. No added ports, queues, or bandwidth.
+// Same fixed-priority grant semantics as vektor_rf_bank_arbiter_reference.
+// Each source read contributes one token to its bank; each bank has two tokens.
 module vektor_rf_bank_arbiter (
+    input wire [3:0] request_valid,
+    input wire [15:0] src0_bank_flat,
+    input wire [15:0] src1_bank_flat,
+    output wire [3:0] grant
+);
+    genvar i, j;
+    generate for (i=0; i<4; i=i+1) begin: slot
+        wire [3:0] b0 = src0_bank_flat[4*i +: 4];
+        wire [3:0] b1 = src1_bank_flat[4*i +: 4];
+        wire [2:0] occ0 [0:4];
+        wire [2:0] occ1 [0:4];
+        assign occ0[0] = 3'd0;
+        assign occ1[0] = 3'd0;
+        for (j=0; j<4; j=j+1) begin: prior
+            if (j<i) begin: active
+                wire m00 = grant[j] && (src0_bank_flat[4*j +: 4] == b0);
+                wire m01 = grant[j] && (src1_bank_flat[4*j +: 4] == b0);
+                wire m10 = grant[j] && (src0_bank_flat[4*j +: 4] == b1);
+                wire m11 = grant[j] && (src1_bank_flat[4*j +: 4] == b1);
+                assign occ0[j+1] = occ0[j] + {2'b00,m00} + {2'b00,m01};
+                assign occ1[j+1] = occ1[j] + {2'b00,m10} + {2'b00,m11};
+            end else begin: inactive
+                assign occ0[j+1] = occ0[j];
+                assign occ1[j+1] = occ1[j];
+            end
+        end
+        assign grant[i] = request_valid[i] &&
+             ((b0 == b1) ? (occ0[4] == 3'd0) :
+                             ((occ0[4] < 3'd2) && (occ1[4] < 3'd2)));
+    end endgenerate
+endmodule
+
+module vektor_rf_bank_arbiter_reference (
     input  wire [3:0]  request_valid,
     input  wire [15:0] src0_bank_flat,
     input  wire [15:0] src1_bank_flat,
