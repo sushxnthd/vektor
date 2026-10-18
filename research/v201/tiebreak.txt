@@ -1,0 +1,1 @@
+V201 tie-break mismatch: exhaustive B4, four-turn check disagrees on 4128 of 262144 grants. Software RTL-order compute_hot4 gain +2.920%, versus V200 lex-order +3.563%. No physical gate.
