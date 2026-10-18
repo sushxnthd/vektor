@@ -1,0 +1,8 @@
+{
+  "total_key_pairs": 16384,
+  "legacy_stale_bypass_pairs": 896,
+  "valid_bypass_pairs": 128,
+  "nonmatches": 15360,
+  "versioned_oracle_mismatches": 0,
+  "evidence_class": "exhaustive key-logic model; RTL and PPA unexecuted"
+}
