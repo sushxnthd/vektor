@@ -1,0 +1,17 @@
+# V199 frozen diagnostic: matched, unplaced LANES=1 input-arrival sweep.
+# This is deliberately NOT electrical qualification: mapped V156 cells violate max capacitance.
+read_liberty $::env(VEKTOR_LIB)
+read_verilog $::env(VEKTOR_NETLIST)
+link_design $::env(VEKTOR_TOP)
+create_clock -name core_clk -period 10 [get_ports clk]
+set data_inputs [get_ports {in_valid in_tag in_mask in_product in_product_exp in_addend in_addend_exp in_product_sign in_addend_sign in_classes out_ready}]
+set_input_delay $::env(VEKTOR_INPUT_DELAY) -clock core_clk $data_inputs
+set_output_delay 0.05 -clock core_clk [all_outputs]
+set_input_transition 0.02 $data_inputs
+set_load 0.01 [all_outputs]
+set_false_path -from [get_ports rst_n]
+puts "V199_BEGIN mode=$::env(VEKTOR_MODE) arrival=$::env(VEKTOR_INPUT_DELAY) evidence=unrepaired_unplaced"
+report_checks -path_delay max
+report_worst_slack
+report_check_types -max_capacitance -max_slew -violators
+puts "V199_END mode=$::env(VEKTOR_MODE) arrival=$::env(VEKTOR_INPUT_DELAY)"
