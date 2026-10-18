@@ -45,6 +45,7 @@ module vektor_issue_control (
 
     vektor_rf_bank_arbiter rf_arbiter (
         .request_valid(sched_valid),
+        .src_alias(4'b0000), // conservative until decoder supplies proven same-register bit
         .src0_bank_flat(src0_bank_flat),
         .src1_bank_flat(src1_bank_flat),
         .grant(rf_grant)
