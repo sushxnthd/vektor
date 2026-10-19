@@ -1,0 +1,1 @@
+RTL simulation: not executed. Synthesis: not executed. Max-cap/slew: not checked. Matched timing and area: not measured. Integrated scheduler issue ID and acceptance feedback would require permutation and inverse mapping. V153/V156 claims remain electrically unqualified. Evidence class: software admission equivalence, not GPU performance.
