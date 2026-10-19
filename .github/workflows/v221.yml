@@ -2,16 +2,16 @@ name: v221-hashed-mshr-physical-gate
 on:
   push:
     branches:
-      - research/mshr-hashed-lookup-221-ci2
+      - research/mshr-hashed-lookup-221-ci3
 jobs:
   rtl-synth:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - name: Install public EDA tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y iverilog yosys
+          sudo apt-get install -y iverilog yosys opensta
       - name: Independent workload model and oracle
         run: |
           mkdir -p build/v221
@@ -29,6 +29,15 @@ jobs:
           test $(wc -c < build/v221/NangateOpenCellLibrary_typical.lib) -gt 1000000
           for top in v221_global_lookup v221_banked_lookup; do
             yosys -p "read_verilog -sv research/v221/rtl/mshr_lookup.sv; synth -top $top; abc -liberty build/v221/NangateOpenCellLibrary_typical.lib; stat -liberty build/v221/NangateOpenCellLibrary_typical.lib; write_verilog -noattr build/v221/${top}_mapped.v" 2>&1 | tee build/v221/${top}_yosys.log
+          done
+      - name: Matched load and slew timing checks
+        run: |
+          set -o pipefail
+          for top in v221_global_lookup v221_banked_lookup; do
+            for cfg in '0.01 0.02' '0.05 0.08' '0.10 0.15'; do
+              read -r load slew <<< "$cfg"
+              TOP="$top" LOAD="$load" SLEW="$slew" sta -exit research/v221/ci/sta.tcl 2>&1 | tee build/v221/${top}_load${load}_slew${slew}_sta.log
+            done
           done
       - name: Preserve all evidence
         if: always()
