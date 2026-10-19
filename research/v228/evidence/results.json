@@ -1,0 +1,80 @@
+{
+  "evidence_class": "synthetic single-cycle issue-admission model only; no RTL simulation, synthesis, electrical STA or power",
+  "frozen_holdouts": [
+    {
+      "regime": "moderate",
+      "seed": 9041,
+      "cycles": 5000,
+      "baseline_issues": 13115,
+      "candidate_issues": 14955,
+      "oracle_issues": 16929,
+      "candidate_gain_percent": 14.02974,
+      "oracle_gap_percent": 13.1996,
+      "frozen_prediction_pass": true
+    },
+    {
+      "regime": "hot",
+      "seed": 9042,
+      "cycles": 5000,
+      "baseline_issues": 8659,
+      "candidate_issues": 9526,
+      "oracle_issues": 9993,
+      "candidate_gain_percent": 10.0127,
+      "oracle_gap_percent": 4.90237,
+      "frozen_prediction_pass": true
+    },
+    {
+      "regime": "disjoint",
+      "seed": 9043,
+      "cycles": 5000,
+      "baseline_issues": 20000,
+      "candidate_issues": 20000,
+      "oracle_issues": 20000,
+      "candidate_gain_percent": 0,
+      "oracle_gap_percent": 0,
+      "frozen_prediction_pass": true
+    },
+    {
+      "regime": "memory",
+      "seed": 9044,
+      "cycles": 5000,
+      "baseline_issues": 5775,
+      "candidate_issues": 5917,
+      "oracle_issues": 5971,
+      "candidate_gain_percent": 2.45887,
+      "oracle_gap_percent": 0.91262,
+      "frozen_prediction_pass": true
+    },
+    {
+      "regime": "uniform",
+      "seed": 9045,
+      "cycles": 5000,
+      "baseline_issues": 19112,
+      "candidate_issues": 19886,
+      "oracle_issues": 20000,
+      "candidate_gain_percent": 4.04981,
+      "oracle_gap_percent": 0.57327,
+      "frozen_prediction_pass": true
+    }
+  ],
+  "all_predictions_pass": true,
+  "independent_checker": {
+    "cases": 10000,
+    "mismatches": 0,
+    "candidate_better_cases": 1386,
+    "candidate_worse_cases": 6,
+    "equal_cases": 8608,
+    "worst_single_cycle_delta": -1
+  },
+  "qualification": {
+    "functional_model": "pass",
+    "RTL_sim": "NOT_RUN",
+    "synthesis": "NOT_RUN",
+    "max_cap_slew": "NOT_RUN",
+    "STA": "NOT_RUN",
+    "wire_load_sensitivity": "NOT_RUN",
+    "equal_area": "NOT_ESTABLISHED"
+  },
+  "blocker": "GitHub content safety check rejected RTL publication; physical EDA tools unavailable in current sandbox",
+  "decision": "NO ARCHITECTURE CLAIM; candidate unqualified; integrated tile unchanged"
+}
