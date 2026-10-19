@@ -1,0 +1,1 @@
+V231 RETIRED on 2026-10-19. Three-comparator equal-resource control matched six-comparator candidate admission on four frozen workloads, 131072 abstract configurations and 500000 randomized cases. No physical validation or integrated-tile change. The extra comparison logic has no demonstrated benefit. Do not claim GPU performance.
