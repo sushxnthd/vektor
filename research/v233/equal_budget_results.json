@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-20",
+  "status": "retired",
+  "evidence_class": "exhaustive software equivalence and algebraic control identity",
+  "exhaustive_cases": 256,
+  "random_packet_checks": 100000,
+  "mismatches": 0,
+  "incremental_gain": 0,
+  "physical_sta": "not run",
+  "physical_area": "not run",
+  "control": "full-bank inequality comparator; identical candidate logic"
+}
