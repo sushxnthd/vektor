@@ -1,0 +1,1 @@
+V233 RETIRED 2026-10-20. Full-bank conflict admission matches strongest equal-budget control exactly. 256 exhaustive bank/valid combinations and 100000 packet trials passed. No unique gain. Physical tests not executed.
