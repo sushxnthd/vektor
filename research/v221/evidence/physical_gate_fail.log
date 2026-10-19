@@ -1,0 +1,5 @@
+Run 39197375693: FAIL RTL compile: matches is reserved SystemVerilog keyword. Corrected to hit_vec.
+Run 39197482834: PASS 5000 differential lookups; PASS 218450 independent model checks; Nangate45 mapped lookup-only areas 783.370 (full) and 596.638 (banked).
+Run 39197629551: PASS 5000 differential lookups; PASS 218450 independent model checks; Nangate45 mapped lookup-only areas 791.882 (full) and 665.266 (banked).
+STA gate FAIL: Warning sta.tcl line 9 report_checks -group_path_count is not known; Error line 9 positional arguments not supported; Error line 10 report_worst_slack -max is not known; Error line 11 report_check_types -max_slew is not known.
+Important: OpenSTA exited zero; workflow marked green although timing/electrical checks produced no valid result. Treat this as a failed gate. No clean max-cap/slew or matched delay claim.
