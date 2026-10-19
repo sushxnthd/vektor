@@ -1,0 +1,1 @@
+V221: 16-entry MSHR hashed bank lookup versus fully associative control. Frozen seeds 22117,22129,22131. Model holdouts: throughput ratios 1.0000, 0.35883, 0.74460; independent checks 218450, mismatches 0. No RTL or physical timing measured. Retire throughput claim; physical qualification blocked.
