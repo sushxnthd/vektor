@@ -1,0 +1,7 @@
+workload,baseline_cycles,candidate_cycles,modeled_gain_percent,baseline_flits,candidate_flits
+frozen_positive,20484,12292,66.64497234,20480,12288
+frozen_negative,20484,20484,0,20480,20480
+completion_limited,40959,40957,0.00488317,20480,12288
+divergent,19404,12255,58.33537332,19400,12251
+allzero,4100,4100,0,4096,4096
+compute_limited,81909,81907,0.00244179,20480,12288
