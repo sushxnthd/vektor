@@ -1,0 +1,5 @@
+[
+  {"seed":22117,"latency":4,"skew":0.0,"base_cycles":20000,"cand_cycles":20000,"base_stalls":0,"cand_stalls":0,"throughput_ratio":1.0,"gain_pct":0.0,"base_comparisons":320000,"cand_comparisons":80000},
+  {"seed":22129,"latency":12,"skew":0.9,"base_cycles":20000,"cand_cycles":55736,"base_stalls":0,"cand_stalls":35736,"throughput_ratio":0.3588345055260514,"gain_pct":-64.11654944739486,"base_comparisons":320000,"cand_comparisons":80000},
+  {"seed":22131,"latency":12,"skew":0.0,"base_cycles":20000,"cand_cycles":26860,"base_stalls":0,"cand_stalls":6860,"throughput_ratio":0.7446016381236039,"gain_pct":-25.539836187639608,"base_comparisons":320000,"cand_comparisons":80000}
+]

@@ -1,0 +1,40 @@
+name: v221-hashed-mshr-physical-gate
+on:
+  push:
+    branches:
+      - research/mshr-hashed-lookup-221
+jobs:
+  rtl-synth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install public EDA tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Independent workload model and oracle
+        run: |
+          mkdir -p build/v221
+          cd research/v221
+          python model/sweep.py | tee ../../build/v221/model.log
+          PYTHONPATH=. python verification/independent.py | tee ../../build/v221/oracle.log
+      - name: Differential RTL simulation
+        run: |
+          iverilog -g2012 -s tb_lookup -o build/v221/tb research/v221/rtl/mshr_lookup.sv research/v221/verification/tb_lookup.sv
+          vvp build/v221/tb | tee build/v221/rtl.log
+      - name: Generic and Liberty-mapped synthesis
+        run: |
+          set -o pipefail
+          curl --retry 3 --fail --location --silent --show-error -o build/v221/NangateOpenCellLibrary_typical.lib https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib
+          test $(wc -c < build/v221/NangateOpenCellLibrary_typical.lib) -gt 1000000
+          for top in v221_global_lookup v221_banked_lookup; do
+            yosys -p "read_verilog -sv research/v221/rtl/mshr_lookup.sv; synth -top $top; abc -liberty build/v221/NangateOpenCellLibrary_typical.lib; stat -liberty build/v221/NangateOpenCellLibrary_typical.lib; write_verilog -noattr build/v221/${top}_mapped.v" 2>&1 | tee build/v221/${top}_yosys.log
+          done
+      - name: Preserve all evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v221-rtl-and-mapped-synthesis
+          path: |
+            build/v221/
+            research/v221/evidence/
