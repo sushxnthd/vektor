@@ -1,0 +1,1 @@
+A second implementation independently enumerated all 4140 set partitions of eight operand-bank labels, 16 validity masks and four issue caps. It reproduced zero admission-count mismatches and 578 accepted-identity mismatches. All bank-equality patterns are covered; latency and fairness remain unverified.
