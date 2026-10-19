@@ -1,0 +1,52 @@
+{
+  "seed": 741,
+  "n": 100000,
+  "evidence_class": "software_cycle_model_only",
+  "cases": [
+    {
+      "workload": "phase8",
+      "gain": 0.3333422222,
+      "traffic_reduction": 0.750005
+    },
+    {
+      "workload": "iid4",
+      "gain": -0.0001086217,
+      "traffic_reduction": -0.00025367
+    },
+    {
+      "workload": "skew80",
+      "gain": -0.0909559119,
+      "traffic_reduction": -0.59979023
+    },
+    {
+      "workload": "phase8_memory8",
+      "gain": 0.0410969863,
+      "traffic_reduction": 0.750005
+    },
+    {
+      "workload": "phase8_no_collision",
+      "gain": 0,
+      "traffic_reduction": 0.750005
+    },
+    {
+      "workload": "phase3",
+      "gain": 0.124994375,
+      "traffic_reduction": 0.33332
+    },
+    {
+      "workload": "phase16",
+      "gain": 0.4117741176,
+      "traffic_reduction": 0.8750025
+    },
+    {
+      "workload": "iid8",
+      "gain": -0.0001600598,
+      "traffic_reduction": -0.0003432494
+    },
+    {
+      "workload": "skew90",
+      "gain": -0.0671381688,
+      "traffic_reduction": -0.79138345
+    }
+  ]
+}
