@@ -1,0 +1,1 @@
+module v232_selective(input wire [7:0] tag,input wire [3:0] mask,input wire [31:0] valid,input wire [255:0] tags,output wire [31:0] wake);genvar g,i;generate for(g=0;g<4;g=g+1)begin wire [7:0] local_tag;assign local_tag=tag&{8{mask[g]}};for(i=0;i<8;i=i+1)begin assign wake[8*g+i]=mask[g]&&valid[8*g+i]&&(tags[8*(8*g+i)+:8]==local_tag);end end endgenerate endmodule
