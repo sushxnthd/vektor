@@ -2,7 +2,7 @@ name: v221-hashed-mshr-physical-gate
 on:
   push:
     branches:
-      - research/mshr-hashed-lookup-221
+      - research/mshr-hashed-lookup-221-ci
 jobs:
   rtl-synth:
     runs-on: ubuntu-latest
