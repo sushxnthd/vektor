@@ -1,5 +1,3 @@
-# V227 research status
+# V227 retired
 
-Four-entry response bypass selector evaluated against a two-entry lookahead control. The branch is experimental; no hardware performance or physical qualification is claimed.
-
-Frozen synthetic holdouts: high bank blocking +28.47% modeled completion throughput; low blocking +0.512%. Prior art substantially overlaps this design. Integrated tile unchanged.
+A positive synthetic response-bypass boundary was observed. The strongest same-capacity oldest-ready control implements the same behavior. No distinct architecture benefit or physical qualification was established. Integrated tile unchanged.
