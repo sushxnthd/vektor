@@ -1,0 +1,1 @@
+module v232_control(input wire [7:0] tag,input wire [3:0] mask,input wire [31:0] valid,input wire [255:0] tags,output wire [31:0] wake);genvar i;generate for(i=0;i<32;i=i+1)begin assign wake[i]=mask[i/8]&&valid[i]&&(tags[8*i+:8]==tag);end endgenerate endmodule
