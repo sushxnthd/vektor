@@ -1,10 +1,10 @@
 module v221_global_lookup(input wire [383:0] tags,input wire [15:0] valid,input wire [23:0] query,output wire hit);
-wire [15:0] matches;
+wire [15:0] hit_vec;
 genvar i;
 generate for(i=0;i<16;i=i+1) begin: g
-assign matches[i]=valid[i] && (tags[i*24 +: 24]==query);
+assign hit_vec[i]=valid[i] && (tags[i*24 +: 24]==query);
 end endgenerate
-assign hit=|matches;
+assign hit=|hit_vec;
 endmodule
 
 module v221_banked_lookup(input wire [383:0] tags,input wire [15:0] valid,input wire [23:0] query,output wire hit);
@@ -19,10 +19,10 @@ case(bank)
 default: begin selected_tags=tags[383:288];selected_valid=valid[15:12];end
 endcase
 end
-wire [3:0] matches;
+wire [3:0] hit_vec;
 genvar i;
 generate for(i=0;i<4;i=i+1) begin: b
-assign matches[i]=selected_valid[i] && (selected_tags[i*24 +: 24]==query);
+assign hit_vec[i]=selected_valid[i] && (selected_tags[i*24 +: 24]==query);
 end endgenerate
-assign hit=|matches;
+assign hit=|hit_vec;
 endmodule
