@@ -1,0 +1,38 @@
+name: V216 wakeup isolation physical discriminator
+on:
+  push:
+    branches:
+      - research/scoreboard-wakeup-isolation-216
+jobs:
+  matched-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Differential RTL simulation
+        run: |
+          mkdir -p build/v216
+          iverilog -g2012 -s tb_v216 -o build/v216/tb research/v216/rtl/wakeup_isolation.sv research/v216/tb.sv
+          vvp build/v216/tb | tee build/v216/sim.log
+      - name: Equal-resource generic synthesis
+        run: |
+          set -o pipefail
+          for top in vektor_wakeup_predecoded vektor_wakeup_isolated; do
+            yosys -p "read_verilog -sv research/v216/rtl/wakeup_isolation.sv; synth -top $top; stat; write_json build/v216/$top.json" 2>&1 | tee build/v216/$top.log
+          done
+      - name: Liberty mapped synthesis (Sky130HD typical)
+        run: |
+          set -o pipefail
+          curl -fsSL --retry 2 -o build/v216/sky130_tt.lib https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/main/timing/sky130_fd_sc_hd__tt_025C_1v80.lib
+          for top in vektor_wakeup_predecoded vektor_wakeup_isolated; do
+            yosys -p "read_verilog -sv research/v216/rtl/wakeup_isolation.sv; synth -top $top -noabc; abc -liberty build/v216/sky130_tt.lib; clean; stat -liberty build/v216/sky130_tt.lib; write_verilog -noattr build/v216/$top.mapped.v" 2>&1 | tee build/v216/$top.mapped.log
+          done
+      - name: Preserve all evidence including failed gates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v216-physical-discriminator
+          path: build/v216/
