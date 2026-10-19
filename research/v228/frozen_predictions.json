@@ -1,1 +1,47 @@
-{"mechanism":"RF bank-conflict backup retry","evidence_class":"model only","physical_gate":"unqualified"}
+{
+  "frozen_before_evaluation": true,
+  "mechanism": "retry one alternative ready wave when a primary candidate fails 2-port RF bank admission",
+  "law": "isolated contested slot: delta E[issue]=Pr(primary conflicts)*Pr(backup admissible | primary conflicts); 4-slot downstream displacement is a negative correction",
+  "holdouts": [
+    {
+      "regime": "moderate",
+      "seed": 9041,
+      "cycles": 5000,
+      "prediction": "positive: bank conflict with diverse backups",
+      "min_gain_pct": 10,
+      "max_gain_pct": 18
+    },
+    {
+      "regime": "hot",
+      "seed": 9042,
+      "cycles": 5000,
+      "prediction": "positive but weaker under saturated hot banks",
+      "min_gain_pct": 6,
+      "max_gain_pct": 14
+    },
+    {
+      "regime": "disjoint",
+      "seed": 9043,
+      "cycles": 5000,
+      "prediction": "negative control: no bank conflict and no fallback",
+      "min_gain_pct": 0,
+      "max_gain_pct": 0
+    },
+    {
+      "regime": "memory",
+      "seed": 9044,
+      "cycles": 5000,
+      "prediction": "small or no improvement when issue demand low",
+      "min_gain_pct": 0,
+      "max_gain_pct": 5
+    },
+    {
+      "regime": "uniform",
+      "seed": 9045,
+      "cycles": 5000,
+      "prediction": "small improvement under rare conflicts",
+      "min_gain_pct": 1,
+      "max_gain_pct": 6
+    }
+  ]
+}
