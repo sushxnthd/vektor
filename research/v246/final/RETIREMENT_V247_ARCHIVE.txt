@@ -1,0 +1,1 @@
+V246 RETIRED: path-dependent safe-admission law passed 24750 exhaustive and 10000 random checks; low-live holdout safe 4 contexts versus static 2, high-live holdout 2 versus 2. This is not throughput. Original frozen four-context direct-map prediction failed. No RTL sim, synthesis, electrical STA or physical PPA. Integrated tile unchanged.
