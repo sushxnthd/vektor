@@ -1,0 +1,1 @@
+V251 retired. Structural comparison: 116384 checks passed. Incremental trunk gating versus equal-resource hierarchical control: zero. RTL simulation, synthesis, STA, and physical power not completed. FP32 V153/V156 disqualified. Next: V252.
