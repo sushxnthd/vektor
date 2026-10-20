@@ -1,0 +1,3 @@
+# V248 frozen, 2026-10-20
+
+Sole active kernel: bank-local sibling-warp lane compaction. Compare with fixed subwarp scheduling, compiler scheduling, and equal-resource dynamic warp formation. Positive holdout seed 248101 uses 256 same-PC complementary 0011/1100 mask pairs, with predicted utilization improvement >=1.5x and modeled throughput gain >=20% only if frequency ratio >=0.9 and migration overhead <=0.1. Negative seed 248102 uses different PCs and full masks, predicting no gain. Physical PPA, RTL simulation, and novelty unqualified. V247 retired on structural equivalence with identical reconfigurable control. V153/V156 electrically disqualified. Full frozen protocol and evidence in local archive.
