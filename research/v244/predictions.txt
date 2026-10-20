@@ -1,0 +1,2 @@
+P: seed 244101, 85 percent misses, lower data activations.
+N: seed 244102, 95 percent hits, no Pareto gain.
