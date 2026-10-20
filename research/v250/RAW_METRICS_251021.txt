@@ -1,0 +1,1 @@
+H+ seed250101: N4096 FIFO4096 V250_1171 cycles4685. H- seed250102: N4096 FIFO4096 V250_4095 cycles16381. Equal combiner delta zero.
