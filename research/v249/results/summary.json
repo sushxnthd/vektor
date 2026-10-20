@@ -1,0 +1,34 @@
+{
+  "evidence_class": "algorithmic/structural; not PPA",
+  "checks": 104096,
+  "workloads": {
+    "H_plus": {
+      "seed": 249101,
+      "issues": 39914,
+      "pairs": 19914
+    },
+    "H_minus": {
+      "seed": 249102,
+      "issues": 8723,
+      "pairs": 0
+    },
+    "compute": {
+      "issues": 39955,
+      "pairs": 19955
+    },
+    "memory": {
+      "issues": 24812,
+      "pairs": 8219
+    },
+    "divergent": {
+      "issues": 21205,
+      "pairs": 1205
+    }
+  },
+  "cycles_per_regime": 20000,
+  "equal_budget_delta_pct": 0,
+  "rtl_sim": "NOT RUN",
+  "synthesis": "NOT RUN",
+  "electrical_STA": "NOT RUN",
+  "conclusion": "Retire: strongest equal-budget predecode-assisted control has identical RTL"
+}
