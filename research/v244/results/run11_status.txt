@@ -1,0 +1,1 @@
+V244 retired after equal-resource phased-cache equivalence audit. No measured physical improvement.
