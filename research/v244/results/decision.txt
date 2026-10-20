@@ -1,0 +1,1 @@
+Retire: identical hit-qualified wordline logic to standard phased-cache control.
