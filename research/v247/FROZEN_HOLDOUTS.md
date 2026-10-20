@@ -1,0 +1,1 @@
+Positive holdout: seed 247101, 50/50 opposing reuse phases, expected modeled traffic improvement. Negative holdout: seed 247102, 98/2 phases, expected no improvement. See complete offline protocol for thresholds and physical gates.
