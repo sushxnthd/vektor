@@ -1,0 +1,8 @@
+V245 FROZEN 2026-10-20; sole active kernel. NO experiments yet.
+Mechanism: pair ready instructions sharing one source register, multicast one RF read to both consumers. No extra ports/buffers.
+Law: p*E_RF > E_control for RF-read energy benefit, subject to issue stalls and fanout delay.
+Strongest control: work-conserving two-issue scheduler with identical operand reuse/bypass storage, RF ports, comparator/multicast wires and queue budget.
+Positive unseen seed 245101: ready occupancy >=6, shared-source p=0.75, RF pressure >0.9; predict fewer RF reads vs naive scheduler but NOT necessarily vs strong control.
+Negative unseen seed 245102: ready occupancy <=2, shared-source p=0.02, divergence 0.7; predict no Pareto win.
+Falsification: if strongest control reproduces same pair selection and reuse, retire immediately. Otherwise require RTL sim, synthesis, clean max-cap/slew, matched STA/area, energy proxy, wire/load sensitivity and holdouts.
+Integrated tile unchanged. RTX5090 equivalence not claimed.
