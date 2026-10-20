@@ -1,0 +1,8 @@
+V252 is the sole active kernel after V251 retirement (2026-10-21).
+Mechanism: conflict-pressure-triggered bank-aware operand collection with no additional register-file read ports and no added collector slots.
+Predicted boundary: benefit only when avoided bank-conflict stalls exceed selection/replay overhead; expected no benefit for conflict-free or serial-dependent traces.
+Matched control: oldest-compatible bank scheduler with the same lookahead, collector entries, and issue width.
+Frozen positive holdout: seed 252101, 8192 requests, 4 banks, window 8, 8 collector entries, skew 0.85, independent probability 0.8.
+Frozen negative holdout: seed 252102, 8192 requests, 4 banks, window 8, 8 collector entries, uniform bank distribution, independent probability 0.8.
+Required evidence: RTL equivalence, simulation, synthesis, clean electrical checks, matched STA/area, workload traffic/throughput, wire/load sensitivity.
+No performance or physical claim. V153/V156 remain electrically disqualified.
