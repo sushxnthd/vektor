@@ -1,0 +1,32 @@
+{
+  "evidence_class": "structural_only_no_physical_qualification",
+  "exhaustive_cases": 512,
+  "mismatches": 0,
+  "independent_oracle_passes": 512,
+  "positive_holdout": {
+    "seed": 248101,
+    "pairs": 256,
+    "lane_ops": 1024,
+    "fixed_cycles": 512,
+    "candidate_cycles": 256,
+    "strong_control_cycles": 256,
+    "incremental_gain": 0
+  },
+  "negative_holdout": {
+    "seed": 248102,
+    "pairs": 256,
+    "lane_ops": 2048,
+    "fixed_cycles": 512,
+    "candidate_cycles": 512,
+    "strong_control_cycles": 512,
+    "incremental_gain": 0
+  },
+  "physicality": {
+    "rtl_sim": false,
+    "synthesis": false,
+    "max_cap_slew": false,
+    "sta": false,
+    "power": false
+  },
+  "decision": "RETIRE"
+}
