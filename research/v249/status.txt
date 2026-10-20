@@ -1,0 +1,1 @@
+V249 retired on 2026-10-21. The strongest predecoded greedy equal-resource control implements the same bank-mask arbitration circuit, so incremental advantage is zero. Independent Python oracle: 104096 checks passed. RTL simulation, synthesis, electrical checks and STA not completed. Results in research/v249/results/summary.json. No integrated tile changes.
