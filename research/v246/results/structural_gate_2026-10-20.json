@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-20",
+  "mechanism": "compiler-proven subgroup register lifetime sharing",
+  "evidence_class": "structural model only; RTL/synthesis/STA unavailable",
+  "seed_positive": 246101,
+  "seed_negative": 246102,
+  "C_groups": 128,
+  "logical_groups": 64,
+  "physical_group_bits": 128,
+  "direct_map_bits_per_warp": 512,
+  "direct_map_overhead_group_equivalents": 4,
+  "positive": {
+    "peak_groups": 29,
+    "q": 0.453125,
+    "whole_register_resident_bound": 2,
+    "dynamic_direct_map_resident_bound": 3,
+    "static_group_coloring_resident_bound": 4,
+    "original_h2_prediction": 4,
+    "original_prediction_passed": false
+  },
+  "negative": {
+    "peak_groups": 64,
+    "q": 1,
+    "whole_register_resident_bound": 2,
+    "dynamic_direct_map_resident_bound": 1,
+    "static_group_coloring_resident_bound": 2,
+    "negative_prediction_passed": true
+  },
+  "interval_coloring_random_tests": 1024,
+  "independent_bruteforce_small_cases": 240,
+  "physicality_gate": "FAIL_UNMEASURED",
+  "tile_change": false,
+  "smallest_claim": "For compile-time-known straight-line subgroup lifetimes, static interval coloring matches minimum live storage; dynamic mapping has no demonstrated incremental benefit. Path-dependent liveness not tested.",
+  "prior_art": [
+    "GPU Register File Virtualization MICRO 2015",
+    "Software-Directed Techniques for Improved GPU Register File Utilization TACO 2018"
+  ]
+}
