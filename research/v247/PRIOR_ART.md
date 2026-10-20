@@ -1,0 +1,1 @@
+Prior-art risk: output-stationary, weight-stationary, and reconfigurable dataflow accelerators are established. This project does not claim novelty from switching modes. Test whether a new measured equal-budget physical boundary exists; otherwise retire.
