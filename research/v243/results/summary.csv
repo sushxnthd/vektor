@@ -1,0 +1,7 @@
+regime,seed,final_gain_over_srf_pct,final_mean_latency,age_mean_latency
+positive_holdout,243101,0.0000,26.4916,26.4910
+negative_holdout,243102,0.0000,3.9997,4.0000
+compute_bound,243103,0.0000,3.9969,4.0000
+memory_balanced,243104,0.0000,15.7461,15.7453
+divergent,243105,0.0063,28.7205,28.7221
+skewed,243106,0.0021,52.8930,52.8959
