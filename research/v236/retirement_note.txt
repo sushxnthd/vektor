@@ -1,0 +1,1 @@
+V236 control audit: the strongest equal-resource control can use the same RTL. No distinct advantage.
