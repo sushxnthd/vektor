@@ -1,0 +1,9 @@
+gate,status,reason
+functional_equivalence,model_only,independent_oracle
+rtl_simulation,not_run,iverilog_unavailable
+synthesis,not_run,yosys_unavailable
+electrical_max_cap_slew,not_run,no_netlist
+matched_STA_area,not_run,no_netlist
+workload_model,completed,software_only
+wire_load_sensitivity,not_run,no_physical_model
+claim,retired,no_equal_resource_advantage
