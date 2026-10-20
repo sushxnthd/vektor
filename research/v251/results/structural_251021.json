@@ -1,0 +1,9 @@
+{
+  "kernel": "V251",
+  "evidence": "structural, not physical",
+  "independent_checks": 116384,
+  "h_plus": {"seed": 251101, "local": 3681, "candidate_global": 415, "matched_control_global": 415, "flat_global": 4096},
+  "h_minus": {"seed": 251102, "local": 421, "candidate_global": 3675, "matched_control_global": 3675, "flat_global": 4096},
+  "incremental_gain": 0,
+  "physical_qualification": false
+}
