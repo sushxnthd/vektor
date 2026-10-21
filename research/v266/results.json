@@ -1,0 +1,28 @@
+{
+  "class": "E1_behavioral_only",
+  "generator_sha256": "32961e9277c3069a430ffb3b06a6a405b5554355dc7c6fe160bae355e663fde9",
+  "assumed_clock_retention": 0.95,
+  "relocation_cycles": 2,
+  "physical_sta": "NOT RUN",
+  "positive": {
+    "static": 20480,
+    "adaptive": 12946,
+    "moves": 73,
+    "matched_control": 12946,
+    "trace_sha256": "a68c8155929c3cd5fab32164c79d5802ef8aedd0769961ceb175b35b1edafcd8"
+  },
+  "negative": {
+    "static": 12800,
+    "adaptive": 12800,
+    "moves": 0,
+    "matched_control": 12800,
+    "trace_sha256": "4b104cc3cb97d0d15dae98615639fbff84f24625579b3169c35c34560dd01c13"
+  },
+  "divergent": {
+    "static": 235,
+    "adaptive": 247,
+    "moves": 0,
+    "matched_control": 247,
+    "trace_sha256": "f7c4c01fd6a12972693c21caec1bad21d7b041cf2c30790fd9809029de6be4c7"
+  }
+}
