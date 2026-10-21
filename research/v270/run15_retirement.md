@@ -1,0 +1,1 @@
+V270 RETIRED on 2026-10-22. CI run 39651892754 failed before characterized STA: OpenROAD executable was not found inside the container. Prior mapped synthesis and unplaced Liberty timing estimates are not signoff. Switching proxies were worse than the flexible control. No physical Pareto advantage was established. Preserve existing logs and results. No integrated-tile changes.
