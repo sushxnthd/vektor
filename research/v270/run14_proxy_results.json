@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-21",
+  "evidence": "E2+ unplaced Liberty-table proxy, NOT OpenSTA",
+  "source_run": 39643654736,
+  "artifact": 12365773020,
+  "original_cap_violations": [
+    41,
+    47,
+    37
+  ],
+  "buffer_counts": [
+    66,
+    69,
+    64
+  ],
+  "structural_checked_pin_connections": 22002,
+  "redirected_pins": 4005,
+  "nominal": {
+    "input_slew_ns": 0.06,
+    "output_load_ff": 4,
+    "wire_per_sink_ff": 0.25,
+    "mode0": {
+      "cells": 1874,
+      "area": 2174.018,
+      "delay_ns": 2.025487,
+      "maxcap_violations": 0,
+      "maxslew_violations": 0
+    },
+    "mode1": {
+      "cells": 1849,
+      "area": 2206.47,
+      "delay_ns": 2.01061,
+      "maxcap_violations": 0,
+      "maxslew_violations": 0
+    },
+    "mode2": {
+      "cells": 1907,
+      "area": 2242.38,
+      "delay_ns": 2.415127,
+      "maxcap_violations": 0,
+      "maxslew_violations": 0
+    }
+  },
+  "sensitivity": {
+    "points": 81,
+    "input_slew_ns": [
+      0.03,
+      0.06,
+      0.12
+    ],
+    "output_load_ff": [
+      1,
+      4,
+      12
+    ],
+    "wire_per_sink_ff": [
+      0,
+      0.25,
+      1
+    ],
+    "cap_violations": 0,
+    "slew_violations": 0,
+    "adaptive_vs_flexible_frequency_ratio_min": 1.1919751,
+    "max": 1.2243546
+  },
+  "toggle_proxy": {
+    "samples_per_regime": 2048,
+    "compute": {
+      "adaptive": 1505.8398,
+      "flexible": 1479.6231
+    },
+    "memory": {
+      "adaptive": 3261.217,
+      "flexible": 3219.2083
+    },
+    "divergent": {
+      "adaptive": 2843.8251,
+      "flexible": 2799.8989
+    }
+  },
+  "holdouts": "unopened",
+  "breakthrough": false
+}
