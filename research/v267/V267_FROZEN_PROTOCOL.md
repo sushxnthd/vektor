@@ -1,0 +1,15 @@
+# V267 frozen E0 protocol: producer-writeback-triggered conflict relief
+**Sole active kernel. No performance/physical/novelty claim.** One mechanism: redirect an existing destination-register writeback into a less-contended RF bank and atomically update one-copy remap metadata. Unlike V266, there is no explicit read-copy migration.
+
+1. **Bottleneck law:** For D operands/work and read-bank shares p_b, T <= min(T_compute,T_memory,1/(D max_b p_b)) in work/cycle under one read per bank/cycle. Rebanking can help only if producer writes precede enough future reads to reduce max p_b.
+2. **Mechanism:** On eligible producer writeback, select an empty slot in a bank predicted to have lower near-future read pressure; invalidate the old copy and atomically change remap/version metadata. No data duplication, extra port or background migration.
+3. **Strongest equal-resource controls:** exhaustive offline-optimal static assignment; compiler-scheduled destination renaming; conventional dynamic bank-aware writeback steering with identical bank ports, free slots, metadata bits, comparators, queue depth and buffering. If the last duplicates the mechanism, kill.
+4. **Predicted boundary:** For a phase of L work units, read-service peak B before and B' after steering, H metadata/hazard cycles, and retained frequency r, improvement requires r*(L*B/B'-H)>L, subject to producer-write bandwidth and whole-tile bottlenecks. This is a necessary modeling condition, NOT measured speedup.
+5. **Smallest RTL:** 4x 1R/1W RF bank proxy, per-word versioned mapping, free-slot search, writeback redirect, atomic invalidation and RAW hazard check.
+6. **Physicality:** functional equivalence -> independent value/version checker -> RTL simulation -> synthesis -> max-cap/slew -> matched STA/area -> workload model -> 0.5x/1x/2x wire/load. No cycle-only architecture claim. No more than two consecutive plumbing-focused runs.
+7. **Workloads:** compute-bound low RF pressure, RF-bound dynamic unpredictable producer pressure, memory-bound fixed external bottleneck, divergent short phases. Report IPC, RF stall, read/write traffic, writeback bank conflicts, toggle/energy proxy.
+8. **Falsification:** identical behavior under matched dynamic writeback control; stale versions or aliases; no win under versioned unseen positive; loss at matched timing/area/energy. Fix early gate once or kill.
+9. **Unseen predictions frozen before test:** 267101 long unpredictable phase skew with dependent value-changing producer writebacks predicts positive only if unmatched by controls; 267102 already-balanced traffic predicts tie/loss; 267103 short divergent phases with write pressure predicts tie/loss. Freeze generator SHA before running.
+10. **Architecture consequence:** integrate into V-Tile only after physically credible Pareto gain and prior-art audit; V153/V156 disqualified. RTX 5090 class is long-range reference only.
+
+Prior art to audit: BOW (MICRO 2020, DOI 10.1109/MICRO50266.2020.00084), Memento (ISCA 2024, DOI 10.1109/ISCA59077.2024.00075), conflict-aware GPU register compiler (JSA 2024), register renaming/writeback steering literature.
