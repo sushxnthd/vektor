@@ -1,0 +1,1 @@
+{"kernel":"V267","evidence_class":"E1 bounded behavioral","equal_resource_policy_configs_checked":82944,"equal_resource_mismatches":0,"one_copy_inflight_old_read_counterexamples":12,"rtl_simulation":"not run","synthesis_sta":"not run","decision":"retire: equal-resource policy identity and in-flight old-read hazard","reproducer":"v267_reproducer.py"}
