@@ -1,0 +1,51 @@
+{
+  "kernel": "V269",
+  "source_run": "https://github.com/sushxnthd/vektor/actions/runs/39629958849",
+  "source_job": 119325231647,
+  "artifact_id": 12358656734,
+  "rtl_simulation": {
+    "split": {
+      "offered": 7544,
+      "accepted": 6656,
+      "delivered": 6656,
+      "slow": 2029,
+      "fast": 4627
+    },
+    "two_head": {
+      "offered": 7544,
+      "accepted": 5453,
+      "delivered": 5453,
+      "slow": 2031,
+      "fast": 3422
+    },
+    "fully_associative": {
+      "offered": 7544,
+      "accepted": 6449,
+      "delivered": 6449,
+      "slow": 2382,
+      "fast": 4067
+    }
+  },
+  "generic_synthesis": {
+    "split": {
+      "cells": 569,
+      "logic_edges": 11
+    },
+    "two_head": {
+      "cells": 754,
+      "logic_edges": 15
+    },
+    "fully_associative": {
+      "cells": 1240,
+      "logic_edges": 45
+    }
+  },
+  "electrical": {
+    "max_cap": "NOT_RUN",
+    "max_slew": "NOT_RUN",
+    "characterized_sta": "NOT_RUN",
+    "post_route": "NOT_RUN"
+  },
+  "evidence_class": "RTL simulation + generic logic synthesis; not mapped physical PPA",
+  "unseen_holdouts": "UNOPENED"
+}
