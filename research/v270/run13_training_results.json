@@ -1,0 +1,28 @@
+{
+  "kernel": "V270",
+  "evidence_class": "E1",
+  "training_only": true,
+  "parameter_sweep": "active counts a,b=1..8, compatible opcodes, 64 combinations",
+  "adaptive_only_vs_static": 8,
+  "full_only_vs_adaptive": 4,
+  "positive_6_2": {
+    "static44": 1,
+    "adaptive": 2,
+    "full": 2
+  },
+  "negative_5_3": {
+    "static44": 1,
+    "adaptive": 1,
+    "full": 2
+  },
+  "balanced_4_4": {
+    "static44": 2,
+    "adaptive": 2,
+    "full": 2
+  },
+  "functional_RTL": "UNVERIFIED until CI",
+  "mapped_PPA": "UNVERIFIED",
+  "max_cap_slew": "UNVERIFIED",
+  "holdouts": "FROZEN_UNOPENED",
+  "claim": "No breakthrough; prior art dynamic warp formation."
+}

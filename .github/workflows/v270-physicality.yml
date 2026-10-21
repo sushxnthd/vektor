@@ -1,0 +1,41 @@
+name: V270 asymmetric lane packing physicality
+on:
+  push:
+    branches: ["research/asymmetric-lane-packing-270"]
+  workflow_dispatch:
+jobs:
+  v270:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install public RTL tools
+        run: sudo apt-get update && sudo apt-get install -y iverilog yosys curl
+      - name: Functional simulation and training law
+        run: |
+          set -euxo pipefail
+          mkdir -p build/v270
+          iverilog -g2012 -s v270_tb -o build/v270/test research/v270/v270_pack.sv research/v270/v270_tb.sv
+          vvp build/v270/test | tee build/v270/rtl_sim.log
+          python3 research/v270/v270_boundary.py > build/v270/training_boundary.json
+      - name: Generic and Nangate45-mapped synthesis
+        run: |
+          set -euxo pipefail
+          LIB=build/v270/NangateOpenCellLibrary_typical.lib
+          curl -fL --retry 3 --connect-timeout 15 --max-time 90 https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib -o "$LIB"
+          sha256sum "$LIB" | tee build/v270/liberty_sha256.txt
+          for mode in 0 1 2; do
+            yosys -p "read_verilog -sv research/v270/v270_pack.sv; hierarchy -top v270_pack -chparam MODE $mode; synth -top v270_pack; stat; ltp -noff" 2>&1 | tee build/v270/mode${mode}_generic.log
+            yosys -p "read_verilog -sv research/v270/v270_pack.sv; hierarchy -top v270_pack -chparam MODE $mode; synth -top v270_pack; abc -liberty $LIB; clean; stat -liberty $LIB; write_verilog -noattr build/v270/mode${mode}_mapped.v" 2>&1 | tee build/v270/mode${mode}_mapped.log
+          done
+      - name: Record outstanding electrical checks
+        if: always()
+        run: |
+          mkdir -p build/v270
+          printf '%s\n' 'No OpenSTA signoff. max_cap=UNCHECKED max_slew=UNCHECKED placement=NONE wireRC=NONE' 'Nangate45 ABC mapping is a proxy, not physically closed timing or area.' 'Unseen holdouts unopened. No GPU-level gain or breakthrough claimed.' > build/v270/electrical_gate.txt
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v270-rtl-and-mapped-proxies
+          path: build/v270/
