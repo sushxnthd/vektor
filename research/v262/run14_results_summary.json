@@ -1,0 +1,9 @@
+{
+ "evidence_class":"E1",
+ "generator_sha256":"2dab68e990760f47f43e89581f972daaf15ee9ddec5558b478bc56885ef1f3f5",
+ "positive":{"seed":262101,"groups":4096,"compressible":3482,"p":0.85009765625,"raw_beats":8192,"candidate_beats":4710,"matched_beats":4710,"raw_link_toggles":92471,"candidate_link_toggles":70579,"raw_rate":0.5,"candidate_rate":0.8261571125265392,"matched_rate":0.8261571125265392,"candidate_speedup_vs_raw":1.6523142250530785,"candidate_speedup_vs_matched":1.0},
+ "negative":{"seed":262102,"groups":4096,"compressible":164,"p":0.0400390625,"raw_beats":8192,"candidate_beats":8028,"matched_beats":8028,"raw_link_toggles":99311,"candidate_link_toggles":98713,"raw_rate":0.25,"candidate_rate":0.2375,"matched_rate":0.2375,"candidate_speedup_vs_raw":0.95,"candidate_speedup_vs_matched":1.0},
+ "divergent":{"seed":262103,"groups":4096,"compressible":327,"p":0.079833984375,"raw_beats":8192,"candidate_beats":7865,"matched_beats":7865,"raw_link_toggles":99499,"candidate_link_toggles":98045,"raw_rate":0.45,"candidate_rate":0.4275,"matched_rate":0.4275,"candidate_speedup_vs_raw":0.95,"candidate_speedup_vs_matched":1.0},
+ "physicality":{"rtl_sim":false,"synthesis":false,"max_cap_slew":false,"sta":false,"power":false},
+ "independent_oracle":{"checks":123480,"failures":0}
+}
