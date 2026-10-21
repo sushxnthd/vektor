@@ -1,0 +1,1 @@
+2026-10-21: iverilog, verilator, yosys and OpenSTA unavailable. sudo requires password. No RTL simulation, synthesis, max-cap/slew, matched STA or measured power. Candidate and equal-resource matched compressor use identical packetization logic, thus no distinct netlist mechanism. Evidence class E1 only.
