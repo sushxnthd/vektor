@@ -1,0 +1,43 @@
+{
+  "kernel": "V269",
+  "evidence": "E1 exploratory discrete-event simulation only",
+  "sweep_configurations": 48,
+  "wins_over_two_head_over_5pct": 16,
+  "positive": {
+    "blocked": 0.75,
+    "slow_frac": 0.5,
+    "offered": 0.85,
+    "fast_burst": true,
+    "completed": {
+      "fifo": 3118,
+      "look2": 3595,
+      "greedy_fully_associative": 4947,
+      "split": 6084
+    },
+    "split_vs_look2": 1.69235
+  },
+  "negative": {
+    "blocked": 0,
+    "slow_frac": 0.1,
+    "offered": 0.6,
+    "fast_burst": false,
+    "completed": {
+      "fifo": 6021,
+      "look2": 6021,
+      "greedy_fully_associative": 6021,
+      "split": 6021
+    }
+  },
+  "invariant": {
+    "cycles": 50000,
+    "pushes": 38660,
+    "pops": 38656,
+    "failures": 0
+  },
+  "caveats": [
+    "greedy fully associative is not global admission oracle",
+    "shared quota-aware control not yet physically compared",
+    "no RTL sim, synthesis, STA or measured energy",
+    "frozen holdouts unopened"
+  ]
+}
