@@ -1,0 +1,9 @@
+{
+  "entries": [
+    {"name":"positive","profile":"alternating","seed":271901,"cycles":7200,"latency":30,"prediction":"hybrid lower mean latency than every fixed partition; global no worse"},
+    {"name":"no_win","profile":"balanced","seed":271902,"cycles":7200,"latency":12,"prediction":"hybrid no better than fixed44"},
+    {"name":"loss","profile":"single_skew","seed":271903,"cycles":7200,"latency":42,"prediction":"hybrid worse than fixed62 and global"}
+  ],
+  "sha256":"cedbe1c2ebb9b526f2137c560c72acc9d4ad6372fe0d24cb0a3af8d715b614a7",
+  "holdouts_evaluated":false
+}
