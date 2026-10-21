@@ -1,0 +1,3 @@
+# V269 retirement (2026-10-21)
+Status: RETIRED. A conventional two-class 4+4 virtual-output queue has the same storage, admission, per-class FIFO ordering, arbitration and datapath as V269. An equal-resource control can reproduce the design exactly, so there is no independent architecture-mechanism advantage. This is structural equivalence, not an electrical STA measurement.
+Preserved run12 Icarus/Yosys observations: 6656 split, 5453 two-head, 6449 associative completed responses; 569/754/1240 generic logic cells. These are NOT physical timing/area/power evidence. No max-cap/slew or placed timing; frozen holdouts remain unopened. V153/V156 FP32 remains electrically disqualified. Integrated tile unchanged. V270 is the sole successor; hourly research continues.
