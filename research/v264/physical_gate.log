@@ -1,0 +1,6 @@
+RTL simulation: NOT RUN (no simulator in execution environment)
+Synthesis: NOT RUN
+Electrical STA: NOT RUN
+Max-cap and slew: NOT RUN
+Matched hardware: identical RTL wrapper/netlist by construction
+Retirement: control equivalence; do not promote any physical claim.

@@ -1,0 +1,42 @@
+{
+  "evidence_class": "E1 software model only",
+  "run_date": "2026-10-21",
+  "workloads": {
+    "positive": {
+      "seed": 264101,
+      "operands": 8192,
+      "physical_reads": 5940,
+      "reads_saved": 2252,
+      "matched_gain": 1,
+      "oldest_gain": 1.379125
+    },
+    "negative": {
+      "seed": 264102,
+      "operands": 8192,
+      "physical_reads": 8150,
+      "reads_saved": 42,
+      "matched_gain": 1,
+      "oldest_gain": 1.005153
+    },
+    "divergent": {
+      "seed": 264103,
+      "operands": 8192,
+      "intervening_writes": 653,
+      "physical_reads": 7534,
+      "reads_saved": 658,
+      "matched_gain": 1,
+      "oldest_gain": 1.087337
+    }
+  },
+  "oracle": "PASS 16384 exhaustive control states; independent value checker PASS",
+  "electrical_STA": "NOT RUN",
+  "max_cap_slew": "NOT RUN",
+  "synthesis": "NOT RUN",
+  "area_proxy_delta_vs_matched": 0,
+  "wire_cap_proxy": [
+    0.7,
+    1.2,
+    2.2
+  ],
+  "retirement": "matched broadcast implements identical netlist"
+}
