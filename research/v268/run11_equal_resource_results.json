@@ -1,0 +1,10 @@
+{
+  "kernel": "V268",
+  "result": "RETIRE",
+  "control": "conventional active-mask sector-gated RF",
+  "normalized_RTL_identical": true,
+  "incremental_area_timing_energy_advantage": 0,
+  "physical_PPA": "not measured; identity proof",
+  "holdouts": "unopened",
+  "prior_art": "Warped Register File HPCA 2013 DOI 10.1109/HPCA.2013.6522337"
+}
