@@ -1,0 +1,3 @@
+# V269 run 12 — matched physicality gate
+
+Only active mechanism: two-class 4+4 response queue. Strongest equal-payload controls: 8-entry two-head ready-bypass, 8-entry fully associative ready-select, and conventional two-class VOQ with the same 4+4 split. The conventional VOQ is structurally identical to V269, so novelty or improvement over that control is zero. No characterized STA, max-cap, slew, area or power result exists; the prior E1 throughput gain must not be interpreted as physical improvement. Frozen holdouts remain unopened. Next decision: retire V269 unless measured physical advantage survives matched controls. FP32 V153/V156 remain electrically disqualified.
