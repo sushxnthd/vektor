@@ -1,0 +1,42 @@
+name: V270 final characterized STA attempt
+on:
+  push:
+    branches: ["research/asymmetric-lane-packing-270"]
+  workflow_dispatch:
+jobs:
+  sta:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Yosys and fetch characterized Nangate45 Liberty
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys curl
+          mkdir -p build/v270
+          curl -fL --retry 3 --max-time 90 https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib -o build/v270/NangateOpenCellLibrary_typical.lib
+          sha256sum build/v270/NangateOpenCellLibrary_typical.lib > build/v270/lib_sha256.txt
+          for mode in 0 1 2; do
+            yosys -p "read_verilog -sv research/v270/v270_pack.sv; hierarchy -top v270_pack -chparam MODE $mode; synth -top v270_pack; abc -liberty build/v270/NangateOpenCellLibrary_typical.lib; clean; stat -liberty build/v270/NangateOpenCellLibrary_typical.lib; write_verilog -noattr build/v270/mode${mode}_mapped.v" > build/v270/mode${mode}_yosys.log 2>&1
+          done
+      - name: Characterized OpenROAD STA under three matched external loads
+        run: |
+          set -euxo pipefail
+          docker pull openroad/orfs:latest
+          docker image inspect openroad/orfs:latest --format '{{.Id}}' > build/v270/openroad_image_digest.txt
+          for mode in 0 1 2; do
+            for load in 0.005 0.020 0.050; do
+              docker run --rm -v "$PWD":/work -w /work openroad/orfs:latest bash -lc "command -v openroad && openroad -exit research/v270/v270_sta.tcl $mode $load 0.05" 2>&1 | tee "build/v270/mode${mode}_load${load}_sta.log"
+            done
+          done
+      - name: Preserve physicality status
+        if: always()
+        run: |
+          mkdir -p build/v270
+          printf '%s\n' 'Lumped-output-load characterized STA only. No placement, extracted RC, or measured power.' 'Treat failure to obtain clean cap/slew and matched delay as failed physical gate; do not extrapolate symbolic timing.' > build/v270/physicality_limitations.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v270-final-sta-attempt
+          path: build/v270/
