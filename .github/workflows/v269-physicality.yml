@@ -1,0 +1,46 @@
+name: V269 queue physicality ladder
+on:
+  push:
+    branches: ["research/response-class-queue-269"]
+  workflow_dispatch:
+jobs:
+  v269:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source RTL tools
+        run: sudo apt-get update && sudo apt-get install -y iverilog yosys
+      - name: Simulate split and equal-storage controls
+        run: |
+          set -euxo pipefail
+          mkdir -p build/v269
+          for kind in split twohead associative; do
+            case "$kind" in
+              split) defs="";;
+              twohead) defs="-DCONTROL2";;
+              associative) defs="-DCONTROL8";;
+            esac
+            iverilog -g2012 $defs -s v269_tb -o build/v269/$kind \
+              research/v269/v269_split_response_fifo.sv \
+              research/v269/v269_ready_select_control.sv \
+              research/v269/v269_tb.sv
+            vvp build/v269/$kind | tee build/v269/${kind}_sim.log
+          done
+      - name: Generic synthesis and logic-depth proxy
+        run: |
+          set -euxo pipefail
+          yosys -p 'read_verilog -sv research/v269/v269_split_response_fifo.sv; synth -top v269_split_response_fifo; stat; ltp -noff' 2>&1 | tee build/v269/split_yosys.log
+          yosys -p 'read_verilog -sv research/v269/v269_ready_select_control.sv; synth -top v269_ready_select_control; stat; ltp -noff' 2>&1 | tee build/v269/twohead_yosys.log
+          yosys -p 'read_verilog -sv research/v269/v269_ready_select_control.sv; hierarchy -top v269_ready_select_control -chparam DEPTH 8; synth -top v269_ready_select_control; stat; ltp -noff' 2>&1 | tee build/v269/assoc8_yosys.log
+      - name: Electrical status
+        run: |
+          echo 'NOT PASSED: generic synthesis is not characterized STA.' | tee build/v269/electrical_gate.txt
+          echo 'max_cap UNCHECKED; max_slew UNCHECKED; wire/load sensitivity UNCHECKED' | tee -a build/v269/electrical_gate.txt
+          echo 'No GPU PPA or breakthrough claim permitted.' | tee -a build/v269/electrical_gate.txt
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v269-generic-rtl-evidence
+          path: build/v269/
