@@ -1,0 +1,36 @@
+{
+  "evidence_class": "E1",
+  "generator_v0_sha256": "ede8be31e19d1cb823ba64bb0f1a8401099bfa702c301de90db816258c55b046",
+  "exhaustive_static_checks": 22620,
+  "positive": {
+    "seed": 263101,
+    "rf_reads": 8192,
+    "instructions": 6404,
+    "oldest_cycles": 7598,
+    "v263_cycles": 7598,
+    "matched_cycles": 7598,
+    "idle_slots_all": 1194
+  },
+  "negative": {
+    "seed": 263102,
+    "rf_reads": 8192,
+    "instructions": 4139,
+    "oldest_cycles": 4140,
+    "v263_cycles": 4140,
+    "matched_cycles": 4140
+  },
+  "divergent": {
+    "seed": 263103,
+    "rf_reads": 8192,
+    "instructions": 3134,
+    "oldest_cycles": 5550,
+    "v263_cycles": 5549,
+    "matched_cycles": 5549
+  },
+  "failed_gates": [
+    "frozen positive >5% IPC gain",
+    "strongest equal-resource control indistinguishable",
+    "physical qualification not attempted after E1 defeat"
+  ],
+  "checker_bug": "v0 starvation-tier tie-break corrected once; v0 preserved in local package"
+}
