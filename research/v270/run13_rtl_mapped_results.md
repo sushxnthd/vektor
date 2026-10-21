@@ -1,0 +1,10 @@
+# V270 run13 — reproducible RTL + Nangate45 mapped-area discriminator
+GitHub Actions: https://github.com/sushxnthd/vektor/actions/runs/39643654736 (success, 2026-10-21 UTC). Source commit 3633bd10e406b23404ebafc26653f78dbc502bf7. Icarus Verilog PASS: 12,000 randomized two-warp trials across each of three MODE configurations (36,000 cases). Checker validates grants, opcode, every compacted payload, source warp, original lane index and valid bits. Generic Yosys synthesis PASS for all modes. Longest generic topological path = 73 edges for each; this is not a clock delay.
+
+NangateOpenCellLibrary typical 45nm ABC-mapped combinational cell area (library units): fixed 4+4 = 2082.514 (1808 mapped cells); V270 adaptive 4+4/6+2 = 2113.902 (1780 mapped cells); fully flexible = 2156.728 (1843 mapped cells). Adaptive area +1.507% vs fixed and -1.986% vs fully flexible. Mapped-area alone is NOT a physical Pareto improvement; no clock, max-cap/slew, RC, placement or power has been established. This is an educational 45nm proxy, not GPU silicon or RTX 5090 evidence.
+
+The frozen positive 6+2 pair yields two issue warp-instructions for adaptive and flexible, versus one for fixed. The frozen negative 5+3 pair yields one for adaptive and fixed, two for flexible. Both holdouts remain UNOPENED; these are predeclared count boundaries, not empirical validation.
+
+A separate 36-point training sensitivity model for binomial lane activity, independent collector readiness and opcode compatibility shows at most 1.061x ideal adaptive/static issue rate, and up to 1.058x required adaptive/full clock ratio to match fully flexible issue rate. The law is conditional and not a GPU throughput prediction. Prior-art novelty unresolved (dynamic warp formation/active thread compaction). Evidence E2 for functional RTL and mapped area proxy only; physical gate FAIL/UNVERIFIED. No tile integration.
+
+Next substantive run: fresh characterized STA with max-cap/slew and wire/load sensitivity for all three controls; if unavailable or no advantage, retire V270. No prolonged CI/plumbing work.
