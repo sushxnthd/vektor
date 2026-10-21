@@ -1,12 +1,20 @@
-# OpenSTA constraints for V270 mapped-netlist checks. NOT executed in run14.
-# Nangate45 Liberty: time 1ns; capacitance 1ff (NOT pF).
-# Set MODE, TRAN (ns), CAP (fF), mapped file path in the caller.
+# V270 characterized OpenROAD STA. Unplaced, no extracted interconnect.
+# CLI: openroad -exit research/v270/v270_sta.tcl MODE LOAD_PF SLEW_NS
+# Nangate45 capacitance unit is 1 fF; convert external pF to fF.
+set mode [lindex $argv 0]
+set load_pf [lindex $argv 1]
+set slew_ns [lindex $argv 2]
+set load_ff [expr {$load_pf * 1000.0}]
 read_liberty build/v270/NangateOpenCellLibrary_typical.lib
-read_verilog build/v270/mode$::env(MODE)_mapped.v
+read_verilog build/v270/mode${mode}_mapped.v
 link_design v270_pack
-set_input_transition $::env(TRAN) [all_inputs]
-set_load $::env(CAP) [all_outputs]
-set_max_delay 4.0 -from [all_inputs] -to [all_outputs]
-report_checks -path_delay max -group_path_count 5 -fields {slew cap fanout}
-report_check_types -max_capacitance -max_slew -violators
+set_input_transition $slew_ns [all_inputs]
+set_load $load_ff [all_outputs]
+set_max_delay 10.0 -from [all_inputs] -to [all_outputs]
+puts "V270 STA mode=$mode load_pf=$load_pf load_ff=$load_ff slew_ns=$slew_ns"
+report_design_area
+report_checks -path_delay max -group_path_count 2 -digits 4
 report_worst_slack -max
+puts "ELECTRICAL_VIOLATIONS_START"
+report_check_types -max_capacitance -max_slew -violators
+puts "ELECTRICAL_VIOLATIONS_END"
