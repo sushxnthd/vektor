@@ -1,0 +1,47 @@
+{
+  "kernel": "V286",
+  "mechanism": "permuted warp id xor salt",
+  "training_n": 10000,
+  "rows": [
+    {
+      "mode": "logical_wave",
+      "identity": 40000,
+      "xor": 20000,
+      "permuted": 39581,
+      "add": 40000,
+      "gain_vs_xor": 1.97905
+    },
+    {
+      "mode": "logical_perm",
+      "identity": 40000,
+      "xor": 39553,
+      "permuted": 20000,
+      "add": 39596,
+      "gain_vs_xor": 0.5056506459687002
+    },
+    {
+      "mode": "hot_same",
+      "identity": 10000,
+      "xor": 40000,
+      "permuted": 40000,
+      "add": 40000,
+      "gain_vs_xor": 1
+    },
+    {
+      "mode": "independent",
+      "identity": 38252,
+      "xor": 38258,
+      "permuted": 38293,
+      "add": 38259,
+      "gain_vs_xor": 1.0009148413403732
+    },
+    {
+      "mode": "hot_pair",
+      "identity": 20000,
+      "xor": 40000,
+      "permuted": 40000,
+      "add": 40000,
+      "gain_vs_xor": 1
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "kernel": "V286",
+  "mechanism": "bit-permuted warp-index XOR bank salt",
+  "status": "FROZEN_BEFORE_HOLDOUT",
+  "date": "2026-10-22",
+  "training_seed": 286090,
+  "perm_output_bits_from_warp": [
+    3,
+    0,
+    1,
+    2
+  ],
+  "holdouts": [
+    {
+      "mode": "logical_wave",
+      "seed": 986101,
+      "n": 10000,
+      "gain_vs_identity_xor": [
+        1.95,
+        2.01
+      ]
+    },
+    {
+      "mode": "logical_perm",
+      "seed": 986102,
+      "n": 10000,
+      "gain_vs_identity_xor": [
+        0.49,
+        0.52
+      ]
+    },
+    {
+      "mode": "hot_same",
+      "seed": 986103,
+      "n": 10000,
+      "gain_vs_identity_xor": [
+        1,
+        1
+      ]
+    },
+    {
+      "mode": "independent",
+      "seed": 986104,
+      "n": 10000,
+      "gain_vs_identity_xor": [
+        0.995,
+        1.005
+      ]
+    }
+  ],
+  "physical_gate": "Mapped area and logic depth must not exceed plain XOR; RTL equivalence and full RF row/write mapping still required",
+  "novelty": "Not established; hash selection known in prior art"
+}
