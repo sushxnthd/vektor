@@ -1,0 +1,35 @@
+{
+  "evidence": "E1 deterministic behavioral, not physical",
+  "pairs_per_regime": 25600,
+  "holdouts_opened": false,
+  "results": {
+    "mixed_in_each_warp": {
+      "best_fixed": 38400,
+      "adaptive": 38400,
+      "per_kernel": 38400,
+      "gain_vs_fixed": 1,
+      "gain_vs_per_kernel": 1
+    },
+    "pure_warps_one_kernel": {
+      "best_fixed": 38400,
+      "adaptive": 51200,
+      "per_kernel": 38400,
+      "gain_vs_fixed": 1.3333333333333333,
+      "gain_vs_per_kernel": 1.3333333333333333
+    },
+    "pure_warps_two_kernels": {
+      "best_fixed": 38400,
+      "adaptive": 51200,
+      "per_kernel": 51200,
+      "gain_vs_fixed": 1.3333333333333333,
+      "gain_vs_per_kernel": 1
+    },
+    "majority_warps_one_kernel": {
+      "best_fixed": 38400,
+      "adaptive": 44800,
+      "per_kernel": 38400,
+      "gain_vs_fixed": 1.1666666666666667,
+      "gain_vs_per_kernel": 1.1666666666666667
+    }
+  }
+}

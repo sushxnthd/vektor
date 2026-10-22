@@ -1,0 +1,13 @@
+name: V276 RTL synthesis
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y iverilog yosys
+      - run: iverilog -g2012 -s tb_warp_rf_map -o /tmp/tb research/v276/warp_rf_map.sv research/v276/tb_warp_rf_map.sv
+      - run: vvp /tmp/tb
+      - run: python3 research/v276/warp_static_model.py
+      - run: yosys -p 'read_verilog -sv research/v276/warp_rf_map.sv; hierarchy -top v276_warp_rf_map -chparam ADAPTIVE 1; synth -top v276_warp_rf_map; stat'
+      - run: yosys -p 'read_verilog -sv research/v276/warp_rf_map.sv; hierarchy -top v276_warp_rf_map -chparam ADAPTIVE 0; synth -top v276_warp_rf_map; stat'
