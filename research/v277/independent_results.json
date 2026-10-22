@@ -1,0 +1,9 @@
+{
+  "reads_checked": 94077,
+  "writes_and_invalidations": 5923,
+  "stale_reads": 0,
+  "confidence_rf_reads": 91181,
+  "lru_rf_reads": 91185,
+  "seed": 277770,
+  "evidence": "independent Python oracle only"
+}
