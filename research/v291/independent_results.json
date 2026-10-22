@@ -1,0 +1,14 @@
+{
+  "mechanism": "V291",
+  "checker": "independent_equal_budget.py",
+  "seed": 29120261023,
+  "exhaustive": 4096,
+  "random": 100000,
+  "random_duplicate_grants": 27125,
+  "mismatches": 0,
+  "control": "same one-port RF + four collector destinations + full-tag compare + broadcast",
+  "evidence": "E0 computational/source-level equivalence",
+  "rtl_equal_budget_ci": "pending at retirement decision",
+  "characterized_sta": "not run",
+  "physicality_claim": false
+}
