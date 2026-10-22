@@ -1,0 +1,3 @@
+# Run30 publication status
+
+2026-10-22: Research protocol committed as b5c012cd3b45c58d725c38c2274ad90a342d5aac. Attempt to publish v282_banked_queue.sv through GitHub create_file was blocked by connector safety checks. No further source-write attempts were made. The matched RTL modules, directed TB, Python model, frozen unseen predictions, raw training CSV, V281 retirement checker/results and physical-gate failure are preserved in the local reproducibility ZIP. GitHub branch does not contain these source files. No GitHub Actions RTL/synthesis or STA run is claimed. Physical gate remains pending; V282 must be retired next run if unavailable.
