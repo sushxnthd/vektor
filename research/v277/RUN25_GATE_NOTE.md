@@ -1,0 +1,3 @@
+# V277 run25: synchronous RF response timing gate
+
+The previous RTL testbench supplies `rf_data` as a combinational function of `req_tag`. This validates cache hit/miss bookkeeping, but it does not model a synchronous RF macro. On a miss, the DUT immediately selects `rf_data` onto `out_data` in the request cycle. If the integrated RF has one-cycle response latency, the output is stale until the following cycle; a ready/valid response protocol or a proved combinational RF path is mandatory. No physical Pareto claim is justified by the prior 50,000-request test. The frozen unseen traces remain unopened.
