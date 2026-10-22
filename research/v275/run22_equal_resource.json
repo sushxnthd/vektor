@@ -1,0 +1,7 @@
+{
+  "states": 512,
+  "legal": 162,
+  "same_full_comparisons": 162,
+  "cam_only_admissions": 16,
+  "indexed_only_admissions": 0
+}
