@@ -1,0 +1,27 @@
+{
+  "kernel": "V292",
+  "evidence": "E0 local independent checker and training mask distribution only",
+  "random_functional_cases": 50000,
+  "random_functional_mismatches": 0,
+  "holdouts_evaluated": false,
+  "training": {
+    "q_0_2": {
+      "trials": 200000,
+      "observed_pair_eligibility": 0.27065,
+      "derived_probability": 0.2708192040014181,
+      "ideal_service_upper": 1.27065
+    },
+    "q_0_5": {
+      "trials": 200000,
+      "observed_pair_eligibility": 0.000115,
+      "derived_probability": 0.00010045242572063329,
+      "ideal_service_upper": 1.000115
+    }
+  },
+  "caveats": [
+    "pair eligibility is not end-to-end throughput",
+    "collector port budget and return bus width unverified",
+    "metadata, wire/load, switching, timing and strongest equal-budget control untested",
+    "positive/no-win frozen holdouts unopened"
+  ]
+}
