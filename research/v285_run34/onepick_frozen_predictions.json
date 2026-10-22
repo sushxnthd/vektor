@@ -1,0 +1,41 @@
+{
+  "kernel": "V285 one-repair (one pressure-selected first grant, then fixed order)",
+  "frozen_before_holdout": true,
+  "training_seed": 285361,
+  "holdouts": [
+    {
+      "mode": "two_bank",
+      "seed": 886001,
+      "n": 10000,
+      "min_gain": 1.08,
+      "max_gain": 1.16
+    },
+    {
+      "mode": "hot_bank",
+      "seed": 886002,
+      "n": 10000,
+      "min_gain": 1.01,
+      "max_gain": 1.04
+    },
+    {
+      "mode": "independent",
+      "seed": 886003,
+      "n": 10000,
+      "min_gain": 1,
+      "max_gain": 1.003
+    },
+    {
+      "mode": "no_conflict",
+      "seed": 886004,
+      "n": 10000,
+      "min_gain": 1,
+      "max_gain": 1
+    }
+  ],
+  "physical_gate": {
+    "mapped_area_ratio_onepick_over_fixed_max": 1.05,
+    "positive_two_bank_max_clock_penalty": 0.10397,
+    "positive_hot_bank_max_clock_penalty": 0.0184
+  },
+  "note": "No workload throughput claim without sequential backlog and downstream constraints; RTL area alone cannot establish PPA."
+}

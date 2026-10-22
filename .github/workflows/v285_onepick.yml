@@ -1,0 +1,18 @@
+name: V285 onepick repair gate
+on:
+  push:
+    branches: ["research/pressure-priority-285-run34-20261022"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y iverilog yosys
+      - run: mkdir -p build/onepick && iverilog -g2012 -s tb_v285_onepick -o build/onepick/tb research/v285_run34/v285_onepick_priority_arbiter.sv research/v285_run34/tb_v285_onepick.sv && vvp build/onepick/tb
+      - run: mkdir -p build/onepick && curl -fsSL https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib -o build/onepick/lib.lib
+      - run: yosys -p 'read_liberty -lib build/onepick/lib.lib; read_verilog -sv research/v285_run34/v285_onepick_priority_arbiter.sv; synth -top v285_onepick_priority_arbiter -noabc; abc -liberty build/onepick/lib.lib; stat -liberty build/onepick/lib.lib' > build/onepick/onepick_yosys.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onepick-gate
+          path: build/onepick/
