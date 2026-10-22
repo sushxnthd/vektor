@@ -1,0 +1,62 @@
+name: v287-physicality
+on:
+  push:
+    branches:
+      - "research/v287-disjoint-lane-fusion-run35-20261022"
+  workflow_dispatch:
+jobs:
+  matched-rtl-mapping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys curl
+      - name: Functional RTL equivalence, exhaustive masks plus randomized operands
+        run: |
+          mkdir -p build/v287
+          iverilog -g2012 -s tb_v287 -o build/v287/tb \
+            research/v287/v287_lane_control.sv \
+            research/v287/v287_lane_fuse_phys.sv \
+            research/v287/tb_v287.sv
+          vvp build/v287/tb | tee build/v287/functional.log
+      - name: Obtain open Nangate45 typical Liberty
+        run: |
+          curl --fail --location --retry 3 \
+            https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib \
+            -o build/v287/NangateOpenCellLibrary_typical.lib
+          test -s build/v287/NangateOpenCellLibrary_typical.lib
+          sha256sum build/v287/NangateOpenCellLibrary_typical.lib | tee build/v287/liberty.sha256
+      - name: Matched Nangate45 combinational synthesis
+        shell: bash
+        run: |
+          set -euo pipefail
+          for top in v287_lane_control v287_lane_fuse_phys; do
+            yosys -Q -T -p "read_verilog -sv research/v287/v287_lane_control.sv research/v287/v287_lane_fuse_phys.sv; hierarchy -check -top $top; synth -top $top; abc -liberty build/v287/NangateOpenCellLibrary_typical.lib; clean; check -assert; stat -liberty build/v287/NangateOpenCellLibrary_typical.lib; ltp -noff; write_json build/v287/${top}_mapped.json; write_verilog -noattr -noexpr build/v287/${top}_mapped.v" \
+              2>&1 | tee "build/v287/${top}_yosys.log"
+          done
+          python3 research/v287/mapped_area.py build/v287/NangateOpenCellLibrary_typical.lib \
+            build/v287/v287_lane_control_mapped.json \
+            build/v287/v287_lane_fuse_phys_mapped.json | tee build/v287/matched_area.json.txt
+      - name: Attempt open STA and report electrical gate accurately
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if apt-cache show opensta >/dev/null 2>&1; then
+            sudo apt-get install -y opensta
+          fi
+          if command -v sta >/dev/null 2>&1; then
+            echo 'OpenSTA available; full matched timing constraints still required.' | tee build/v287/sta_status.txt
+          else
+            echo 'STA NOT RUN: OpenSTA unavailable; max-cap/slew and wire sensitivity NOT VERIFIED.' | tee build/v287/sta_status.txt
+          fi
+      - name: Preserve physical evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v287-physicality-${{ github.run_id }}
+          path: build/v287/
+          retention-days: 30
