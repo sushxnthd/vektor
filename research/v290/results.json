@@ -1,0 +1,1 @@
+{"exhaustive_cases":65536,"random_arrival_cases":10000,"mismatches":0,"evidence":"E0 software functional equivalence, not RTL or physical validation","strongest_control":"conventional per-bank operand collector with identical 4 slots, 2 ports, 2 ready bits/slot"}
