@@ -1,0 +1,19 @@
+name: V286 mapping physical gate
+on:
+  push:
+    branches: ["research/warp-salted-rf-bank-286-20261022"]
+jobs:
+  map:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y iverilog yosys
+      - run: mkdir -p build/v286 && iverilog -g2012 -s tb_v286_map -o build/v286/tb research/v286/v286_bank_map.sv research/v286/tb_v286_map.sv && vvp build/v286/tb
+      - run: curl -fsSL https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib -o build/v286/lib.lib
+      - run: yosys -p 'read_liberty -lib build/v286/lib.lib; read_verilog -sv research/v286/v286_bank_map.sv; synth -top v286_add_bank_map -noabc; abc -liberty build/v286/lib.lib; stat -liberty build/v286/lib.lib; ltp -noff' > build/v286/add.log
+      - run: yosys -p 'read_liberty -lib build/v286/lib.lib; read_verilog -sv research/v286/v286_bank_map.sv; synth -top v286_xor_bank_map -noabc; abc -liberty build/v286/lib.lib; stat -liberty build/v286/lib.lib; ltp -noff' > build/v286/xor.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v286-mapping-physical
+          path: build/v286/

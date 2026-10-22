@@ -1,0 +1,55 @@
+{
+  "kernel": "V286",
+  "date": "2026-10-22",
+  "status": "FROZEN_BEFORE_HOLDOUT",
+  "mode": "additive warp-index RF bank salt",
+  "training_seeds": [
+    286001,
+    286002,
+    286003,
+    286004,
+    286005,
+    286006
+  ],
+  "holdouts": [
+    {
+      "mode": "perwarp_pair",
+      "seed": 986001,
+      "n": 10000,
+      "add_over_xor": [
+        1.95,
+        2.05
+      ]
+    },
+    {
+      "mode": "hot_same",
+      "seed": 986002,
+      "n": 10000,
+      "add_over_xor": [
+        1,
+        1
+      ]
+    },
+    {
+      "mode": "independent",
+      "seed": 986003,
+      "n": 10000,
+      "add_over_xor": [
+        0.99,
+        1.01
+      ]
+    },
+    {
+      "mode": "hot_pair",
+      "seed": 986004,
+      "n": 10000,
+      "add_over_xor": [
+        1,
+        1
+      ]
+    }
+  ],
+  "must_compare": "identity, XOR salt, GF16 linear hash, and compiler-static layout before novelty claim",
+  "physicality": "E0 until matched RTL and characterized PPA",
+  "integrated_tile": "unchanged"
+}

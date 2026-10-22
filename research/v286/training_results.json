@@ -1,0 +1,48 @@
+{
+  "kernel": "V286",
+  "training_n_per_mode": 10000,
+  "records": [
+    {
+      "mode": "hot_same",
+      "identity_grants": 10000,
+      "xor_grants": 40000,
+      "add_grants": 40000,
+      "gain_add_over_xor": 1
+    },
+    {
+      "mode": "hot_pair",
+      "identity_grants": 20000,
+      "xor_grants": 40000,
+      "add_grants": 40000,
+      "gain_add_over_xor": 1
+    },
+    {
+      "mode": "independent",
+      "identity_grants": 38296,
+      "xor_grants": 38160,
+      "add_grants": 38229,
+      "gain_add_over_xor": 1.001808176100629
+    },
+    {
+      "mode": "perwarp_pair",
+      "identity_grants": 40000,
+      "xor_grants": 20000,
+      "add_grants": 40000,
+      "gain_add_over_xor": 2
+    },
+    {
+      "mode": "withinwarp_collision",
+      "identity_grants": 36360,
+      "xor_grants": 36293,
+      "add_grants": 36313,
+      "gain_add_over_xor": 1.0005510704543576
+    },
+    {
+      "mode": "phase_shifted",
+      "identity_grants": 29952,
+      "xor_grants": 38914,
+      "add_grants": 40000,
+      "gain_add_over_xor": 1.0279076938890888
+    }
+  ]
+}
