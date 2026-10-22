@@ -1,0 +1,36 @@
+{
+  "kernel": "V286",
+  "date": "2026-10-22",
+  "mapper": "warp-bit-permuted XOR",
+  "workflow": "https://github.com/sushxnthd/vektor/actions/runs/39803798594",
+  "rtl_exhaustive": "PASS 256 bijective mapping patterns",
+  "nangate45": {
+    "permuted": {
+      "area": 6.384,
+      "cells": 4,
+      "topological_depth_cells": 1
+    },
+    "plain_xor": {
+      "area": 6.384,
+      "cells": 4,
+      "topological_depth_cells": 1
+    },
+    "additive": {
+      "area": 17.822,
+      "cells": 14,
+      "topological_depth_cells": 4
+    }
+  },
+  "equal_mapper_area_vs_plain_xor": true,
+  "physicality": {
+    "rtl_sim": "PASS",
+    "characterized_cell_mapping": "PASS",
+    "sta": "NOT_RUN",
+    "max_cap_slew": "NOT_RUN",
+    "wire_load_sensitivity": "NOT_RUN",
+    "power": "NOT_RUN",
+    "rf_storage_writeback": "NOT_IMPLEMENTED"
+  },
+  "evidence_class": "E2 mapper only; not complete RF or GPU",
+  "breakthrough": false
+}
