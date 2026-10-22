@@ -1,0 +1,9 @@
+{
+  "mechanism": "V288",
+  "evidence": "E0 independent Python control equivalence only",
+  "exhaustive_AW2_cases": 32768,
+  "random_AW12_cases": 100000,
+  "mismatches": 0,
+  "control": "one-entry write-through operand cache, identical tag/data/comparator/ports",
+  "conclusion": "No unique architectural benefit against strongest equal-budget control"
+}
