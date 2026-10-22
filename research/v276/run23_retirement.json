@@ -1,0 +1,19 @@
+{
+  "kernel": "V276",
+  "decision": "retired",
+  "date": "2026-10-22",
+  "evidence_class": "E2 RTL plus mapped synthesis; logical falsification",
+  "testbench_passes": 50000,
+  "original_ideal_gain": 1.3333333333333333,
+  "actual_gain_vs_best_fixed": 1,
+  "perfect_fixed_hashes": 8,
+  "area": {
+    "direct": 5.852,
+    "xor": 15.428,
+    "adaptive": 72.352
+  },
+  "sta": "not executed; openroad executable unavailable",
+  "actions_run": 39724515893,
+  "artifact_id": 12402273337,
+  "holdouts_opened": false
+}
