@@ -1,0 +1,75 @@
+name: V285 matched physical gate
+on:
+  push:
+    branches: ["research/pressure-priority-285-run34-20261022"]
+  workflow_dispatch:
+jobs:
+  matched:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open RTL tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog yosys
+          mkdir -p build/v285
+      - name: Simulate independent matched oracle
+        run: |
+          set -euxo pipefail
+          iverilog -g2012 -s tb_v285_matched -o build/v285/tb \
+            research/v285_run34/v285_pressure_priority_arbiter.sv \
+            research/v285_run34/v285_fixed_priority_arbiter.sv \
+            research/v285_run34/tb_v285_matched.sv
+          vvp build/v285/tb | tee build/v285/rtl_sim.log
+      - name: Obtain public characterized library
+        run: |
+          curl -fsSL --retry 3 \
+            https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib \
+            -o build/v285/nangate45_typical.lib
+          sha256sum build/v285/nangate45_typical.lib | tee build/v285/lib.sha256
+      - name: Matched characterized synthesis
+        run: |
+          set -euxo pipefail
+          for item in pressure fixed; do
+            if [ "$item" = pressure ]; then top=v285_pressure_priority_arbiter; else top=v285_fixed_priority_arbiter; fi
+            yosys -Q -T -p "read_liberty -lib build/v285/nangate45_typical.lib; read_verilog -sv research/v285_run34/v285_${item}_priority_arbiter.sv; synth -top ${top} -noabc; dfflibmap -liberty build/v285/nangate45_typical.lib; abc -liberty build/v285/nangate45_typical.lib; clean; stat -liberty build/v285/nangate45_typical.lib; ltp -noff; write_verilog -noattr -noexpr build/v285/${item}_mapped.v" 2>&1 | tee build/v285/${item}_yosys.log
+          done
+      - name: Attempt matched STA and electrical checks
+        shell: bash
+        run: |
+          set -euxo pipefail
+          if command -v sta >/dev/null; then tool=sta
+          elif command -v openroad >/dev/null; then tool="openroad -exit"
+          else
+            sudo apt-get install -y opensta || sudo apt-get install -y openroad || true
+            if command -v sta >/dev/null; then tool=sta
+            elif command -v openroad >/dev/null; then tool="openroad -exit"
+            else echo "STA_NOT_AVAILABLE" | tee build/v285/STA_BLOCKED.txt; exit 0
+            fi
+          fi
+          for item in pressure fixed; do
+            if [ "$item" = pressure ]; then top=v285_pressure_priority_arbiter; else top=v285_fixed_priority_arbiter; fi
+            for load in 0.002 0.010 0.050; do
+              cat > build/v285/sta_${item}_${load}.tcl <<EOF
+          read_liberty build/v285/nangate45_typical.lib
+          read_verilog build/v285/${item}_mapped.v
+          link_design ${top}
+          create_clock -name virtual_clk -period 2.0
+          set_input_delay -clock virtual_clk 0.05 [all_inputs]
+          set_output_delay -clock virtual_clk 0.05 [all_outputs]
+          set_input_transition 0.05 [all_inputs]
+          set_load ${load} [all_outputs]
+          report_checks -path_delay max -group_path_count 3
+          report_check_types -max_capacitance -max_slew -violators
+          EOF
+              $tool build/v285/sta_${item}_${load}.tcl > build/v285/sta_${item}_${load}.log 2>&1
+            done
+          done
+      - name: Upload all evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v285-run34-physical-gate
+          path: build/v285/
+          if-no-files-found: warn
