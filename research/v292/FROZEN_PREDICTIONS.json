@@ -1,0 +1,33 @@
+{
+  "mechanism": "V292 sparse-lane memory-return overlay",
+  "frozen_at": "2026-10-23",
+  "evaluation_status": "unopened",
+  "L": 32,
+  "mask_model": "independent Bernoulli active lanes; queue head pair",
+  "prediction_law": "e=(1-q*q)^32; ideal return bus speedup <=1+e if two collectors, saturated bus, two pending",
+  "cases": [
+    {
+      "id": "win_sparse",
+      "q": 0.08,
+      "collector_write_destinations": 2,
+      "return_bus_saturated": true,
+      "prediction": "raw bus service gain >1.5x versus serial-only; equal-budget strongest-control advantage unknown"
+    },
+    {
+      "id": "no_win_dense",
+      "q": 0.7,
+      "collector_write_destinations": 2,
+      "return_bus_saturated": true,
+      "prediction": "raw bus service gain <=1.01x"
+    },
+    {
+      "id": "no_win_single_collector",
+      "q": 0.08,
+      "collector_write_destinations": 1,
+      "return_bus_saturated": true,
+      "prediction": "end-to-end collector service gain 1.00x"
+    }
+  ],
+  "tolerance": "raw modeled service gain ±0.08; no-win within 0.01; any matched control gain <=0.01 triggers retirement",
+  "do_not_evaluate_until": "RTL smoke test, strongest baseline and physical collector-port inventory"
+}

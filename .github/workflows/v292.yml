@@ -1,0 +1,29 @@
+name: V292 isolated RTL smoke test
+on:
+  push:
+    branches:
+      - research/v292-sparse-return-overlay
+jobs:
+  rtl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: V292 lane-integrity and credit checks
+        run: |
+          mkdir -p build/v292
+          iverilog -g2012 -s tb_v292 -o build/v292/tb research/v292/v292_overlay.sv research/v292/tb_v292.sv
+          vvp build/v292/tb | tee build/v292/rtl.log
+          python3 research/v292/independent_model.py | tee build/v292/independent.json
+      - name: Generic synthesis, no physical STA
+        run: |
+          yosys -p 'read_verilog -sv research/v292/v292_overlay.sv; synth -top v292_sparse_return_overlay; stat' | tee build/v292/yosys.log
+      - name: Preserve raw logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v292-isolated-e0
+          path: build/v292/
