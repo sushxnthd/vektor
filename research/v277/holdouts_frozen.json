@@ -1,0 +1,18 @@
+{
+  "status": "frozen unopened",
+  "positive": {
+    "seed": 277901,
+    "R": 5,
+    "K": 9,
+    "phases": 64,
+    "min_read_reduction": 0.25
+  },
+  "negative": {
+    "seed": 277902,
+    "R": 4,
+    "K": 1,
+    "phases": 64,
+    "max_gain": 1
+  },
+  "gate": "RTL, mapped synthesis, electrical checks"
+}

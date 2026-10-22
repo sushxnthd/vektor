@@ -1,0 +1,15 @@
+name: V277 RTL check
+on:
+  push:
+    branches: ["research/reuse-confidence-cache-277-20261022"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y iverilog yosys
+      - run: iverilog -g2012 -s tb_v277 -o /tmp/tb research/v277/operand_cache.sv research/v277/tb_v277.sv
+      - run: vvp /tmp/tb
+      - run: python3 research/v277/boundary.py
+      - run: yosys -p 'read_verilog -sv research/v277/operand_cache.sv; hierarchy -top v277_operand_cache -chparam CONFIDENCE 1; synth -top v277_operand_cache; stat'
+      - run: yosys -p 'read_verilog -sv research/v277/operand_cache.sv; hierarchy -top v277_operand_cache -chparam CONFIDENCE 0; synth -top v277_operand_cache; stat'

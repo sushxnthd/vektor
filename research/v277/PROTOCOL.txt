@@ -1,0 +1,8 @@
+V277 ACTIVE. Confidence-gated one-entry RF operand cache admission.
+Bottleneck: RF read traffic on cache misses. For epochs H^R C with R>=3, LRU misses twice per epoch; confidence pinning misses once per stable epoch. If hot H changes every K epochs, candidate incurs about two additional misses per phase. Reads saved per phase ~K-2, positive for K>2. Energy boundary: saved_reads*E_RF > accesses*E_extra_control.
+Mechanism: same one-entry 32-bit data and 8-bit tag as LRU; 2-bit hit confidence prevents replacement on a cold miss until confidence decays. RF write invalidation required.
+Strong controls: equal-storage LRU, fixed pin/bypass, per-phase compiler-informed pinning, established GPU RF operand caches, and any equal-budget admission policy.
+Physical: randomized RTL equivalence, Yosys Nangate45, characterized cap/slew/STA and wire/load sensitivity; model RF macro power before energy claims.
+Metrics: RF reads/access, modeled issue throughput, switched capacitance, area and timing across compute/memory/divergent/phase-change regimes.
+Falsify on stale values, lack of gain vs equal-budget control, or excess power/clock cost. Holdouts frozen separately and unopened.
+Prior art: BOW MICRO 2020 DOI 10.1109/MICRO50266.2020.00084; Memento ISCA 2024 DOI 10.1109/ISCA59077.2024.00075. Novelty unproven. Tile unchanged.
