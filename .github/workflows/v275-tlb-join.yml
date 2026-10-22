@@ -1,0 +1,22 @@
+name: V275 TLB join RTL gate
+on:
+  push:
+    branches: [research/tlb-pagewalk-join-275-20261022]
+  workflow_dispatch:
+jobs:
+  rtl-and-generic-synthesis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install public RTL tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog yosys
+      - name: Functional RTL and generic synthesis
+        run: sh research/v275/ci_run.sh
+      - name: Upload raw synthesis log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v275-yosys-log
+          path: research/v275/yosys_generic.log
+          if-no-files-found: ignore

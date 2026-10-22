@@ -1,0 +1,32 @@
+{
+  "kernel": "V275",
+  "evaluated": false,
+  "seed_positive": 27591,
+  "seed_negative": 27592,
+  "cycles": 20000,
+  "positive": {
+    "arrival_probability": 0.2,
+    "hot_page_reuse_probability": 0.85,
+    "hot_page_keys": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "prediction": "indexed/fully_associative accepted throughput >= 0.99; raw full-key comparator activations <= 0.60x"
+  },
+  "negative": {
+    "arrival_probability": 0.4,
+    "page_key_parity": 0,
+    "prediction": "indexed/fully_associative accepted throughput <= 0.80"
+  },
+  "compute_bound": {
+    "arrival_probability": 0.02,
+    "prediction": "throughput parity, no significant whole-tile speedup"
+  },
+  "divergent": {
+    "arrival_probability": 0.4,
+    "hot_set_skew": 0.9,
+    "prediction": "indexed loses under hot-set occupancy"
+  }
+}
