@@ -1,0 +1,54 @@
+{
+  "kernel": "V285",
+  "decision": "RETIRED",
+  "date": "2026-10-22",
+  "full": {
+    "rtl_oracle": 10000,
+    "area": 1950.844,
+    "cells": 1690,
+    "topological_cells": 69
+  },
+  "fixed": {
+    "rtl_oracle": 10000,
+    "area": 793.212,
+    "cells": 740,
+    "topological_cells": 19
+  },
+  "onepick": {
+    "rtl_oracle": 10000,
+    "area": 1681.918,
+    "cells": 1493
+  },
+  "ratio_full_to_fixed": 2.459423205902079,
+  "ratio_onepick_to_fixed": 2.120389000670691,
+  "sta": "NOT_RUN_STA_UNAVAILABLE",
+  "max_cap_slew": "NOT_RUN",
+  "holdout": [
+    {
+      "mode": "two_bank",
+      "gain": 1.1234402332361515,
+      "pass": true
+    },
+    {
+      "mode": "hot_bank",
+      "gain": 1.018318731445949,
+      "pass": true
+    },
+    {
+      "mode": "independent",
+      "gain": 1.0000261533633226,
+      "pass": true
+    },
+    {
+      "mode": "no_conflict",
+      "gain": 1,
+      "pass": true
+    }
+  ],
+  "workflow_runs": [
+    39802191054,
+    39802670733
+  ],
+  "evidence_class": "E2 mapped synthesis; no characterized STA or PPA claim",
+  "integrated_tile": "UNCHANGED"
+}
