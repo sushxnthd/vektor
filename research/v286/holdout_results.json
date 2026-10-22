@@ -1,0 +1,60 @@
+{
+  "kernel": "V286",
+  "variant": "warp-bit permutation XOR",
+  "frozen_prediction_results": [
+    {
+      "mode": "logical_wave",
+      "seed": 986101,
+      "identity": 40000,
+      "xor": 20000,
+      "permuted": 39572,
+      "add": 40000,
+      "ratio": 1.9786,
+      "pass": true
+    },
+    {
+      "mode": "logical_perm",
+      "seed": 986102,
+      "identity": 40000,
+      "xor": 39566,
+      "permuted": 20000,
+      "add": 39570,
+      "ratio": 0.5054845068998636,
+      "pass": true
+    },
+    {
+      "mode": "hot_same",
+      "seed": 986103,
+      "identity": 10000,
+      "xor": 40000,
+      "permuted": 40000,
+      "add": 40000,
+      "ratio": 1,
+      "pass": true
+    },
+    {
+      "mode": "independent",
+      "seed": 986104,
+      "identity": 38313,
+      "xor": 38244,
+      "permuted": 38292,
+      "add": 38201,
+      "ratio": 1.0012550988390336,
+      "pass": true
+    }
+  ],
+  "physical_mapping": {
+    "add_area": 17.822,
+    "xor_area": 6.384,
+    "add_cells": 14,
+    "xor_cells": 4,
+    "add_path_cells": 4,
+    "xor_path_cells": 1,
+    "permuted_area": "PENDING_CI",
+    "max_cap_slew": "NOT_RUN",
+    "sta": "NOT_RUN"
+  },
+  "evidence_class": "E0 workload and E2 mapper for additive/XOR only",
+  "integrated_tile": "UNCHANGED",
+  "claim": "NO_ARCHITECTURE_BREAKTHROUGH"
+}
