@@ -1,0 +1,47 @@
+{
+  "kernel": "V274",
+  "evidence": "E1 Python cycle-model only; no RTL sim, synthesis, or STA",
+  "seed": 27421,
+  "trace_count": 40,
+  "cycles_per_trace": 2500,
+  "collector_state_comparisons": 100000,
+  "equal_resource_mismatches": 0,
+  "explicit_counterexample": {
+    "original_prefetch_reads": 6,
+    "repaired_prefetch_reads": 1,
+    "original_redundant": 5,
+    "repaired_redundant": 0
+  },
+  "aggregate": {
+    "original": {
+      "reads": 72020,
+      "prefetch_reads": 33395,
+      "redundant_prefetches": 17572,
+      "demand_hits": 26257,
+      "demand_misses": 38625
+    },
+    "repaired": {
+      "reads": 50545,
+      "prefetch_reads": 7205,
+      "redundant_prefetches": 1688,
+      "demand_hits": 21542,
+      "demand_misses": 43340
+    },
+    "equal_lookahead": {
+      "reads": 50545,
+      "prefetch_reads": 7205,
+      "redundant_prefetches": 1688,
+      "demand_hits": 21542,
+      "demand_misses": 43340
+    },
+    "demand_only": {
+      "reads": 44888,
+      "prefetch_reads": 0,
+      "redundant_prefetches": 0,
+      "demand_hits": 19994,
+      "demand_misses": 44888
+    }
+  },
+  "holdouts_evaluated": false,
+  "decision": "retire: strongest equal-resource lookahead duplicates repaired V274 exactly"
+}
