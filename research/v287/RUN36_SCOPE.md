@@ -1,0 +1,3 @@
+# V287 run36 physical discriminator
+
+Single active kernel: disjoint-lane dual-warp issue. No architecture breakthrough claim. Previous E0 holdouts assumed a warp-count RF cap; the physically relevant constraint is one operand read and one write per active lane per cycle, with bank-address selection. This run evaluates whether one-ALU-per-lane and one-RF-port-per-lane can serve two disjoint warps without an excessive input mux, address mux, control or timing penalty. Strongest control is one-warp issue with the same lane ALUs and RF ports. Equal-area control and full electrical STA are mandatory before a Pareto claim. FP32 V153/V156 electrically disqualified. No tile integration.
