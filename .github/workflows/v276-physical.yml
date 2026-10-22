@@ -1,0 +1,17 @@
+name: V276 characterized STA
+on:
+  push:
+    branches: ["research/warp-bank-hash-276-physical-run23"]
+jobs:
+  v276:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y yosys
+      - run: bash research/v276/run23_physical.sh
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v276-run23-physical-logs
+          path: research/v276/run23_ci/

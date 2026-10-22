@@ -1,0 +1,31 @@
+{
+  "status": "frozen",
+  "gate": "RTL and mapped STA first",
+  "positive": {
+    "seed": 902763,
+    "p_w": [
+      0.2,
+      0.8
+    ],
+    "gain": 1.2,
+    "tolerance": 0.02
+  },
+  "negative": {
+    "seed": 902764,
+    "p_w": [
+      0.5,
+      0.5
+    ],
+    "gain": 1,
+    "tolerance": 0.01
+  },
+  "negative_kernel": {
+    "seed": 902765,
+    "p_w": [
+      0,
+      1
+    ],
+    "gain_vs_per_kernel": 1,
+    "tolerance": 0.01
+  }
+}
