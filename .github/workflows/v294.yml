@@ -1,0 +1,27 @@
+name: V294 conflict escape RTL and area proxy
+on:
+  push:
+    branches: [research/v294-conflict-escape-issue]
+jobs:
+  physicality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y iverilog yosys
+      - name: RTL directed holdouts
+        run: |
+          mkdir -p build/v294
+          iverilog -g2012 -s tb_v294 -o build/v294/tb research/v294/v294_issue.sv research/v294/tb_v294.sv
+          vvp build/v294/tb | tee build/v294/rtl.log
+      - name: Independent oracle and exhaustive assignment upper bound
+        run: python3 research/v294/independent_checker.py | tee build/v294/oracle.json
+      - name: Equal-input generic synthesis, control
+        run: yosys -p 'read_verilog -sv research/v294/v294_issue.sv; hierarchy -top v294_issue -chparam LOOKAHEAD 0; synth -top v294_issue; stat' | tee build/v294/control_yosys.log
+      - name: Equal-input generic synthesis, lookahead
+        run: yosys -p 'read_verilog -sv research/v294/v294_issue.sv; hierarchy -top v294_issue -chparam LOOKAHEAD 1; synth -top v294_issue; stat' | tee build/v294/lookahead_yosys.log
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v294-e0-e1-generic
+          path: build/v294/
