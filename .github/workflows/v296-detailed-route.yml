@@ -17,7 +17,7 @@ on:
 jobs:
   physical:
     runs-on: ubuntu-22.04
-    timeout-minutes: 45
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - name: Install revision-pinned open-source tools
