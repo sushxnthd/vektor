@@ -24,7 +24,9 @@ for variant in original optimized pairwise; do
       pre=""
       ;;
   esac
-  yosys -p "read_verilog -sv $src; $pre synth -top $top -flatten; dfflibmap -liberty $LIB; abc -liberty $LIB; clean; check -assert; write_verilog -noattr -noexpr build/v296/sta/$variant.v; stat -liberty $LIB" > "build/v296/sta/$variant.synth.log" 2>&1
+  # Register standard-cell port directions before checking mapped output drivers.
+  # The previous check lacked the Liberty blackbox definitions and rejected 24 output bits.
+  yosys -p "read_liberty -lib -ignore_miss_func -ignore_miss_dir $LIB; read_verilog -sv $src; $pre synth -top $top -flatten; dfflibmap -liberty $LIB; abc -liberty $LIB; clean; check -assert; write_verilog -noattr -noexpr build/v296/sta/$variant.v; stat -liberty $LIB" > "build/v296/sta/$variant.synth.log" 2>&1
   test -s "build/v296/sta/$variant.v"
   for scenario in low nominal high; do
     case "$scenario" in
