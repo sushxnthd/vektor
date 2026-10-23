@@ -6,6 +6,7 @@ on:
       - 'research/v296/placed_repair.tcl'
       - 'research/v296/fixed_topology_sweep.tcl'
       - 'research/v296/audit_fixed_topology.py'
+      - 'research/v296/audit_intermediate_rc.py'
       - 'research/v296/run_placed_repair.sh'
       - 'research/v296/audit_placed_repair.py'
       - '.github/workflows/v296-place.yml'
@@ -46,6 +47,7 @@ jobs:
         run: |
           python3 research/v296/audit_placed_repair.py --self-test
           python3 research/v296/audit_fixed_topology.py --self-test
+          python3 research/v296/audit_intermediate_rc.py --self-test
       - name: Run matched three-way placed, repaired and global-routed comparison
         run: |
           set -euo pipefail
