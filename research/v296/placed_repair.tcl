@@ -1,4 +1,5 @@
-# V296 matched placed-and-repaired physical discriminator (not signoff).
+# V296 matched 3.5 ns placed-and-repaired physical discriminator (not signoff).
+# Preregistered clock/RC boundary: research/v296/ROUTED_RC_BOUNDARY_AND_3P5NS_PREREG_20261023.md
 # Nangate45 only; same die/core, pin layers, timing, utilization and RC model.
 # Each variant/scenario is placed from scratch to avoid cross-case contamination.
 foreach k {V296_LIB V296_TECH_LEF V296_CELL_LEF V296_TRACKS V296_NETLIST V296_TOP V296_VARIANT V296_RC_SCALE V296_OUT} {
@@ -12,7 +13,7 @@ link_design $env(V296_TOP)
 initialize_floorplan -die_area {0 0 140 140} -core_area {10 10 130 130} -site FreePDK45_38x28_10R_NP_162NW_34O
 source $env(V296_TRACKS)
 place_pins -hor_layers metal5 -ver_layers metal6
-create_clock -name coreclk -period 2.0 [get_ports clk]
+create_clock -name coreclk -period 3.5 [get_ports clk]
 set_input_delay -clock coreclk 0.15 [all_inputs -no_clocks]
 set_output_delay -clock coreclk 0.15 [all_outputs]
 set_input_transition 0.04 [all_inputs -no_clocks]
@@ -52,14 +53,31 @@ estimate_parasitics -placement
 v296_metrics repaired
 report_checks -path_delay max -fields {slew capacitance fanout} -digits 4
 write_def "$env(V296_OUT).repaired.def"
-# Routed-wire estimates are a stronger test than the previous uniform lumped net load.
-# A routing failure is preserved as a negative/incomplete result, never a physical win.
+# Routed-wire estimates are stronger than uniform lumped net loads.
+# If residual routed electrical violations exist, use exactly one matched
+# repair-and-reroute pass; record the preclosure and postclosure evidence.
 set_routing_layers -signal metal2-metal10
 if {[catch {global_route -guide_file "$env(V296_OUT).guide" -congestion_iterations 30} err]} {
   puts "V296_ROUTE_FAILED $err"
   puts "V296_PHYSICAL_INCOMPLETE"
 } else {
   estimate_parasitics -global_routing
+  v296_metrics routed_preclosure
+  set residual [expr {[sta::max_slew_violation_count] + [sta::max_capacitance_violation_count]}]
+  if {$residual > 0} {
+    puts "V296_ROUTED_ELECTRICAL_CLOSURE_ATTEMPT residual=$residual"
+    if {[catch {
+      repair_design
+      detailed_placement
+      estimate_parasitics -placement
+      global_route -guide_file "$env(V296_OUT).guide" -congestion_iterations 30
+      estimate_parasitics -global_routing
+    } err]} {
+      puts "V296_ROUTE_FAILED closure=$err"
+      puts "V296_PHYSICAL_INCOMPLETE"
+      exit 5
+    }
+  }
   v296_metrics routed
   report_checks -path_delay max -fields {slew capacitance fanout} -digits 4
   write_def "$env(V296_OUT).routed.def"
