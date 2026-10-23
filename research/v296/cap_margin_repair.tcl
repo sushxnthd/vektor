@@ -51,7 +51,7 @@ global_route -guide_file "$env(V296_OUT).first.guide" -congestion_iterations 30
 estimate_parasitics -global_routing
 v296_repair_metrics routed_first
 puts "V296_FIRST_CAP_VIOLATORS_BEGIN"
-report_check_types -max_capacitance -violators -format end -max_count 50 -digits 6
+report_check_types -max_capacitance -violators -format end -digits 6
 puts "V296_FIRST_CAP_VIOLATORS_END"
 write_def "$env(V296_OUT).first.def"
 # Second round ALWAYS runs on every variant and RC, not only violators.
@@ -64,7 +64,7 @@ global_route -guide_file "$env(V296_OUT).final.guide" -congestion_iterations 30
 estimate_parasitics -global_routing
 v296_repair_metrics routed_final
 puts "V296_FINAL_CAP_VIOLATORS_BEGIN"
-report_check_types -max_capacitance -violators -format end -max_count 50 -digits 6
+report_check_types -max_capacitance -violators -format end -digits 6
 puts "V296_FINAL_CAP_VIOLATORS_END"
 report_checks -path_delay max -fields {slew capacitance fanout} -digits 4
 write_def "$env(V296_OUT).final.def"
