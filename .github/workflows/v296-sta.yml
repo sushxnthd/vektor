@@ -25,7 +25,7 @@ jobs:
           (cd build/v296/tools/cudd && autoreconf -fi && ./configure --prefix="$PWD/install" && make -j2 && make install)
           git clone --depth 1 https://github.com/parallaxsw/OpenSTA.git build/v296/tools/opensta
           git -C build/v296/tools/opensta rev-parse HEAD > build/v296/tools/opensta.sha
-          cmake -S build/v296/tools/opensta -B build/v296/tools/opensta-build -DCMAKE_BUILD_TYPE=Release -DCUDD_DIR="$PWD/build/v296/tools/cudd/install"
+          cmake -S build/v296/tools/opensta -B build/v296/tools/opensta-build -DCMAKE_BUILD_TYPE=Release -DCUDD_DIR="$PWD/build/v296/tools/cudd/install" -DFLEX_INCLUDE_DIR=/usr/include
           cmake --build build/v296/tools/opensta-build --parallel 2
           test -x build/v296/tools/opensta-build/sta
       - name: Matched RTL simulation
