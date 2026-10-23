@@ -1,0 +1,126 @@
+{
+  "evidence": "E0 structural counts, not area/timing/power",
+  "physical_coefficients": "unknown",
+  "rows": [
+    {
+      "banks": 4,
+      "issue_slots": 2,
+      "operand_reads": 4,
+      "pairwise_comparator_input_bits": 12,
+      "onehot_decode_output_bits": 16,
+      "structural_ratio": 0.75
+    },
+    {
+      "banks": 4,
+      "issue_slots": 4,
+      "operand_reads": 8,
+      "pairwise_comparator_input_bits": 56,
+      "onehot_decode_output_bits": 32,
+      "structural_ratio": 1.75
+    },
+    {
+      "banks": 4,
+      "issue_slots": 8,
+      "operand_reads": 16,
+      "pairwise_comparator_input_bits": 240,
+      "onehot_decode_output_bits": 64,
+      "structural_ratio": 3.75
+    },
+    {
+      "banks": 8,
+      "issue_slots": 2,
+      "operand_reads": 4,
+      "pairwise_comparator_input_bits": 18,
+      "onehot_decode_output_bits": 32,
+      "structural_ratio": 0.5625
+    },
+    {
+      "banks": 8,
+      "issue_slots": 4,
+      "operand_reads": 8,
+      "pairwise_comparator_input_bits": 84,
+      "onehot_decode_output_bits": 64,
+      "structural_ratio": 1.3125
+    },
+    {
+      "banks": 8,
+      "issue_slots": 8,
+      "operand_reads": 16,
+      "pairwise_comparator_input_bits": 360,
+      "onehot_decode_output_bits": 128,
+      "structural_ratio": 2.8125
+    },
+    {
+      "banks": 16,
+      "issue_slots": 2,
+      "operand_reads": 4,
+      "pairwise_comparator_input_bits": 24,
+      "onehot_decode_output_bits": 64,
+      "structural_ratio": 0.375
+    },
+    {
+      "banks": 16,
+      "issue_slots": 4,
+      "operand_reads": 8,
+      "pairwise_comparator_input_bits": 112,
+      "onehot_decode_output_bits": 128,
+      "structural_ratio": 0.875
+    },
+    {
+      "banks": 16,
+      "issue_slots": 8,
+      "operand_reads": 16,
+      "pairwise_comparator_input_bits": 480,
+      "onehot_decode_output_bits": 256,
+      "structural_ratio": 1.875
+    },
+    {
+      "banks": 32,
+      "issue_slots": 2,
+      "operand_reads": 4,
+      "pairwise_comparator_input_bits": 30,
+      "onehot_decode_output_bits": 128,
+      "structural_ratio": 0.234375
+    },
+    {
+      "banks": 32,
+      "issue_slots": 4,
+      "operand_reads": 8,
+      "pairwise_comparator_input_bits": 140,
+      "onehot_decode_output_bits": 256,
+      "structural_ratio": 0.546875
+    },
+    {
+      "banks": 32,
+      "issue_slots": 8,
+      "operand_reads": 16,
+      "pairwise_comparator_input_bits": 600,
+      "onehot_decode_output_bits": 512,
+      "structural_ratio": 1.171875
+    },
+    {
+      "banks": 64,
+      "issue_slots": 2,
+      "operand_reads": 4,
+      "pairwise_comparator_input_bits": 36,
+      "onehot_decode_output_bits": 256,
+      "structural_ratio": 0.140625
+    },
+    {
+      "banks": 64,
+      "issue_slots": 4,
+      "operand_reads": 8,
+      "pairwise_comparator_input_bits": 168,
+      "onehot_decode_output_bits": 512,
+      "structural_ratio": 0.328125
+    },
+    {
+      "banks": 64,
+      "issue_slots": 8,
+      "operand_reads": 16,
+      "pairwise_comparator_input_bits": 720,
+      "onehot_decode_output_bits": 1024,
+      "structural_ratio": 0.703125
+    }
+  ]
+}
