@@ -7,6 +7,7 @@ on:
       - 'research/v296/slew_forensics.tcl'
       - 'research/v296/audit_slew_forensics.py'
       - 'research/v296/spef_load_summary.py'
+      - 'research/v296/map_slew_to_spef.py'
       - 'research/v296/EXTRACTED_SPEF_LOAD_CONCENTRATION_20261024.md'
       - '.github/workflows/v296-slew-forensics.yml'
   workflow_dispatch:
@@ -81,6 +82,11 @@ jobs:
             > build/v296/forensics/inputs.after.sha256
           cmp build/v296/forensics/inputs.before.sha256 build/v296/forensics/inputs.after.sha256
           python3 research/v296/audit_slew_forensics.py "$root" build/v296/forensics/replay.log
+          python3 research/v296/map_slew_to_spef.py --self-test
+          python3 research/v296/map_slew_to_spef.py \
+            build/v296/forensics/replay.slew.txt \
+            "$root/pairwise.high.detail.spef" \
+            build/v296/forensics/slew_spef_map.json
       - name: Preserve all positive and negative replay evidence
         if: always()
         uses: actions/upload-artifact@v4
