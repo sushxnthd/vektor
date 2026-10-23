@@ -8,13 +8,13 @@ foreach k {V296_LIB V296_TECH_LEF V296_CELL_LEF V296_NETLIST V296_DEF V296_SPEF}
 read_lef $env(V296_TECH_LEF)
 read_lef $env(V296_CELL_LEF)
 read_liberty $env(V296_LIB)
-# Establish the STA/Resizer network from the frozen synthesized netlist, then
-# import the original routed DEF INCREMENTALLY into that chip. A second default
-# read_def creates a duplicate chip (ODB-0251); DEF-only import leaves Resizer
-# uninitialized in this pinned OpenROAD and segfaults at design_area().
-read_verilog $env(V296_NETLIST)
-link_design v296_issue_core
-read_def -incremental $env(V296_DEF)
+# Load the routed DEF as the sole OpenDB chip. The frozen post-route DEF
+# contains repair-added instances absent from the pre-repair synthesized Verilog;
+# read_def -incremental skips those instances, corrupting the SPEF replay.
+# Do not invoke rsz::design_area on a DEF-only import: the pinned Resizer
+# dereferences an uninitialized design pointer. Sum LEF master dimensions
+# directly from OpenDB instead; preserve the original synthesized Verilog hash.
+read_def $env(V296_DEF)
 create_clock -name coreclk -period 3.5 [get_ports clk]
 set_input_delay -clock coreclk 0.15 [all_inputs -no_clocks]
 set_output_delay -clock coreclk 0.15 [all_outputs]
@@ -24,8 +24,17 @@ set_max_transition 0.25 [current_design]
 set_false_path -from [get_ports rst_n]
 if {![check_setup]} { error "Unconstrained timing setup in replay" }
 read_spef $env(V296_SPEF)
+set block [ord::get_db_block]
+set dbu [$block getDbUnitsPerMicron]
+if {$dbu <= 0} { error "Invalid OpenDB units" }
+set area_dbu2 0
+foreach inst [$block getInsts] {
+  set master [$inst getMaster]
+  set area_dbu2 [expr {$area_dbu2 + [$master getWidth] * [$master getHeight]}]
+}
+set area_um2 [expr {$area_dbu2 / double($dbu * $dbu)}]
 puts "V296_FORENSIC_REPLAY_BEGIN"
-puts "V296_FORENSIC_METRIC area_um2=[expr {[rsz::design_area] * 1.0e12}] slew=[sta::max_slew_violation_count] cap=[sta::max_capacitance_violation_count]"
+puts "V296_FORENSIC_METRIC area_um2=$area_um2 slew=[sta::max_slew_violation_count] cap=[sta::max_capacitance_violation_count]"
 puts "V296_FORENSIC_SETUP_BEGIN"
 report_worst_slack -max -digits 6
 puts "V296_FORENSIC_SETUP_END"
