@@ -34,6 +34,8 @@ def evaluate(p):
     tile = number(p["tile_area_control_um2"], "tile_area_control_um2")
     if tile < ac or tile - ac + ap <= 0:
         raise ValueError("invalid tile/block area relationship")
+    tile_after = tile - ac + ap
+    tile_area_ratio = tile_after / tile
     rows = []
     for w in p["workloads"]:
         issue = number(w["issue_waves_per_cycle"], "issue_waves_per_cycle")
@@ -56,7 +58,9 @@ def evaluate(p):
                       "partial_regression")
         rows.append({"id": str(w["id"]), "regime": regime,
                      "baseline_waves_per_s": tc, "pairwise_waves_per_s": tn,
-                     "gain": tn / tc, "ceiling_to_baseline_issue_ratio": ceiling / c})
+                     "gain": tn / tc,
+                     "throughput_per_tile_area_gain": (tn / tc) / tile_area_ratio,
+                     "ceiling_to_baseline_issue_ratio": ceiling / c})
     return {
         "evidence_class": "analytical_projection_requires_measured_fmax_and_external_workloads",
         "not_evidence_of": ["measured_workload_speedup", "post_route_timing", "power", "novelty"],
@@ -64,7 +68,10 @@ def evaluate(p):
         "frequency_ratio": fp / fc,
         "issue_block_area_ratio": ap / ac,
         "tile_area_reduction_fraction": (ac - ap) / tile,
-        "tile_area_after_um2": tile - ac + ap,
+        "issue_controller_tile_area_fraction": ac / tile,
+        "tile_area_ratio": tile_area_ratio,
+        "compute_bound_frequency_ratio_break_even_for_throughput_density": tile_area_ratio,
+        "tile_area_after_um2": tile_after,
         "workloads": rows,
     }
 
@@ -87,9 +94,12 @@ def selftest():
     r = evaluate(p)
     assert [round(x["gain"], 8) for x in r["workloads"]] == [1.0, 1.2, 1.1]
     assert abs(r["tile_area_reduction_fraction"] - 0.02) < 1e-12
+    assert abs(r["compute_bound_frequency_ratio_break_even_for_throughput_density"] - 0.98) < 1e-12
+    assert abs(r["workloads"][0]["throughput_per_tile_area_gain"] - 1 / 0.98) < 1e-12
+    assert abs(r["workloads"][1]["throughput_per_tile_area_gain"] - 1.2 / 0.98) < 1e-12
     p["f_pairwise_ghz"] = 0.8
     assert evaluate(p)["workloads"][1]["gain"] == 0.8
-    print("V296_BOUNDARY_SELFTEST_PASS: four synthetic checks; holdouts sealed")
+    print("V296_BOUNDARY_SELFTEST_PASS: seven synthetic checks; holdouts sealed")
 
 
 if __name__ == "__main__":
