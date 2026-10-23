@@ -6,6 +6,8 @@ on:
       - 'research/v296/HIGH_RC_SLEW_FORENSICS_PREREG_20261024.md'
       - 'research/v296/slew_forensics.tcl'
       - 'research/v296/audit_slew_forensics.py'
+      - 'research/v296/spef_load_summary.py'
+      - 'research/v296/EXTRACTED_SPEF_LOAD_CONCENTRATION_20261024.md'
       - '.github/workflows/v296-slew-forensics.yml'
   workflow_dispatch:
 permissions:
@@ -37,6 +39,13 @@ jobs:
           github-token: ${{ github.token }}
           repository: sushxnthd/vektor
           path: build/v296
+      - name: Independently audit six extracted-SPEF net-load distributions
+        run: |
+          set -euo pipefail
+          python3 research/v296/spef_load_summary.py --self-test
+          python3 research/v296/spef_load_summary.py \
+            build/v296/v296-detailed-route-extracted-rc/detail \
+            build/v296/forensics/spef_load_summary.json
       - name: Rehydrate original pinned Nangate45 models
         run: |
           set -euo pipefail
