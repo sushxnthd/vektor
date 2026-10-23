@@ -13,6 +13,7 @@ puts "V296_DETAIL_DRC_COUNT $n_drc"
 puts "V296_DETAIL_IS_ROUTED [expr {$routed ? 1 : 0}]"
 if {!$routed} { error "Unrouted nets after detailed route" }
 # Revision-pinned Nangate45 research calibration, not a foundry signoff deck.
+define_process_corner -ext_model_index 0 X
 extract_parasitics -ext_model_file $env(V296_RCX_RULES)
 set factor $env(V296_DETAIL_RC_MULTIPLIER)
 if {$factor != 1.0} {
