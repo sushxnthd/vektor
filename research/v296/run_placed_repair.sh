@@ -34,5 +34,6 @@ for variant in original optimized pairwise; do
   done
 done
 python3 research/v296/audit_fixed_topology.py "$root" || fixed_status=$?
+python3 research/v296/audit_intermediate_rc.py "$root" || interpolation_status=$?
 python3 research/v296/audit_placed_repair.py "$root" || physical_status=$?
-if [[ ${fixed_status:-0} -ne 0 || ${physical_status:-0} -ne 0 ]]; then exit 3; fi
+if [[ ${fixed_status:-0} -ne 0 || ${physical_status:-0} -ne 0 || ${interpolation_status:-0} -ne 0 ]]; then exit 3; fi
