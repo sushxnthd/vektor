@@ -1,0 +1,48 @@
+name: V296 pairwise RF-bank admission physical discriminator
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+  workflow_dispatch:
+jobs:
+  discriminator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install public tools and Nangate45 library
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys curl
+          mkdir -p build/v296
+          curl -fL --retry 3 --max-time 180 \
+            https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib \
+            -o build/v296/nangate.lib
+          sha256sum build/v296/nangate.lib > build/v296/lib.sha256
+      - name: Three-way RTL equivalence
+        run: |
+          set -o pipefail
+          iverilog -g2012 -s tb_v296 -o build/v296/tb \
+            rtl/vtile/steal_warp_scheduler.sv rtl/vtile/rf_bank_arbiter.sv \
+            rtl/vtile/issue_control.sv research/v295/v295_issue_core.sv \
+            research/v296/v296_issue_core.sv research/v296/tb_v296.sv
+          vvp build/v296/tb | tee build/v296/rtl.log
+      - name: Nangate45 map original control
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/steal_warp_scheduler.sv rtl/vtile/rf_bank_arbiter.sv rtl/vtile/issue_control.sv; synth -top vektor_issue_control -flatten; dfflibmap -liberty build/v296/nangate.lib; abc -liberty build/v296/nangate.lib; clean; stat -liberty build/v296/nangate.lib' | tee build/v296/original.log
+      - name: Nangate45 map optimized control
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/steal_warp_scheduler.sv research/v295/v295_issue_core.sv; hierarchy -top v295_issue_core -chparam PREDECODE 0; synth -top v295_issue_core -flatten; dfflibmap -liberty build/v296/nangate.lib; abc -liberty build/v296/nangate.lib; clean; stat -liberty build/v296/nangate.lib' | tee build/v296/optimized.log
+      - name: Nangate45 map V296 pairwise comparator
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/steal_warp_scheduler.sv research/v296/v296_issue_core.sv; synth -top v296_issue_core -flatten; dfflibmap -liberty build/v296/nangate.lib; abc -liberty build/v296/nangate.lib; clean; stat -liberty build/v296/nangate.lib' | tee build/v296/pairwise.log
+      - name: Matched characterized area gate
+        run: python3 research/v296/compare_area.py build/v296/original.log build/v296/optimized.log build/v296/pairwise.log
+      - name: Preserve raw results including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-matched-nangate45
+          path: build/v296/
