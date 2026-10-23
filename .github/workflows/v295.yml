@@ -1,0 +1,47 @@
+name: V295 predecode RTL and mapped-area discriminator
+on:
+  push:
+    branches: [research/v295-parallel-bank-predecode]
+  workflow_dispatch:
+jobs:
+  discriminator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install public tools and Nangate45 library
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys curl
+          mkdir -p build/v295
+          curl -fL --retry 3 --max-time 180 \
+            https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib \
+            -o build/v295/nangate.lib
+          sha256sum build/v295/nangate.lib > build/v295/lib.sha256
+      - name: Functional RTL differential check
+        run: |
+          set -o pipefail
+          iverilog -g2012 -s tb_v295 -o build/v295/tb \
+            rtl/vtile/steal_warp_scheduler.sv rtl/vtile/rf_bank_arbiter.sv \
+            rtl/vtile/issue_control.sv research/v295/v295_issue_core.sv research/v295/tb_v295.sv
+          vvp build/v295/tb | tee build/v295/rtl.log
+      - name: Nangate45 map original integrated control
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/steal_warp_scheduler.sv rtl/vtile/rf_bank_arbiter.sv rtl/vtile/issue_control.sv; synth -top vektor_issue_control -flatten; dfflibmap -liberty build/v295/nangate.lib; abc -liberty build/v295/nangate.lib; clean; stat -liberty build/v295/nangate.lib' | tee build/v295/original.log
+      - name: Nangate45 map optimized serial control
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/steal_warp_scheduler.sv research/v295/v295_issue_core.sv; hierarchy -top v295_issue_core -chparam PREDECODE 0; synth -top v295_issue_core -flatten; dfflibmap -liberty build/v295/nangate.lib; abc -liberty build/v295/nangate.lib; clean; stat -liberty build/v295/nangate.lib' | tee build/v295/optimized.log
+      - name: Nangate45 map V295 parallel predecode
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/steal_warp_scheduler.sv research/v295/v295_issue_core.sv; hierarchy -top v295_issue_core -chparam PREDECODE 1; synth -top v295_issue_core -flatten; dfflibmap -liberty build/v295/nangate.lib; abc -liberty build/v295/nangate.lib; clean; stat -liberty build/v295/nangate.lib' | tee build/v295/parallel.log
+      - name: Equal-area physical discriminator
+        run: python3 research/v295/compare_area.py build/v295/original.log build/v295/optimized.log build/v295/parallel.log
+      - name: Preserve negative results and raw logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v295-characterized-area
+          path: build/v295/
