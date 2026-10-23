@@ -104,7 +104,7 @@ def audit(root):
 
 def self_test():
     sample = (
-        "\n".join(REQUIRED) + "\n"
+        "\n".join(x for x in REQUIRED if x not in ("V296_FOURTH_HOLD_BEGIN", "V296_FOURTH_HOLD_END")) + "\n"
         + "V296_FOURTH_DRC_COUNT 0\n"
         + "V296_FOURTH_HOLD_BEGIN\nworst slack min 0.12\nV296_FOURTH_HOLD_END\n"
         + "V296_STAGE_BEGIN extracted_fourth\n"
