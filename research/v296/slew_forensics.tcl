@@ -8,10 +8,13 @@ foreach k {V296_LIB V296_TECH_LEF V296_CELL_LEF V296_NETLIST V296_DEF V296_SPEF}
 read_lef $env(V296_TECH_LEF)
 read_lef $env(V296_CELL_LEF)
 read_liberty $env(V296_LIB)
-# DEF contains the placed/routed physical netlist; linking Verilog first creates a
-# second OpenDB chip and makes read_def fail (ODB-0251). Keep the Verilog hash as
-# provenance, but use the original DEF as the single authoritative physical DB.
-read_def $env(V296_DEF)
+# Establish the STA/Resizer network from the frozen synthesized netlist, then
+# import the original routed DEF INCREMENTALLY into that chip. A second default
+# read_def creates a duplicate chip (ODB-0251); DEF-only import leaves Resizer
+# uninitialized in this pinned OpenROAD and segfaults at design_area().
+read_verilog $env(V296_NETLIST)
+link_design v296_issue_core
+read_def -incremental $env(V296_DEF)
 create_clock -name coreclk -period 3.5 [get_ports clk]
 set_input_delay -clock coreclk 0.15 [all_inputs -no_clocks]
 set_output_delay -clock coreclk 0.15 [all_outputs]
