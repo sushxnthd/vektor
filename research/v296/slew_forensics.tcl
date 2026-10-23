@@ -8,8 +8,9 @@ foreach k {V296_LIB V296_TECH_LEF V296_CELL_LEF V296_NETLIST V296_DEF V296_SPEF}
 read_lef $env(V296_TECH_LEF)
 read_lef $env(V296_CELL_LEF)
 read_liberty $env(V296_LIB)
-read_verilog $env(V296_NETLIST)
-link_design v296_issue_core
+# DEF contains the placed/routed physical netlist; linking Verilog first creates a
+# second OpenDB chip and makes read_def fail (ODB-0251). Keep the Verilog hash as
+# provenance, but use the original DEF as the single authoritative physical DB.
 read_def $env(V296_DEF)
 create_clock -name coreclk -period 3.5 [get_ports clk]
 set_input_delay -clock coreclk 0.15 [all_inputs -no_clocks]
