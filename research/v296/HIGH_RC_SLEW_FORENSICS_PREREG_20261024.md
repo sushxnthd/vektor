@@ -20,3 +20,9 @@
 - If endpoint attribution succeeds, freeze a **matched** post-route electrical repair with independent control optimization and a common area ceiling *before* seeing its PPA. V296-only high-RC repair has at most **259.961874 um2** extra area to preserve >=10% saving against the **unchanged** optimized control; this is conditional, not an allowance to ignore equal-resource controls.
 - Retire V296 if a fully clean repaired candidate loses the matched area/timing advantage or a best equal-resource control eliminates it.
 - No workload holdouts opened; no tile frequency, GPU throughput, power, signoff, or RTX-5090 claim.
+
+
+## Rehydration compatibility amendments (2026-10-24, before any successful replay)
+- Initial run **40018003482** stopped because the cross-run artifact is unpacked under a named directory; the runner path was corrected without modifying physical inputs or acceptance thresholds.
+- Second run **40018173410** passed the audit self-test and artifact download but stopped with `ODB-0251 Chip already exists`: `link_design` creates a chip before `read_def` tries to create the routed chip. The corrected replay loads the **routed DEF alone as the authoritative OpenDB physical netlist**, while still requiring and hashing the original synthesized Verilog for provenance. The Liberty and extracted SPEF are unchanged. This follows OpenROAD's documented DEF import path and does not alter any timing constraint, expected metric, or frozen falsifier.
+- The two interrupted runs are **tool/replay failures**, not evidence of slew closure. No endpoint result is claimed until the corrected replay and independent audit complete.
