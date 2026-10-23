@@ -14,6 +14,7 @@ initialize_floorplan -die_area {0 0 140 140} -core_area {10 10 130 130} -site Fr
 source $env(V296_TRACKS)
 place_pins -hor_layers metal5 -ver_layers metal6
 create_clock -name coreclk -period 3.5 [get_ports clk]
+puts "V296_CLOCK_PERIOD_NS 3.5"
 set_input_delay -clock coreclk 0.15 [all_inputs -no_clocks]
 set_output_delay -clock coreclk 0.15 [all_outputs]
 set_input_transition 0.04 [all_inputs -no_clocks]
