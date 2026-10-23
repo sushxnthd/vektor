@@ -51,7 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 research/v296/audit_slew_forensics.py --self-test
-          root=build/v296/detail
+          root=build/v296/v296-detailed-route-extracted-rc/detail
           test -s "$root/pairwise.v"
           test -s "$root/pairwise.high.detail.def"
           test -s "$root/pairwise.high.detail.spef"
