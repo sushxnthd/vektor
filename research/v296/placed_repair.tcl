@@ -33,7 +33,7 @@ set_wire_rc -signal -layer metal3
 set_wire_rc -clock -layer metal5
 proc v296_metrics {stage} {
   puts "V296_STAGE_BEGIN $stage"
-  puts "V296_METRIC stage=$stage area_um2=[rsz::design_area] slew=[sta::max_slew_violation_count] cap=[sta::max_capacitance_violation_count]"
+  puts "V296_METRIC stage=$stage area_um2=[expr {[rsz::design_area] * 1.0e12}] slew=[sta::max_slew_violation_count] cap=[sta::max_capacitance_violation_count]"
   report_worst_slack -max -digits 6
   report_design_area
   puts "V296_STAGE_END $stage"
@@ -50,7 +50,7 @@ repair_timing -setup
 detailed_placement
 estimate_parasitics -placement
 v296_metrics repaired
-report_checks -path_delay max -group_path_count 3 -fields {slew capacitance fanout} -digits 4
+report_checks -path_delay max -fields {slew capacitance fanout} -digits 4
 write_def "$env(V296_OUT).repaired.def"
 # Routed-wire estimates are a stronger test than the previous uniform lumped net load.
 # A routing failure is preserved as a negative/incomplete result, never a physical win.
@@ -61,7 +61,7 @@ if {[catch {global_route -guide_file "$env(V296_OUT).guide" -congestion_iteratio
 } else {
   estimate_parasitics -global_routing
   v296_metrics routed
-  report_checks -path_delay max -group_path_count 3 -fields {slew capacitance fanout} -digits 4
+  report_checks -path_delay max -fields {slew capacitance fanout} -digits 4
   write_def "$env(V296_OUT).routed.def"
   puts "V296_PHYSICAL_DONE"
 }
