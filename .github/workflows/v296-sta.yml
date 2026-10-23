@@ -13,7 +13,8 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y yosys iverilog curl git build-essential cmake swig bison flex tcl-dev libeigen3-dev zlib1g-dev libfmt-dev autoconf automake libtool
+          sudo apt-get install -y yosys iverilog curl git build-essential cmake swig bison flex libfl-dev tcl-dev libeigen3-dev zlib1g-dev libfmt-dev autoconf automake libtool
+          test -f /usr/include/FlexLexer.h
           mkdir -p build/v296/tools
           curl -fL --retry 3 --max-time 180 https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib -o build/v296/nangate.lib
           sha256sum build/v296/nangate.lib > build/v296/nangate.sha256
