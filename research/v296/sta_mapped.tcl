@@ -18,10 +18,20 @@ set_max_transition 0.25 [current_design]
 puts "V296_CASE variant=$env(V296_VARIANT) cap_pf=$env(V296_WIRE_CAP) resistance_kohm=$env(V296_WIRE_R)"
 report_units
 if {![check_setup]} { error "Unconstrained or malformed STA setup" }
-puts "V296_WORST_SLACK_START"
+# Record full-design worst slack, including asynchronous reset recovery.
+# This is NOT the issue-path performance metric.
+puts "V296_ALL_PATH_WORST_SLACK_START"
 report_worst_slack -max -digits 6
-puts "V296_WORST_SLACK_END"
+puts "V296_ALL_PATH_WORST_SLACK_END"
+# Reset recovery is a separate correctness constraint. Exclude reset paths only
+# from the issue-data critical-path discriminator; retain all-path evidence above.
+set_false_path -from [get_ports rst_n]
+puts "V296_DATA_WORST_SLACK_START"
+report_worst_slack -max -digits 6
+puts "V296_DATA_WORST_SLACK_END"
+puts "V296_DATA_PATHS_START"
 report_checks -path_delay max -group_path_count 3 -fields {slew capacitance fanout} -digits 4
+puts "V296_DATA_PATHS_END"
 puts "V296_ELECTRICAL_VIOLATORS_START"
 report_check_types -max_slew -max_capacitance -violators -max_count 10000
 puts "V296_ELECTRICAL_VIOLATORS_END"
