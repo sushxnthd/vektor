@@ -22,7 +22,7 @@ At RC=0.5, 1, 2, increasing output load from 0.0025 to 0.010 pF changed V296 sla
 ## Independent inference and negative results
 1. **FAIL**: The fixed-topology gate requires all 27 cases across all three designs to be electrically clean and meet the clock. At RC=2, V296 and the optimized control each have three max-capacitance violations; original has five and negative setup slack. This is an *electrical falsification*, not a software exception.
 2. V296 is smaller and has better modeled setup slack than both controls in every tested case, and **has no candidate-only electrical failure**. These facts are insufficient for physical closure.
-3. At 3.5 ns, the issue decisions and issue/cycle are equivalent. **The demonstrated same-clock throughput gain is 0%.** The timing lead is a margin, not a measured frequency advantage. The controller-area reduction is not a GPU-area saving.
+3. At the shared 3.5 ns clock, issue decisions are equivalent. **The analytical same-clock throughput-gain prediction is 0% under equal issue/cycle and unchanged downstream constraints; no workload-level throughput was measured.** The timing lead is a margin, not a measured frequency advantage. The controller-area reduction is not a GPU-area saving.
 4. The earlier adaptively repaired low-RC experiment also failed (V296 one cap violation; original setup failure). Fixed-topology and adaptive-repair results must not be pooled to claim a single RC law.
 5. There is no extracted interconnect, power evidence, integrated tile result, unseen workload transfer, or independent signoff. V296 remains provisional, not validated.
 
