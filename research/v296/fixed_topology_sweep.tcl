@@ -23,3 +23,20 @@ foreach {rc_label rc} {05 0.5 10 1.0 20 2.0} {
   }
 }
 puts "V296_FIXED_END"
+
+# Prospective interpolation test: numerical forecasts and 40 ps tolerance were
+# frozen in FIXED_TOPOLOGY_SENSITIVITY_FALSIFICATION_20261023.md BEFORE these runs.
+# This is NOT a workload holdout and cannot overturn the failed electrical gate.
+puts "V296_INTERMEDIATE_BEGIN"
+set_load 0.005 [all_outputs]
+foreach {label rc} {125 1.25 150 1.50 175 1.75} {
+  set_layer_rc -layer metal3 -resistance [expr {3.57147e-03 * $rc}] -capacitance [expr {1.03981e-01 * $rc}]
+  set_layer_rc -layer metal5 -resistance [expr {1.50000e-03 * $rc}] -capacitance [expr {1.09256e-01 * $rc}]
+  set_wire_rc -signal -layer metal3
+  set_wire_rc -clock -layer metal5
+  estimate_parasitics -global_routing
+  set stage "intermediate_rc$label"
+  v296_metrics $stage
+  write_def "$env(V296_OUT).$stage.def"
+}
+puts "V296_INTERMEDIATE_END"
