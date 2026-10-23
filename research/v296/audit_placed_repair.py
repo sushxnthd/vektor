@@ -68,7 +68,8 @@ def audit(root):
     result = {
         "evidence_class": "matched_openroad_placement_repair_global_route_estimated_RC_not_signoff",
         "holdouts": "SEALED",
-        "clock_period_ns": PERIOD_NS,\n        "protocol": "research/v296/ROUTED_RC_BOUNDARY_AND_3P5NS_PREREG_20261023.md",
+        "clock_period_ns": PERIOD_NS,
+        "protocol": "research/v296/ROUTED_RC_BOUNDARY_AND_3P5NS_PREREG_20261023.md",
         "same_die_core_and_constraints": True,
         "rc_multipliers": {"low": 0.5, "nominal": 1.0, "high": 2.0},
         "rows": rows,
@@ -77,7 +78,7 @@ def audit(root):
         "nominal_postrepair_area_saving_um2": repaired_area_saving,
         "nominal_area_saving_survives": repaired_area_saving > 0,
         "all_cases_electrically_clean": clean,
-        "all_cases_meet_2ns": meets_clock,
+        "all_cases_meet_3p5ns": meets_clock,
         "all_cases_pairwise_faster_than_both_controls": faster,
         "all_cases_pairwise_smaller_than_both_controls": area_advantage,
         "decision": ("PROVISIONAL_POST_GLOBAL_ROUTE_PASS" if
