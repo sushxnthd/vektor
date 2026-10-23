@@ -21,14 +21,18 @@ for variant in original optimized pairwise; do
   test -s "$root/$variant.v"
   for scenario in low nominal high; do
     case "$scenario" in low) rc=0.5 ;; nominal) rc=1.0 ;; high) rc=2.0 ;; esac
+    script=research/v296/placed_repair.tcl
+    if [[ "$scenario" == nominal ]]; then script=research/v296/fixed_topology_sweep.tcl; fi
     V296_LIB="$lib" V296_TECH_LEF="$lef/NangateOpenCellLibrary.tech.lef" \
       V296_CELL_LEF="$lef/NangateOpenCellLibrary.macro.mod.lef" \
       V296_TRACKS="$lef/make_tracks.tcl" V296_NETLIST="$root/$variant.v" \
       V296_TOP="$top" V296_VARIANT="$variant" V296_RC_SCALE="$rc" \
       V296_OUT="$root/$variant.$scenario" \
-      "$V296_OPENROAD_BIN" -exit research/v296/placed_repair.tcl \
+      "$V296_OPENROAD_BIN" -exit "$script" \
       > "$root/$variant.$scenario.log" 2>&1
     grep -q 'V296_PHYSICAL_DONE' "$root/$variant.$scenario.log" || { echo "Incomplete physical gate: $variant/$scenario"; exit 4; }
   done
 done
-python3 research/v296/audit_placed_repair.py "$root"
+python3 research/v296/audit_fixed_topology.py "$root" || fixed_status=$?
+python3 research/v296/audit_placed_repair.py "$root" || physical_status=$?
+if [[ ${fixed_status:-0} -ne 0 || ${physical_status:-0} -ne 0 ]]; then exit 3; fi
