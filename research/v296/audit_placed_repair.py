@@ -16,7 +16,9 @@ STAGES = ("placed", "repaired", "routed_preclosure", "routed")
 PERIOD_NS = 3.5
 
 def parse_stage(log, stage):
-    match = re.search(r"V296_STAGE_BEGIN " + stage + r"\s*(.*?)V296_STAGE_END " + stage, log, re.S)
+    match = re.search(r"(?m)^V296_STAGE_BEGIN " + re.escape(stage) +
+                      r"\r?\n(.*?)^V296_STAGE_END " + re.escape(stage) +
+                      r"(?:\r?\n|\Z)", log, re.S | re.M)
     if not match:
         raise ValueError("missing stage: " + stage)
     block = match.group(1)
@@ -98,6 +100,11 @@ def self_test():
     assert row["area_um2"] == 3100.125
     assert row["setup_slack_ns_at_clock"] == 0.123456
     assert row["max_slew_violations"] == 0
+    # A prefix collision must not parse routed_preclosure as routed.
+    pre = sample.replace("routed", "routed_preclosure").replace("3100.125", "9999.0")
+    row2 = parse_stage(pre + sample, "routed")
+    assert row2["area_um2"] == 3100.125
+    assert parse_stage(pre + sample, "routed_preclosure")["area_um2"] == 9999.0
     for broken in (sample.replace("slew=0", "slew=abc"), sample.replace("V296_STAGE_END", "BROKEN")):
         try:
             parse_stage(broken, "routed")
