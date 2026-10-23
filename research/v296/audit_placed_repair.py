@@ -40,7 +40,9 @@ def audit(root):
         for variant in VARIANTS:
             path = root / f"{variant}.{scenario}.log"
             log = path.read_text()
-            if "V296_CLOCK_PERIOD_NS 3.5" not in log:\n                raise ValueError("clock period does not match frozen 3.5 ns protocol: " + str(path))\n            if "V296_PHYSICAL_DONE" not in log or "V296_ROUTE_FAILED" in log:
+            if "V296_CLOCK_PERIOD_NS 3.5" not in log:
+                raise ValueError("clock period does not match frozen 3.5 ns protocol: " + str(path))
+            if "V296_PHYSICAL_DONE" not in log or "V296_ROUTE_FAILED" in log:
                 raise ValueError("global routing incomplete: " + str(path))
             rows[scenario][variant] = {s: parse_stage(log, s) for s in STAGES}
     nominal = rows["nominal"]
