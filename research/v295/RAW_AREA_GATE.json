@@ -1,0 +1,18 @@
+{
+  "kernel": "V295",
+  "date": "2026-10-23",
+  "run_id": 39891526821,
+  "artifact_id": 12474609537,
+  "commit": "33b1815c337e937946fb2b9828bf78ed4cbdc79a",
+  "rtl_randomized_cycles": 2048,
+  "rtl_status": "PASS",
+  "original_area_um2": 4046.126,
+  "optimized_control_area_um2": 3780.126,
+  "parallel_area_um2": 7462.098,
+  "ratio": 1.9740341988600378,
+  "area_gate": "FAIL",
+  "electrical_checks": "NOT_RUN",
+  "sta": "NOT_RUN",
+  "unseen_workloads": "SEALED",
+  "decision": "RETIRE"
+}
