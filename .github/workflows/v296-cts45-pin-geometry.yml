@@ -1,0 +1,95 @@
+name: V296 matched I/O-boundary post-CTS physical stress
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/CTS45_PIN_GEOMETRY_STRESS_PREREG_20261025.md'
+      - 'research/v296/pin_geometry.py'
+      - '.github/workflows/v296-cts45-pin-geometry.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pin-cts:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        edge: [top, bottom]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned synthesis and physical tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform
+      - name: Download pinned Nangate45 and OpenRCX technology
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Independent audit and generator adversarial self-tests
+        run: python3 research/v296/pin_geometry.py --self-test
+      - name: Run both matched physical contestants
+        env:
+          V296_PIN_EDGE: ${{ matrix.edge }}
+        run: |
+          set -euo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          python3 research/v296/pin_geometry.py --edge "$V296_PIN_EDGE"
+          for variant in pairwise serial_onehot; do
+            echo "V296_PIN_EDGE_REPLICATION_START edge=$V296_PIN_EDGE variant=$variant"
+            V296_CTS45_VARIANT="$variant" bash "build/v296/cts45_pin_stress/$V296_PIN_EDGE/run_cts45_pin.sh"
+            echo "V296_PIN_EDGE_REPLICATION_DONE edge=$V296_PIN_EDGE variant=$variant"
+          done
+      - name: Preserve positive, negative and incomplete physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-cts45-pin-${{ matrix.edge }}
+          path: build/v296/cts45_pin_stress/${{ matrix.edge }}/
+          if-no-files-found: warn
+  independent-aggregate:
+    needs: pin-cts
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download both preregistered seed archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v296-cts45-pin-*
+          path: build/v296/cts45_pin_stress/artifacts/
+          merge-multiple: false
+      - name: Restore separate seed evidence directories
+        run: |
+          set -euo pipefail
+          for edge in top bottom; do
+            mkdir -p "build/v296/cts45_pin_stress/$edge"
+            src="build/v296/cts45_pin_stress/artifacts/v296-cts45-pin-$edge"
+            if test -d "$src"; then cp -a "$src/." "build/v296/cts45_pin_stress/$edge/"; fi
+          done
+      - name: Independent fail-closed all-geometry comparison
+        run: |
+          python3 research/v296/pin_geometry.py --self-test
+          python3 research/v296/pin_geometry.py --aggregate build/v296/cts45_pin_stress
+      - name: Preserve aggregate falsification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-cts45-pin-independent-audit
+          path: build/v296/cts45_pin_stress/aggregate.pin_stress.json
+          if-no-files-found: warn
