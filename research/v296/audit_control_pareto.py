@@ -147,7 +147,7 @@ def audit(root):
 
 def self_test():
     variant = "serial_onehot"
-    markers = list(REQUIRED) + [
+    markers = [m for m in REQUIRED if m not in ("V296_PARETO_HOLD_BEGIN", "V296_PARETO_HOLD_END")] + [
         "V296_PARETO_VARIANT serial_onehot",
         "V296_PARETO_EXTRA_REPAIR 1",
         "V296_PARETO_CONTROL_FIFTH_DONE",
