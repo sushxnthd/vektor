@@ -22,7 +22,7 @@ for variant in original serial_onehot parallel_onehot pairwise; do
     V296_CELL_LEF="$lef/NangateOpenCellLibrary.macro.mod.lef" \
     V296_TRACKS="$lef/make_tracks.tcl" V296_RCX_RULES="$lef/rcx_patterns.rules" \
     V296_NETLIST="$root/$variant.v" V296_TOP="$top" V296_RC_SCALE=2.0 \
-    V296_DETAIL_RC_MULTIPLIER=2.0 V296_VARIANT="$variant" V296_CONTROL_EXTRA="$extra" \
+    V296_DETAIL_RC_MULTIPLIER=2.0 V296_PLACE_DENSITY=0.65 V296_VARIANT="$variant" V296_CONTROL_EXTRA="$extra" \
     V296_OUT="$root/$variant.high" \
     "$V296_OPENROAD_BIN" -exit research/v296/control_advantaged_pareto.tcl \
     > "$root/$variant.high.log" 2>&1 || {
