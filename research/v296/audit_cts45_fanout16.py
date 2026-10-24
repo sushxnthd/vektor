@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent audit for the preregistered V296 symmetric fanout-16-slew intervention.
+"""Independent audit for the preregistered V296 symmetric fanout-16 intervention.
 
 Reuses the already-tested CTS physical evidence parser, then independently
 resolves every extracted slew violator to its SPEF net. A control failure
@@ -21,9 +21,9 @@ def policy_marker(log):
     if lines.count(POLICY) != 1:
         raise ValueError("missing, duplicated, or changed frozen fanout-16 intervention")
     if any(x.startswith("V296_CTS45_FANOUT_POLICY ") and x != POLICY for x in lines):
-        raise ValueError("ambiguous slew policy marker")
+        raise ValueError("ambiguous fanout policy marker")
     if lines.index(POLICY) < lines.index("V296_CTS45_CTS_END"):
-        raise ValueError("slew intervention occurred before CTS")
+        raise ValueError("fanout intervention occurred before CTS")
     if lines.index(POLICY) > lines.index("V296_CTS45_DETAIL_BEGIN"):
         raise ValueError("slew intervention occurred after detailed routing")
 
@@ -92,7 +92,7 @@ def self_test():
               "\nV296_CTS45_DETAIL_BEGIN\n")
     policy_marker(sample)
     for changed in (
-        sample.replace(" 40", " 10"),
+        sample.replace(" 16", " 10"),
         sample.replace(POLICY, POLICY + "\n" + POLICY),
         sample.replace("V296_CTS45_CTS_END\n", ""),
         sample.replace("V296_CTS45_DETAIL_BEGIN\n", ""),
