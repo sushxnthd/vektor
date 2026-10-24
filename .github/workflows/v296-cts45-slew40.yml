@@ -8,7 +8,7 @@ on:
       - 'research/v296/run_cts45_slew40.sh'
       - 'research/v296/audit_cts45_slew40.py'
       - 'research/v296/cts45_slew_net_forensics.py'
-      - '.github/workflows/v296-cts45-slew40-slew40.yml'
+      - '.github/workflows/v296-cts45-slew40.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -32,7 +32,7 @@ jobs:
             https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
             -o /tmp/openroad-v296.deb
           sudo apt-get install -y /tmp/openroad-v296.deb
-          mkdir -p build/v296/platform build/v296/cts45
+          mkdir -p build/v296/platform build/v296/cts45_slew40
           sha256sum /tmp/openroad-v296.deb > build/v296/cts45_slew40/openroad.deb.sha256
       - name: Download pinned Nangate45 and OpenRCX technology
         run: |
@@ -76,7 +76,7 @@ jobs:
       - name: Independent fail-closed propagated-clock comparison
         run: |
           python3 research/v296/audit_cts45_slew40.py --self-test
-          python3 research/v296/audit_cts45_slew40.py --aggregate build/v296/cts45
+          python3 research/v296/audit_cts45_slew40.py --aggregate build/v296/cts45_slew40
       - name: Preserve aggregate negative result
         if: always()
         uses: actions/upload-artifact@v4
