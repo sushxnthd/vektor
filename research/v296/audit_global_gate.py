@@ -13,19 +13,19 @@ import sys
 VARIANTS = ("pairwise", "serial_onehot", "parallel_onehot", "original")
 AREA_CEILING = 7400.0
 STAGES = ("pareto_fourth_routed", "pareto_control_fifth_routed", "pareto_global_final")
-NUM = r"([-+]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][-+]?\\d+)?)"
+NUM = r"([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"
 
 
 def stage_metrics(log, stage):
     pattern = (r"(?ms)^V296_STAGE_BEGIN " + re.escape(stage) +
-               r"\\r?\\n(.*?)^V296_STAGE_END " + re.escape(stage) + r"\\r?$")
+               r"\r?\n(.*?)^V296_STAGE_END " + re.escape(stage) + r"\r?$")
     match = re.search(pattern, log)
     if not match:
         return None
     block = match.group(1)
     area = re.search(r"(?m)^V296_METRIC stage=" + re.escape(stage) +
-                     r" area_um2=" + NUM + r" slew=(\\d+) cap=(\\d+)\\r?$", block)
-    slack = re.search(r"(?mi)^worst slack\\s+max\\s+" + NUM + r"\\s*$", block)
+                     r" area_um2=" + NUM + r" slew=(\d+) cap=(\d+)\r?$", block)
+    slack = re.search(r"(?mi)^worst slack\s+max\s+" + NUM + r"\s*$", block)
     if not area or not slack:
         raise ValueError(f"{stage}: malformed area/electrical/setup evidence")
     vals = {
@@ -86,16 +86,16 @@ def parse_log(log, variant, has_def):
 
 def self_test():
     def marker(stage, area, slack):
-        return (f"V296_STAGE_BEGIN {stage}\\n"
-                f"V296_METRIC stage={stage} area_um2={area} slew=0 cap=0\\n"
-                f"worst slack max {slack}\\nV296_STAGE_END {stage}\\n")
-    log = ("V296_PARETO_VARIANT pairwise\\nV296_PARETO_EXTRA_REPAIR 0\\n"
-           "V296_CLOCK_PERIOD_NS 3.5\\nV296_PLACE_DENSITY 0.65\\n"
-           "V296_PARETO_FOURTH_DONE\\n" +
+        return (f"V296_STAGE_BEGIN {stage}\n"
+                f"V296_METRIC stage={stage} area_um2={area} slew=0 cap=0\n"
+                f"worst slack max {slack}\nV296_STAGE_END {stage}\n")
+    log = ("V296_PARETO_VARIANT pairwise\nV296_PARETO_EXTRA_REPAIR 0\n"
+           "V296_CLOCK_PERIOD_NS 3.5\nV296_PLACE_DENSITY 0.65\n"
+           "V296_PARETO_FOURTH_DONE\n" +
            marker("pareto_fourth_routed", 5990, 0.35) +
-           "V296_GLOBAL_GATE_ONLY 1\\n" +
+           "V296_GLOBAL_GATE_ONLY 1\n" +
            marker("pareto_global_final", 5990, 0.35) +
-           "V296_GLOBAL_GATE_ONLY_COMPLETE_NOT_SIGNOFF\\n")
+           "V296_GLOBAL_GATE_ONLY_COMPLETE_NOT_SIGNOFF\n")
     row = parse_log(log, "pairwise", True)
     assert row["decision"] == "GLOBAL_ONLY_AREA_WITHIN_CEILING_NOT_SIGNOFF"
     assert abs(row["stages"]["pareto_global_final"]["area_headroom_um2"] - 1410) < 1e-9
@@ -126,7 +126,7 @@ def main(root, variant):
         result = {"decision": "GLOBAL_GATE_INCOMPLETE_NOT_SIGNOFF",
                   "error": str(exc), "variant": variant,
                   "workload_holdouts": "SEALED"}
-    result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\\n")
+    result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps(result, indent=2, sort_keys=True))
     if not result.get("complete_global_route_record"):
         raise SystemExit(3)
