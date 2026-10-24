@@ -44,6 +44,16 @@ if {$env(V296_CONTROL_EXTRA) == 1} {
   v296_repair_metrics pareto_control_fifth_routed
   puts "V296_PARETO_CONTROL_FIFTH_DONE"
 }
+# Explicitly separate a cheap, matched global-route feasibility tier from
+# expensive detailed routing. Default remains the original full physical test.
+# Global-only results are NEVER a detailed-route or extracted-RC pass.
+if {[info exists env(V296_GLOBAL_GATE_ONLY)] && $env(V296_GLOBAL_GATE_ONLY) eq "1"} {
+  puts "V296_GLOBAL_GATE_ONLY 1"
+  v296_repair_metrics pareto_global_final
+  write_def "$env(V296_OUT).global.def"
+  puts "V296_GLOBAL_GATE_ONLY_COMPLETE_NOT_SIGNOFF"
+  exit 0
+}
 puts "V296_PARETO_DETAIL_BEGIN"
 detailed_route -output_drc "$env(V296_OUT).pareto.drc.rpt" -output_maze "$env(V296_OUT).pareto.maze.log"
 puts "V296_PARETO_DRC_COUNT [detailed_route_num_drvs]"
