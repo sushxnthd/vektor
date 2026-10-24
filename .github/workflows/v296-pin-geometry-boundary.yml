@@ -1,0 +1,26 @@
+name: V296 pin-geometry conditional tile boundary audit
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/pin_geometry_physical_boundary.py'
+      - 'research/v296/CTS45_PIN_GEOMETRY_TWO_CASE_RESULT_AND_TILE_BOUNDARY_20261025.md'
+      - '.github/workflows/v296-pin-geometry-boundary.yml'
+  workflow_dispatch:
+jobs:
+  independent-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate frozen physical arithmetic and prospective no-win/win probes
+        run: |
+          python3 research/v296/pin_geometry_physical_boundary.py --self-test
+          python3 research/v296/pin_geometry_physical_boundary.py > v296_pin_boundary.json
+          python3 -m json.tool v296_pin_boundary.json > /dev/null
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v296-pin-boundary-analytical-evidence
+          path: v296_pin_boundary.json
+          if-no-files-found: warn
