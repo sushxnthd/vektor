@@ -1,0 +1,49 @@
+{
+  "description": "Matched 5 fF versus 10 fF output-port load; transcribed from independent aggregate job logs; no independent artifact-byte redownload claimed.",
+  "observations": [
+    {
+      "output_load_ff": 5,
+      "source_run": "https://github.com/sushxnthd/vektor/actions/runs/40113773976",
+      "evidence_tier": "post_CTS_extracted_Nangate45_not_signoff",
+      "matched_policy": "cts45_fanout16_setup250_2xRC_density45",
+      "pairwise": {
+        "area_um2": 6239.828209686493,
+        "setup_ps": 430.41,
+        "hold_ps": 284.848,
+        "slew_violations": 0,
+        "cap_violations": 0,
+        "drc_violations": 0
+      },
+      "serial_onehot": {
+        "area_um2": 7284.9419829879025,
+        "setup_ps": 104.791,
+        "hold_ps": 249.547,
+        "slew_violations": 0,
+        "cap_violations": 0,
+        "drc_violations": 0
+      }
+    },
+    {
+      "output_load_ff": 10,
+      "source_run": "https://github.com/sushxnthd/vektor/actions/runs/40125008392",
+      "evidence_tier": "post_CTS_extracted_Nangate45_not_signoff",
+      "matched_policy": "cts45_fanout16_setup250_2xRC_density45",
+      "pairwise": {
+        "area_um2": 6239.828209686493,
+        "setup_ps": 430.401,
+        "hold_ps": 284.848,
+        "slew_violations": 0,
+        "cap_violations": 0,
+        "drc_violations": 0
+      },
+      "serial_onehot": {
+        "area_um2": 7284.9419829879025,
+        "setup_ps": 104.783,
+        "hold_ps": 249.547,
+        "slew_violations": 0,
+        "cap_violations": 0,
+        "drc_violations": 0
+      }
+    }
+  ]
+}
