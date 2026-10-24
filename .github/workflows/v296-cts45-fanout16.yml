@@ -1,0 +1,86 @@
+name: V296 symmetric fanout16 post-CTS slew repair physical falsification
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/CTS45_SLEW40_NULL_INTERVENTION_AND_FANOUT16_PREREG_20261024.md'
+      - 'research/v296/cts45_fanout16.tcl'
+      - 'research/v296/run_cts45_fanout16.sh'
+      - 'research/v296/audit_cts45_fanout16.py'
+      - 'research/v296/cts45_slew_net_forensics.py'
+      - '.github/workflows/v296-cts45-fanout16.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cts:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        variant: [pairwise, serial_onehot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install frozen Yosys and OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/cts45_fanout16
+          sha256sum /tmp/openroad-v296.deb > build/v296/cts45_fanout16/openroad.deb.sha256
+      - name: Download pinned Nangate45 and OpenRCX technology
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Independent CTS audit adversarial self-tests
+        run: python3 research/v296/audit_cts45_fanout16.py --self-test
+      - name: Matched propagated-clock CTS contestant
+        env:
+          V296_CTS45_VARIANT: ${{ matrix.variant }}
+        run: |
+          set -euo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          bash research/v296/run_cts45_fanout16.sh
+      - name: Preserve physical, electrical and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-cts45-fanout16-${{ matrix.variant }}
+          path: build/v296/cts45_fanout16/
+          if-no-files-found: warn
+  independent-aggregate:
+    needs: cts
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download both contestant archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v296-cts45-fanout16-*
+          path: build/v296/cts45_fanout16/
+          merge-multiple: true
+      - name: Independent fail-closed propagated-clock comparison
+        run: |
+          python3 research/v296/audit_cts45_fanout16.py --self-test
+          python3 research/v296/audit_cts45_fanout16.py --aggregate build/v296/cts45_fanout16
+      - name: Preserve aggregate negative result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-cts45-fanout16-independent-audit
+          path: build/v296/cts45_fanout16/aggregate.fanout16.json
+          if-no-files-found: warn
