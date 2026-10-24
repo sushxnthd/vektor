@@ -7,6 +7,8 @@ on:
       - 'research/v296/control_advantaged_pareto.tcl'
       - 'research/v296/run_control_pareto.sh'
       - 'research/v296/audit_control_pareto.py'
+      - 'research/v296/run_control_pareto_collect_all.sh'
+      - 'research/v296/CONTROL_PARETO_65PCT_CONGESTION_FALSIFICATION_20261024.md'
       - '.github/workflows/v296-control-pareto.yml'
   workflow_dispatch:
 permissions:
@@ -46,7 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           export V296_OPENROAD_BIN="$(command -v openroad)"
-          bash research/v296/run_control_pareto.sh
+          bash research/v296/run_control_pareto_collect_all.sh
       - name: Preserve all positive and negative physical evidence
         if: always()
         uses: actions/upload-artifact@v4
