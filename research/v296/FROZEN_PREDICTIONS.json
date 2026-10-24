@@ -1,0 +1,28 @@
+{
+  "kernel": "V296 pairwise bank-collision admission",
+  "date": "2026-10-23",
+  "status": "SEALED",
+  "hardware": {
+    "banks": 16,
+    "read_ports_per_bank": 2,
+    "issue_slots": 4,
+    "operands_per_wave": 2,
+    "added_ports": 0,
+    "added_storage": 0
+  },
+  "boundary": "A_pair ~ a R(R-1) log2(B)/2; A_mask ~ b B R; characterized area and STA decide",
+  "positive": {
+    "id": "compute_issue_saturated",
+    "prediction": "G=f_pair/f_best if f_pair>f_best with equal area, clean electrical checks, no extra bubbles"
+  },
+  "no_win": {
+    "id": "memory_return_limited",
+    "prediction": "G=1.000 if memory ceiling < f_best*I"
+  },
+  "adverse": {
+    "id": "pairwise_comparator_fanout",
+    "prediction": "no gain when comparator fanout/wire cost dominates"
+  },
+  "gate": "Holdouts sealed until RTL equivalence, area and clean electrical STA",
+  "evidence": "E0 protocol only"
+}

@@ -1,0 +1,22 @@
+{
+  "date_utc": "2026-10-22",
+  "kernel": "V289",
+  "evidence_class": "E0 software only",
+  "exhaustive_combinational_cases": 4096,
+  "different_grants_vs_age": 584,
+  "different_grants_vs_equal_budget_urgency": 0,
+  "dag_trace_cases": 800,
+  "different_dag_outcomes_vs_urgency": 0,
+  "v289_better_critical_end_than_age": 597,
+  "age_better_critical_end_than_v289": 0,
+  "no_contention_violations": 0,
+  "representative": {
+    "chain_length": 16,
+    "background_requests": 32,
+    "age": {"makespan":38,"critical_end":38},
+    "v289": {"makespan":38,"critical_end":16},
+    "urgency_matched": {"makespan":38,"critical_end":16}
+  },
+  "decision": "RETIRE: V289 is exactly equivalent to same-bit urgency-aware scheduling, even where it beats age-only scheduling",
+  "limits": "No RTL simulation, mapped area, STA, power, or silicon inference from this run."
+}

@@ -1,0 +1,35 @@
+name: V291 isolated RTL check
+on:
+  push:
+    branches:
+      - research/v291-same-cycle-rf-multicast
+jobs:
+  rtl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: RTL equivalence and exhaustive tag check
+        run: |
+          mkdir -p build/v291
+          iverilog -g2012 -s tb_v291 -o build/v291/tb research/v291/v291_multicast.sv research/v291/tb_v291.sv
+          vvp build/v291/tb | tee build/v291/rtl.log
+      - name: Strongest equal-budget broadcast RTL falsifier
+        run: |
+          iverilog -g2012 -s tb_v291_equal_budget -o build/v291/tb_equal research/v291/v291_multicast.sv research/v291/v291_equal_budget_control.sv research/v291/tb_equal_budget.sv
+          vvp build/v291/tb_equal | tee build/v291/equal_budget_rtl.log
+          python3 research/v291/independent_equal_budget.py | tee build/v291/independent.json
+      - name: Generic synthesis (not characterized STA)
+        run: |
+          yosys -p 'read_verilog -sv research/v291/v291_multicast.sv; synth -top v291_multicast; stat' | tee build/v291/multicast_yosys.log
+          yosys -p 'read_verilog -sv research/v291/v291_multicast.sv; synth -top v291_serial; stat' | tee build/v291/serial_yosys.log
+          yosys -p 'read_verilog -sv research/v291/v291_equal_budget_control.sv; synth -top v291_equal_budget_broadcast; stat' | tee build/v291/equal_budget_yosys.log
+      - name: Upload raw logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v291-rtl-generic-synthesis
+          path: build/v291/

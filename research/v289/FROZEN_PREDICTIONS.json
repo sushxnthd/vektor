@@ -1,0 +1,8 @@
+{
+ "frozen_at_utc":"2026-10-22T19:32:15Z",
+ "mechanism":"V289 critical-first bank admission",
+ "status":"pre-workload-evaluation, no measured outcome; timestamp corrected before evaluation",
+ "win":{"regime":"long dependency chain, 50 percent same-bank conflicts with older independent requests, accurate criticality labels","prediction":"critical chain waits fewer cycles than age-first baseline, if added control delay is negligible"},
+ "no_win":{"regime":"conflict-free bank accesses and independent requests","prediction":"same grant cardinality and no makespan improvement"},
+ "kill_if":"equal-resource urgency-aware baseline matches, or physical delay/area outweighs workload-level benefit"
+}

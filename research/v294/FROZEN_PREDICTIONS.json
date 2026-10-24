@@ -1,0 +1,12 @@
+{
+  "kernel": "V294 bounded lookahead conflict escape",
+  "frozen_at": "2026-10-23",
+  "evidence": "E0 preregistration",
+  "hardware": {"schedulers":4,"banks":16,"reads_per_bank":2,"candidate_choices_per_scheduler":2,"additional_rf_ports":0,"additional_collector_entries":0},
+  "law": "G_local=1+p*a*(1-q)/(1-p) for 0<=p<1 and no displaced grants",
+  "positive": {"id":"primary_hot_pair_alt_cold","description":"Primary choices oversubscribe a shared pair of banks while at least one valid alternative avoids the pair. A bounded-lookahead policy should exceed primary-first grants; equal-budget bank-pressure greedy is the decisive control.","prediction":"greater than primary-first, but not assumed greater than pressure-greedy"},
+  "no_win": {"id":"all_pairs_disjoint","description":"Every primary candidate accesses a disjoint pair of RF banks; all four issue slots are already accepted.","prediction":"gain exactly 1.000 versus both controls"},
+  "probability_sanity": {"p":0.5,"a":1.0,"q":0.5,"predicted_single_choice_service_gain":1.5},
+  "evaluation_status":"unopened",
+  "falsification":"retire if equal-area two-choice greedy or pressure-aware baseline matches or physical gate fails"
+}

@@ -1,0 +1,54 @@
+name: V296 live high-RC slew endpoint discriminator
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/HIGH_RC_LIVE_ENDPOINT_PREREG_20261024.md'
+      - 'research/v296/high_rc_live_endpoint.tcl'
+      - 'research/v296/run_high_rc_live_endpoint.sh'
+      - '.github/workflows/v296-live-endpoint.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  high_rc_live:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned OpenROAD and Yosys
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/live_endpoint
+          sha256sum /tmp/openroad-v296.deb > build/v296/live_endpoint/openroad.deb.sha256
+      - name: Download pinned Nangate45 and OpenRCX technology
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+          sha256sum build/v296/nangate.lib build/v296/platform/* > build/v296/live_endpoint/models.sha256
+      - name: Self-test checker and execute original live physical route
+        run: |
+          set -euo pipefail
+          python3 research/v296/audit_slew_forensics.py --self-test
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          bash research/v296/run_high_rc_live_endpoint.sh
+      - name: Preserve physical and negative evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-live-high-rc-slew-endpoints
+          path: build/v296/live_endpoint/
+          if-no-files-found: warn

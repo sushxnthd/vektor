@@ -1,0 +1,96 @@
+name: V296 immutable extracted-SPEF slew forensics
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/HIGH_RC_SLEW_FORENSICS_PREREG_20261024.md'
+      - 'research/v296/slew_forensics.tcl'
+      - 'research/v296/audit_slew_forensics.py'
+      - 'research/v296/spef_load_summary.py'
+      - 'research/v296/map_slew_to_spef.py'
+      - 'research/v296/EXTRACTED_SPEF_LOAD_CONCENTRATION_20261024.md'
+      - '.github/workflows/v296-slew-forensics.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  forensics:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the original pinned OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/forensics
+          sha256sum /tmp/openroad-v296.deb > build/v296/forensics/openroad.deb.sha256
+          openroad -version > build/v296/forensics/openroad.version
+      - name: Rehydrate the immutable six-case physical artifact
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 12523741140
+          run-id: 39995731088
+          github-token: ${{ github.token }}
+          repository: sushxnthd/vektor
+          path: build/v296
+      - name: Independently audit six extracted-SPEF net-load distributions
+        run: |
+          set -euo pipefail
+          python3 research/v296/spef_load_summary.py --self-test
+          python3 research/v296/spef_load_summary.py \
+            build/v296/v296-detailed-route-extracted-rc/detail \
+            build/v296/forensics/spef_load_summary.json
+      - name: Rehydrate original pinned Nangate45 models
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          sha256sum build/v296/nangate.lib build/v296/platform/*.lef > build/v296/forensics/models.sha256
+      - name: Independently self-test and replay without modifying routed inputs
+        run: |
+          set -euo pipefail
+          python3 research/v296/audit_slew_forensics.py --self-test
+          root=build/v296/v296-detailed-route-extracted-rc/detail
+          test -s "$root/pairwise.v"
+          test -s "$root/pairwise.high.detail.def"
+          test -s "$root/pairwise.high.detail.spef"
+          sha256sum "$root/pairwise.v" "$root/pairwise.high.detail.def" "$root/pairwise.high.detail.spef" \
+            > build/v296/forensics/inputs.before.sha256
+          export V296_LIB=build/v296/nangate.lib
+          export V296_TECH_LEF=build/v296/platform/NangateOpenCellLibrary.tech.lef
+          export V296_CELL_LEF=build/v296/platform/NangateOpenCellLibrary.macro.mod.lef
+          export V296_NETLIST="$root/pairwise.v"
+          export V296_DEF="$root/pairwise.high.detail.def"
+          export V296_SPEF="$root/pairwise.high.detail.spef"
+          openroad -exit research/v296/slew_forensics.tcl \
+            > build/v296/forensics/replay.log 2>&1 || {
+              tail -n 80 build/v296/forensics/replay.log
+              exit 4
+            }
+          sha256sum "$root/pairwise.v" "$root/pairwise.high.detail.def" "$root/pairwise.high.detail.spef" \
+            > build/v296/forensics/inputs.after.sha256
+          cmp build/v296/forensics/inputs.before.sha256 build/v296/forensics/inputs.after.sha256
+          python3 research/v296/audit_slew_forensics.py "$root" build/v296/forensics/replay.log
+          python3 research/v296/map_slew_to_spef.py --self-test
+          python3 research/v296/map_slew_to_spef.py \
+            build/v296/forensics/replay.slew.txt \
+            "$root/pairwise.high.detail.spef" \
+            build/v296/forensics/slew_spef_map.json
+      - name: Preserve all positive and negative replay evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-extracted-slew-forensics
+          path: build/v296/forensics/
+          if-no-files-found: warn

@@ -1,0 +1,8 @@
+{
+  "seed": 295,
+  "exhaustive_two_slot": 65536,
+  "random_four_slot": 100000,
+  "total": 165536,
+  "mismatches": 0,
+  "evidence": "E0 Python oracle; local container execution, not physical or RTL proof"
+}

@@ -1,0 +1,43 @@
+name: V296 prospective bank-scaling area crossover
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/SCALING_CROSSOVER_PREREG_20261024.md'
+      - 'research/v296/v296_scaling_arbiters.sv'
+      - 'research/v296/tb_v296_scaling.sv'
+      - 'research/v296/scaling_crossover_audit.py'
+      - 'research/v296/run_scaling_crossover.sh'
+      - '.github/workflows/v296-scaling-crossover.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scaling-crossover:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install synthesis and RTL simulation tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          mkdir -p build/v296/scaling
+      - name: Download same revision-pinned Nangate45 Liberty
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          mkdir -p build/v296
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          sha256sum build/v296/nangate.lib > build/v296/scaling/liberty.sha256
+      - name: Run preregistered oracle and mapped-area holdout test
+        run: bash research/v296/run_scaling_crossover.sh
+      - name: Preserve all positive and negative area-law evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-scaling-crossover
+          path: build/v296/scaling/
+          if-no-files-found: warn

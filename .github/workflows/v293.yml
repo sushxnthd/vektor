@@ -1,0 +1,17 @@
+name: V293 RTL and synthesis
+on:
+  push:
+    branches: [research/v293-bank-local-bypass-topology]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y iverilog yosys
+      - run: |
+          mkdir -p build/v293
+          iverilog -g2012 -s tb_v293 -o build/v293/tb research/v293/v293_bypass.sv research/v293/tb_v293.sv
+          vvp build/v293/tb
+          python3 research/v293/independent_checker.py > build/v293/holdouts.json
+      - run: yosys -p 'read_verilog -sv research/v293/v293_bypass.sv; hierarchy -top v293_bypass -chparam LOCAL 1; synth -top v293_bypass; stat'
+      - run: yosys -p 'read_verilog -sv research/v293/v293_bypass.sv; hierarchy -top v293_bypass -chparam LOCAL 0; synth -top v293_bypass; stat'

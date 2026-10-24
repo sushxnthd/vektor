@@ -1,0 +1,12 @@
+{
+  "evidence_class":"E0","seed":29220261023,"cases":265536,"mismatches":0,
+  "control":"same-resource conventional sector packer",
+  "regimes":[
+    {"name":"win_sparse","q":0.08,"collector_credits":2,"pairs":32588,"samples":40000,"mean_packets_per_beat":1.8147,"overlay_over_matched_packer":1.0},
+    {"name":"no_win_dense","q":0.7,"collector_credits":2,"pairs":0,"samples":40000,"mean_packets_per_beat":1.0,"overlay_over_matched_packer":1.0},
+    {"name":"no_win_single_collector","q":0.08,"collector_credits":1,"pairs":0,"samples":40000,"mean_packets_per_beat":1.0,"overlay_over_matched_packer":1.0},
+    {"name":"training_20","q":0.2,"collector_credits":2,"pairs":10888,"samples":40000,"mean_packets_per_beat":1.2722,"overlay_over_matched_packer":1.0},
+    {"name":"training_50","q":0.5,"collector_credits":2,"pairs":6,"samples":40000,"mean_packets_per_beat":1.00015,"overlay_over_matched_packer":1.0}
+  ],
+  "caveat":"Not RTL simulation, PPA, STA or an integrated GPU workload"
+}

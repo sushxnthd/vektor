@@ -1,0 +1,13 @@
+{
+  "kernel":"V295 parallel bank predecode",
+  "frozen_at":"2026-10-23",
+  "status":"unopened",
+  "hardware":{"schedulers":4,"rf_banks":16,"reads_per_bank":2,"added_rf_ports":0,"added_collector_entries":0},
+  "timing_boundary":"T_new=max(T_sched,T_predecode)+T_select+T_arb_new+T_accept+T_wire < T_old",
+  "workload_law":"G=min(f_new*I,B_mem/m)/min(f_old*I,B_mem/m) for unchanged issue IPC I",
+  "positive":{"id":"compute_bound_rf_issue_saturated","prediction":"G=f_new/f_old if STA proves f_new>f_old with clean electrical checks and no added issue bubbles"},
+  "no_win":{"id":"memory_return_limited","prediction":"G=1.000 if B_mem/m < f_old*I and memory ceiling unchanged"},
+  "adverse":{"id":"predecode_wire_fanout_dominant","prediction":"No win or loss when T_wire eliminates parallelism"},
+  "physical_gate":"Do not open workload holdouts before functional equivalence, RTL simulation, characterized timing and equal-area checks",
+  "no_claim":"E0 only; no PPA or GPU performance claim"
+}

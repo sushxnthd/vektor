@@ -1,0 +1,1 @@
+V292 E0 raw results: 265536 cases; zero mismatches; q=.08 1.8147 packets/beat for both equal-resource policies; q=.7 1.0 for both. See RETIREMENT_EQUAL_BUDGET.md.

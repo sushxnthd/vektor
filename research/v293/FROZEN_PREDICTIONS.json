@@ -1,0 +1,12 @@
+{
+  "mechanism":"V293 bank-local operand bypass topology",
+  "frozen_at":"2026-10-23",
+  "status":"unopened",
+  "hardware_budget":{"rf_banks":4,"bypass_entries":4,"data_bits_per_entry":32,"same_rf_ports":true},
+  "derived_boundary":"(hL-hG)*ER + hG*EG - hL*EL + CG-CL > 0",
+  "positive":{"id":"four_bank_stationary_reuse","description":"Each bank repeatedly accesses one hot address; local and global hit rates should approach equality after warmup. With nonzero global wire penalty, local bypass predicts lower hit-wire energy, provided STA and area pass.","prediction":"hL approximately hG; local energy advantage only if measured EG-EL exceeds control overhead difference"},
+  "negative":{"id":"single_bank_four_address_cycle","description":"All reads address one bank cycling four distinct registers; 4-way global cache should retain all, while one-entry local cache thrashes.","prediction":"hL near zero, hG high after warmup; local loses if RF-read energy exceeds global wire savings"},
+  "tolerances":{"hit_rate_absolute":0.02,"energy_model_relative":0.1},
+  "gate":"do not evaluate frozen traces until paired RTL and equal-resource baseline are verified",
+  "no_performance_or_novelty_claim":true
+}

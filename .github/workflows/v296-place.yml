@@ -1,0 +1,64 @@
+name: V296 matched placement, electrical repair and routed RC
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/placed_repair.tcl'
+      - 'research/v296/fixed_topology_sweep.tcl'
+      - 'research/v296/audit_fixed_topology.py'
+      - 'research/v296/audit_intermediate_rc.py'
+      - 'research/v296/run_placed_repair.sh'
+      - 'research/v296/audit_placed_repair.py'
+      - '.github/workflows/v296-place.yml'
+      - 'research/v296/v296_issue_core.sv'
+      - 'research/v295/v295_issue_core.sv'
+      - 'rtl/vtile/**'
+  workflow_dispatch:
+jobs:
+  physical:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source synthesis and pinned OpenROAD binary
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          openroad -version
+          mkdir -p build/v296/platform
+          sha256sum /tmp/openroad-v296.deb > build/v296/platform/openroad.deb.sha256
+      - name: Download revision-pinned Nangate45 physical and timing models
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          sha256sum build/v296/nangate.lib build/v296/platform/* > build/v296/platform/models.sha256
+      - name: Verify independent physical gate parser
+        run: |
+          python3 research/v296/audit_placed_repair.py --self-test
+          python3 research/v296/audit_fixed_topology.py --self-test
+          python3 research/v296/audit_intermediate_rc.py --self-test
+      - name: Run matched three-way placed, repaired and global-routed comparison
+        run: |
+          set -euo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          bash research/v296/run_placed_repair.sh
+      - name: Preserve full positive and negative physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-matched-placed-repair-global-route
+          path: |
+            build/v296/placed/
+            build/v296/platform/*.sha256
+          if-no-files-found: warn
