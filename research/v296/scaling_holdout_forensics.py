@@ -8,11 +8,14 @@ import argparse
 import json
 import math
 from pathlib import Path
+import re
+
+AREA_RE = re.compile(r"Chip area for (?:top )?module[^:\\n]*:\\s*([0-9.]+)")
 
 EXPECTED = {(2, 4), (3, 8), (4, 8), (5, 2), (6, 8)}
 
 
-def evaluate(payload):
+def evaluate(payload, logs_dir=None):
     assert payload["decision"] == "SIMPLE_MAPPED_CROSSOVER_LAW_FALSIFIED"
     rows = payload["holdouts"]
     assert len(rows) == 5
@@ -25,6 +28,14 @@ def evaluate(payload):
         p = r["measured_um2"]["pairwise"]
         h = r["measured_um2"]["onehot"]
         assert math.isfinite(p) and math.isfinite(h) and min(p, h) > 0
+        if logs_dir is not None:
+            sim = (logs_dir / f"b{b}_s{s}.sim.log").read_text()
+            assert f"V296_SCALING_ORACLE_PASS bits={b} slots={s} " in sim
+            for kind, reported in (("pairwise", p), ("onehot", h)):
+                log = (logs_dir / f"b{b}_s{s}_{kind}.synth.log").read_text()
+                matched = AREA_RE.findall(log)
+                assert matched, f"missing raw area {b} {s} {kind}"
+                assert math.isclose(float(matched[-1]), reported, abs_tol=1e-8)
         actual_win = p < h
         assert actual_win == r["measured_pairwise_wins"]
         assert math.isclose(1 - p / h, r["measured_pairwise_area_saving_fraction"],
@@ -70,8 +81,9 @@ def evaluate(payload):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("audit_json", type=Path)
+    p.add_argument("--logs-dir", type=Path, default=None)
     args = p.parse_args()
-    print(json.dumps(evaluate(json.loads(args.audit_json.read_text())),
+    print(json.dumps(evaluate(json.loads(args.audit_json.read_text()), args.logs_dir),
                      indent=2, sort_keys=True))
 
 
