@@ -12,7 +12,11 @@ import sys
 
 VARIANTS = ("pairwise", "serial_onehot", "parallel_onehot", "original")
 AREA_CEILING = 7400.0
-STAGES = ("pareto_fourth_routed", "pareto_control_fifth_routed", "pareto_global_final")
+STAGES = ("placed", "repaired_first", "routed_first", "repaired_second",
+          "routed_final", "repaired_third", "routed_third",
+          "pareto_fourth_repaired", "pareto_fourth_routed",
+          "pareto_control_fifth_repaired", "pareto_control_fifth_routed",
+          "pareto_global_final")
 NUM = r"([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"
 
 
@@ -25,7 +29,7 @@ def stage_metrics(log, stage):
     block = match.group(1)
     area = re.search(r"(?m)^V296_METRIC stage=" + re.escape(stage) +
                      r" area_um2=" + NUM + r" slew=(\d+) cap=(\d+)\r?$", block)
-    slack = re.search(r"(?mi)^worst slack\s+max\s+" + NUM + r"\s*$", block)
+    slack = re.search(r"(?mi)^worst slack(?:\s+max)?\s+" + NUM + r"\s*$", block)
     if not area or not slack:
         raise ValueError(f"{stage}: malformed area/electrical/setup evidence")
     vals = {
@@ -38,6 +42,9 @@ def stage_metrics(log, stage):
         raise ValueError(f"{stage}: nonfinite/invalid measurement")
     vals["area_headroom_um2"] = AREA_CEILING - vals["area_um2"]
     vals["area_within_ceiling"] = vals["area_headroom_um2"] >= 0
+    vals["ideal_clock_electrical_setup_feasible"] = (
+        vals["area_within_ceiling"] and vals["slew"] == 0 and
+        vals["cap"] == 0 and vals["setup_ns"] >= 0)
     return vals
 
 
@@ -52,11 +59,18 @@ def parse_log(log, variant, has_def):
         "V296_CLOCK_PERIOD_NS 3.5",
         "V296_PLACE_DENSITY 0.65",
     )
-    for marker in expected:
+    # The two physics markers occur before initial placement. Pareto identity
+    # markers are absent in legitimately interrupted earlier repair stages.
+    for marker in expected[2:]:
         if marker not in markers:
             raise ValueError(f"missing frozen-physics marker {marker}")
+    for marker in expected[:2]:
+        key = marker.split(" ", 1)[0] + " "
+        if any(line.startswith(key) and line != marker for line in markers):
+            raise ValueError(f"contradictory contestant/repair marker: {key}")
     stages = {s: v for s in STAGES if (v := stage_metrics(log, s)) is not None}
-    full = ("V296_GLOBAL_GATE_ONLY 1" in markers and
+    full = (all(marker in markers for marker in expected[:2]) and
+            "V296_GLOBAL_GATE_ONLY 1" in markers and
             "V296_GLOBAL_GATE_ONLY_COMPLETE_NOT_SIGNOFF" in markers and
             "V296_PARETO_FOURTH_DONE" in markers and
             "V296_PARETO_DETAIL_BEGIN" not in markers and
@@ -72,10 +86,18 @@ def parse_log(log, variant, has_def):
         "stages": stages,
         "decision": (
             ("GLOBAL_ONLY_AREA_CEILING_FAIL_NOT_SIGNOFF" if not final["area_within_ceiling"]
-             else "GLOBAL_ONLY_AREA_WITHIN_CEILING_NOT_SIGNOFF")
+             else "GLOBAL_ONLY_ELECTRICAL_OR_SETUP_FAIL_NOT_SIGNOFF"
+             if not final["ideal_clock_electrical_setup_feasible"]
+             else "GLOBAL_ONLY_FEASIBLE_NOT_SIGNOFF")
             if full else "GLOBAL_GATE_INCOMPLETE_NOT_SIGNOFF"
         ),
         "complete_global_route_record": bool(full),
+        "global_only_feasibility": (
+            ("PASS_GLOBAL_ONLY" if final["ideal_clock_electrical_setup_feasible"]
+             else "FAIL_GLOBAL_ONLY") if full else "NOT_EVALUATED"),
+        "last_completed_stage": next((s for s in reversed(STAGES) if s in stages), None),
+        "fatal_errors": [line for line in log.splitlines()
+                         if line.startswith(("[ERROR", "Error:", "[FATAL", "FATAL:"))][-5:],
         "detailed_route": "NOT_RUN",
         "extracted_spef": "NOT_RUN",
         "cts": "NOT_RUN",
@@ -97,10 +119,17 @@ def self_test():
            marker("pareto_global_final", 5990, 0.35) +
            "V296_GLOBAL_GATE_ONLY_COMPLETE_NOT_SIGNOFF\n")
     row = parse_log(log, "pairwise", True)
-    assert row["decision"] == "GLOBAL_ONLY_AREA_WITHIN_CEILING_NOT_SIGNOFF"
+    assert row["decision"] == "GLOBAL_ONLY_FEASIBLE_NOT_SIGNOFF"
     assert abs(row["stages"]["pareto_global_final"]["area_headroom_um2"] - 1410) < 1e-9
     assert parse_log(log, "pairwise", False)["decision"] == "GLOBAL_GATE_INCOMPLETE_NOT_SIGNOFF"
     assert parse_log(log.replace("5990", "7990"), "pairwise", True)["decision"] == "GLOBAL_ONLY_AREA_CEILING_FAIL_NOT_SIGNOFF"
+    assert parse_log(log.replace("cap=0", "cap=2"), "pairwise", True)["decision"] == "GLOBAL_ONLY_ELECTRICAL_OR_SETUP_FAIL_NOT_SIGNOFF"
+    partial = ("V296_CLOCK_PERIOD_NS 3.5\nV296_PLACE_DENSITY 0.65\n" +
+               marker("placed", 8223, -4.12) + "[ERROR DPL-0036] Placement failed.\n")
+    partial_row = parse_log(partial, "parallel_onehot", False)
+    assert partial_row["decision"] == "GLOBAL_GATE_INCOMPLETE_NOT_SIGNOFF"
+    assert partial_row["stages"]["placed"]["area_um2"] == 8223
+    assert partial_row["fatal_errors"]
     assert parse_log(log.replace("V296_GLOBAL_GATE_ONLY_COMPLETE_NOT_SIGNOFF", "CANCELLED"),
                      "pairwise", True)["decision"] == "GLOBAL_GATE_INCOMPLETE_NOT_SIGNOFF"
     for corrupted in (log.replace("V296_PLACE_DENSITY 0.65", "V296_PLACE_DENSITY 0.45"),
@@ -128,7 +157,7 @@ def main(root, variant):
                   "workload_holdouts": "SEALED"}
     result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps(result, indent=2, sort_keys=True))
-    if not result.get("complete_global_route_record"):
+    if not result.get("complete_global_route_record") or result.get("global_only_feasibility") != "PASS_GLOBAL_ONLY":
         raise SystemExit(3)
 
 
