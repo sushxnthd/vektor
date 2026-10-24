@@ -1,0 +1,84 @@
+name: V296 matched 45pct detailed route and extracted RC falsification
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/DETAIL45_MATCHED_EXTRACTED_PREREG_20261024.md'
+      - 'research/v296/run_detail45.sh'
+      - 'research/v296/audit_detail45.py'
+      - '.github/workflows/v296-detail45-matched.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  extracted:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        variant: [pairwise, serial_onehot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Yosys and OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/detail45
+          sha256sum /tmp/openroad-v296.deb > build/v296/detail45/openroad.deb.sha256
+      - name: Download frozen Nangate45 and OpenRCX models
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Independent audit adversarial self-tests
+        run: python3 research/v296/audit_detail45.py --self-test
+      - name: Frozen matched detailed-route contestant
+        env:
+          V296_DETAIL45_VARIANT: ${{ matrix.variant }}
+        run: |
+          set -euo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          bash research/v296/run_detail45.sh
+      - name: Preserve positive and negative detailed-route evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-detail45-${{ matrix.variant }}
+          path: build/v296/detail45/
+          if-no-files-found: warn
+  independent-aggregate:
+    needs: extracted
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download both contestant archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v296-detail45-*
+          path: build/v296/detail45/
+          merge-multiple: true
+      - name: Independent fail-closed matched comparison
+        run: |
+          python3 research/v296/audit_detail45.py --self-test
+          python3 research/v296/audit_detail45.py --aggregate build/v296/detail45
+      - name: Preserve aggregate falsification even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-detail45-independent-audit
+          path: build/v296/detail45/aggregate.json
+          if-no-files-found: warn
