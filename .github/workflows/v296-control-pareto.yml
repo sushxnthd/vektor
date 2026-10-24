@@ -1,0 +1,56 @@
+name: V296 control-advantaged high-RC Pareto falsification
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/CONTROL_ADVANTAGED_PARETO_PREREG_20261024.md'
+      - 'research/v296/control_advantaged_pareto.tcl'
+      - 'research/v296/run_control_pareto.sh'
+      - 'research/v296/audit_control_pareto.py'
+      - '.github/workflows/v296-control-pareto.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  control-pareto:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install revision-pinned OpenROAD and Yosys
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/control_pareto_high
+          sha256sum /tmp/openroad-v296.deb > build/v296/control_pareto_high/openroad.deb.sha256
+      - name: Download pinned Nangate45 and OpenRCX calibration
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+          sha256sum build/v296/nangate.lib build/v296/platform/* > build/v296/control_pareto_high/models.sha256
+      - name: Self-test independent checker
+        run: python3 research/v296/audit_control_pareto.py --self-test
+      - name: Run four high-RC routed variants with stronger controls
+        run: |
+          set -euo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          bash research/v296/run_control_pareto.sh
+      - name: Preserve all positive and negative physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-control-advantaged-high-rc-pareto
+          path: build/v296/control_pareto_high/
+          if-no-files-found: warn
