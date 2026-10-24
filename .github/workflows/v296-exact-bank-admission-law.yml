@@ -1,0 +1,25 @@
+name: V296 exact bank admission law
+on:
+  push:
+    branches:
+      - research/v296-pairwise-bank-conflict
+    paths:
+      - research/v296/exact_bank_admission_law.py
+      - .github/workflows/v296-exact-bank-admission-law.yml
+  workflow_dispatch:
+
+jobs:
+  independent-model-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exhaustive and Monte Carlo falsification
+        run: python3 research/v296/exact_bank_admission_law.py --self-test
+      - name: Freeze analytical output for audit
+        run: python3 research/v296/exact_bank_admission_law.py > v296-exact-admission-law.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v296-exact-bank-admission-model
+          path: v296-exact-admission-law.json
+          retention-days: 30
