@@ -34,7 +34,14 @@ proc v296_repair_metrics {stage} {
   report_design_area
   puts "V296_STAGE_END $stage"
 }
-global_placement -density 0.45
+# The control-advantaged high-RC rerun uses a frozen uniform 0.65 target.
+# All older experiments retain their original 0.45 target by default.
+if {![info exists env(V296_PLACE_DENSITY)]} { set env(V296_PLACE_DENSITY) 0.45 }
+if {![string is double -strict $env(V296_PLACE_DENSITY)] || $env(V296_PLACE_DENSITY) <= 0 || $env(V296_PLACE_DENSITY) >= 1} {
+  error "Invalid V296_PLACE_DENSITY"
+}
+puts "V296_PLACE_DENSITY $env(V296_PLACE_DENSITY)"
+global_placement -density $env(V296_PLACE_DENSITY)
 detailed_placement
 estimate_parasitics -placement
 v296_repair_metrics placed
