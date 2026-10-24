@@ -1,0 +1,95 @@
+name: V296 independent placement-seed post-CTS physical replication
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/CTS45_SEED_REPLICATION_PREREG_20261025.md'
+      - 'research/v296/seed_replication.py'
+      - '.github/workflows/v296-cts45-seed-replication.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  seeded-cts:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        seed: [17, 43]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned synthesis and physical tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform
+      - name: Download pinned Nangate45 and OpenRCX technology
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Independent audit and generator adversarial self-tests
+        run: python3 research/v296/seed_replication.py --self-test
+      - name: Run both matched physical contestants
+        env:
+          V296_SEED: ${{ matrix.seed }}
+        run: |
+          set -euo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          python3 research/v296/seed_replication.py --seed "$V296_SEED"
+          for variant in pairwise serial_onehot; do
+            echo "V296_SEED_REPLICATION_START seed=$V296_SEED variant=$variant"
+            V296_CTS45_VARIANT="$variant" bash "build/v296/cts45_seedrep/seed$V296_SEED/run_cts45_seeded.sh"
+            echo "V296_SEED_REPLICATION_DONE seed=$V296_SEED variant=$variant"
+          done
+      - name: Preserve positive, negative and incomplete physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-cts45-seedrep-${{ matrix.seed }}
+          path: build/v296/cts45_seedrep/seed${{ matrix.seed }}/
+          if-no-files-found: warn
+  independent-aggregate:
+    needs: seeded-cts
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download both preregistered seed archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v296-cts45-seedrep-*
+          path: build/v296/cts45_seedrep/artifacts/
+          merge-multiple: false
+      - name: Restore separate seed evidence directories
+        run: |
+          set -euo pipefail
+          for seed in 17 43; do
+            mkdir -p "build/v296/cts45_seedrep/seed$seed"
+            src="build/v296/cts45_seedrep/artifacts/v296-cts45-seedrep-$seed"
+            if test -d "$src"; then cp -a "$src/." "build/v296/cts45_seedrep/seed$seed/"; fi
+          done
+      - name: Independent fail-closed all-seed comparison
+        run: |
+          python3 research/v296/seed_replication.py --self-test
+          python3 research/v296/seed_replication.py --aggregate build/v296/cts45_seedrep
+      - name: Preserve aggregate falsification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-cts45-seedrep-independent-audit
+          path: build/v296/cts45_seedrep/aggregate.seedrep.json
+          if-no-files-found: warn
