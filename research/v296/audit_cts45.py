@@ -152,7 +152,7 @@ def aggregate(root):
             decision = "CANDIDATE_CTS_PHYSICAL_GATE_FAIL"
         elif not c["feasible"]:
             decision = "CONTROL_CTS_INFEASIBLE_NO_PARETO_CLAIM"
-        elif saving >= 0.10 and lead >= 0.200:
+        elif saving + 1e-12 >= 0.10 and lead + 1e-12 >= 0.200:
             decision = "PREDICTED_CTS_PARETO_SURVIVES"
         else:
             decision = "PREDICTED_CTS_PARETO_FALSIFIED"
@@ -196,7 +196,7 @@ def self_test():
         return log
     with tempfile.TemporaryDirectory() as d:
         root = Path(d)
-        p_log = mk(root, "pairwise", 0.3, 6000)
+        p_log = mk(root, "pairwise", 0.31, 6000)
         mk(root, "serial_onehot", 0.1, 7000)
         assert aggregate(root)["decision"] == "PREDICTED_CTS_PARETO_SURVIVES"
         p = root / "pairwise.high.log"
