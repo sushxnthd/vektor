@@ -45,7 +45,7 @@ The companion `detail45_postroute_envelope.py` is an independent fail-closed sen
 
 - **Keep V296 as the sole provisional mechanism** and retain V287 as retired. Do not create a new active mechanism or PR.
 - **Freeze** the 45% postroute numbers and guardband sensitivity above before any CTS results are opened.
-- Next: implement and run *matched* CTS and post-CTS hold/setup repair on both extracted, detailed-routed designs, preserving clock-cell area, added wire/capacitance, final DRC, setup and hold endpoints. Compare with the same floorplan and control-advantaged repair protocol. Do not change the clock, area ceiling, RC model or density to rescue a failure.
+- Next: **rerun the matched physical flow with CTS inserted before detailed routing**, then perform post-CTS hold/setup repair, reroute and re-extract parasitics for both designs. Preserve clock-cell area, added clock wire/capacitance, final DRC, setup and hold endpoints. Do not graft a clock tree onto the already completed routed DEF and call it signoff. Compare with the same floorplan and control-advantaged repair protocol. Do not change the clock, area ceiling, RC model or density to rescue a failure.
 - If CTS invalidates V296's own feasibility or eliminates the numerical area/timing advantage, record the falsification and retire or redesign the mechanism rather than reclassifying a failure.
 - Even if CTS passes, **equal consumed area**, power/activity, tile-level critical-path propagation, memory/port limits, unseen workload predictions and a nontrivial positive boundary law remain unproven. Functional equivalence means no per-cycle admission advantage at the same resources and clock. Never claim RTX-5090 equivalence.
 
