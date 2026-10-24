@@ -1,5 +1,5 @@
-# V296 preregistered symmetric 40%-margin post-CTS repair intervention.
-# Frozen before outcomes in CTS45_SLEW40_PREREG_20261024.md.
+# V296 preregistered symmetric fanout-16 post-CTS repair intervention.
+# Frozen before outcomes in CTS45_SLEW40_NULL_INTERVENTION_AND_FANOUT16_PREREG_20261024.md.
 # The existing pre-CTS physical Tcl is NOT modified. CTS is inserted before detailed routing.
 foreach k {V296_CONTROL_EXTRA V296_VARIANT V296_RCX_RULES V296_RC_SCALE V296_DETAIL_RC_MULTIPLIER V296_PLACE_DENSITY} {
   if {![info exists env($k)]} { error "Missing $k" }
@@ -54,7 +54,7 @@ puts "V296_CTS45_POSTCTS_AREA_UM2 $post_cts_area"
 v296_repair_metrics cts45_clock_tree
 write_def "$env(V296_OUT).postcts.def"
 puts "V296_CTS45_CTS_END"
-# Same fixed post-CTS repair for both architectures, with no adaptive exceptions.
+# Same fixed fanout-16 post-CTS repair for both architectures; prior 40%-margin policy otherwise unchanged.
 puts "V296_CTS45_FANOUT_POLICY 16"
 set_max_fanout 16 [current_design]
 repair_design -cap_margin 20 -slew_margin 40
