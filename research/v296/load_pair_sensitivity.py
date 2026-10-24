@@ -16,6 +16,10 @@ REQUIRED = ("area_um2", "setup_ps", "hold_ps", "slew_violations",
 def compare(rows):
     if len(rows) != 2:
         raise ValueError("exactly two observed load points required")
+    if any(not isinstance(row.get("output_load_ff"), (int, float)) or
+           not math.isfinite(row["output_load_ff"]) or row["output_load_ff"] <= 0
+           for row in rows):
+        raise ValueError("output loads must be positive finite numbers")
     a, b = sorted(rows, key=lambda x: x["output_load_ff"])
     if a["output_load_ff"] == b["output_load_ff"]:
         raise ValueError("load points must differ")
@@ -74,7 +78,9 @@ def self_test():
     assert result["secant_ps_per_ff"]["candidate_setup"] == -2
     assert result["secant_ps_per_ff"]["control_setup"] == -1
     assert result["load10_feasible_pareto_supported"]
-    for bad in ([x, x], [x], [x, {**y, "matched_policy": "changed"}],
+    for bad in ([x, x], [x], [x, {**y, "output_load_ff": float("nan")}],
+                [x, {**y, "output_load_ff": -1}],
+                [x, {**y, "matched_policy": "changed"}],
                 [x, {**y, "pairwise": {**y["pairwise"], "slew_violations": 1}}],
                 [x, {**y, "serial_onehot": {**y["serial_onehot"], "setup_ps": float("nan")}}]):
         try:
