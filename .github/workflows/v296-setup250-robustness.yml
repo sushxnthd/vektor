@@ -1,0 +1,22 @@
+name: V296 setup250 independent robustness law
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/setup250_robustness_envelope.py'
+      - '.github/workflows/v296-setup250-robustness.yml'
+  pull_request:
+    paths:
+      - 'research/v296/setup250_robustness_envelope.py'
+      - '.github/workflows/v296-setup250-robustness.yml'
+permissions:
+  contents: read
+jobs:
+  algebraic-sensitivity:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Adversarial self-tests (no physicality claim)
+        run: python3 research/v296/setup250_robustness_envelope.py --self-test
+      - name: Bounded illustrative uncertainty envelope
+        run: python3 research/v296/setup250_robustness_envelope.py --area-um2 50 --setup-ps 50
