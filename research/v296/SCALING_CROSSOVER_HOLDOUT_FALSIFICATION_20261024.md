@@ -7,6 +7,7 @@
 - Full 61-file raw evidence artifact: https://github.com/sushxnthd/vektor/actions/runs/40063326884/artifacts/12548178469
 - Artifact SHA-256: `df25a04baf6d1473e9859fca0ee3f977bb8eaa5307e94c42a017410273ba4010`.
 - Existing executable frozen evaluator: `scaling_crossover_audit.py`. Additional independent falsifier: `scaling_holdout_forensics.py`.
+- **Independent raw replay completed:** downloaded the original artifact ZIP, verified its SHA-256 digest, extracted all 61 files, and executed `python3 research/v296/scaling_holdout_forensics.py <artifact>/scaling_crossover_audit.json --logs-dir <artifact>`. The checker reconciled each of the five held-out areas against the corresponding raw Yosys log, verified the independent RTL-oracle PASS markers, recomputed errors and winner labels, and returned `FROZEN_AREA_LAW_FALSIFIED_AND_SINGLE_RATIO_THRESHOLD_FALSIFIED`. This replay is not a new holdout.
 
 ## Frozen quantitative test
 
