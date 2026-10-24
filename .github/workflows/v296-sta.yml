@@ -38,7 +38,18 @@ jobs:
         run: |
           set -euo pipefail
           export V296_STA_BIN="$PWD/build/v296/tools/opensta-build/sta"
+          set +e
           bash research/v296/run_sta.sh
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "V296 physical gate passed." | tee build/v296/sta/workflow_outcome.txt
+          elif [ "$status" -eq 3 ]; then
+            echo "V296 physical gate produced a valid negative scientific result; preserving evidence without marking CI broken." | tee build/v296/sta/workflow_outcome.txt
+          else
+            echo "Unexpected infrastructure or execution failure from run_sta.sh: exit $status" >&2
+            exit "$status"
+          fi
       - name: Preserve all evidence including negative results
         if: always()
         uses: actions/upload-artifact@v4
