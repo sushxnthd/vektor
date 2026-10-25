@@ -6,6 +6,7 @@ on:
       - 'research/v296/PARALLEL_THRESHOLD_TOPOLOGY_PREREG_20261026.md'
       - 'research/v296/v296_pairwise_parallel_threshold.sv'
       - 'research/v296/tb_v296_parallel_threshold.sv'
+      - 'research/v296/parallel_threshold_independent_oracle.py'
       - '.github/workflows/v296-parallel-threshold-gate.yml'
   workflow_dispatch:
 permissions:
@@ -21,6 +22,12 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y iverilog yosys curl python3
+      - name: Independent occupancy-oracle falsification
+        run: |
+          set -euo pipefail
+          mkdir -p build/v296/parallel_threshold
+          python3 research/v296/parallel_threshold_independent_oracle.py | tee build/v296/parallel_threshold/math_oracle.log
+          grep -q 'V296_INDEPENDENT_MATH_ORACLE_PASS cases=164976' build/v296/parallel_threshold/math_oracle.log
       - name: Exhaustive and seeded RTL equivalence
         run: |
           set -euo pipefail
