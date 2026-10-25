@@ -14,9 +14,9 @@ OUT = Path("build/v296/tile_slice")
 ORIGINAL = (
     "cap_margin_repair.tcl", "cap_margin_third.tcl", "cts45_setup250.tcl")
 OLD_FLOOR = ("initialize_floorplan -die_area {0 0 140 140} "
-             "-core_area {10 10 130 130}")
+             "-core_area {10 10 130 130} -site FreePDK45_38x28_10R_NP_162NW_34O")
 NEW_FLOOR = ("initialize_floorplan -die_area {0 0 260 260} "
-             "-core_area {10 10 250 250}")
+             "-core_area {10 10 250 250} -site FreePDK45_38x28_10R_NP_162NW_34O")
 
 
 def replace_once(source, before, after):
