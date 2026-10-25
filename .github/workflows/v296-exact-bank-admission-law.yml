@@ -5,6 +5,7 @@ on:
       - research/v296-pairwise-bank-conflict
     paths:
       - research/v296/exact_bank_admission_law.py
+      - research/v296/class_weighted_bank_skew_law.py
       - .github/workflows/v296-exact-bank-admission-law.yml
   workflow_dispatch:
 
@@ -16,10 +17,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Exhaustive and Monte Carlo falsification
         run: python3 research/v296/exact_bank_admission_law.py --self-test
+      - name: Independent class-weighted exact and Monte Carlo falsification
+        run: python3 research/v296/class_weighted_bank_skew_law.py --self-test
+      - name: Freeze skew sensitivity and overlap-controlled outputs
+        run: python3 research/v296/class_weighted_bank_skew_law.py > v296-class-weighted-skew-law.json
       - name: Freeze analytical output for audit
         run: python3 research/v296/exact_bank_admission_law.py > v296-exact-admission-law.json
       - uses: actions/upload-artifact@v4
         with:
           name: v296-exact-bank-admission-model
-          path: v296-exact-admission-law.json
+          path: |
+            v296-exact-admission-law.json
+            v296-class-weighted-skew-law.json
           retention-days: 30
