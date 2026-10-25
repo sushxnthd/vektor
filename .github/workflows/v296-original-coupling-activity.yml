@@ -56,7 +56,7 @@ jobs:
                                       ('serial_onehot','serial.zip',59.0860103061)]:
               with zipfile.ZipFile('/tmp/v296-original-spef/'+archive) as z:
                   s=z.read(v+'.high.cts45.spef').decode()
-              caps=[float(x) for x in re.findall(r'^\\*D_NET\\s+\\S+\\s+([\\d.eE+-]+)$',s,re.M)]
+              caps=[float(x) for x in re.findall(r'^\*D_NET\s+\S+\s+([\d.eE+-]+)$',s,re.M)]
               assert len(caps)==r[v]['net_count'] and abs(sum(caps)-expected)<1e-5
               assert abs(sum(caps)-r[v]['sum_declared_dnet_pf'])<1e-8
           p,s=r['pairwise'],r['serial_onehot']
