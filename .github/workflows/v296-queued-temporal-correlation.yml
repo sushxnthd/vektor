@@ -1,0 +1,28 @@
+name: V296 queued temporal correlation prospective replay
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/queued_temporal_correlation.py'
+      - 'research/v296/QUEUED_TEMPORAL_CORRELATION_PREREG_20261025.md'
+      - '.github/workflows/v296-queued-temporal-correlation.yml'
+  workflow_dispatch:
+jobs:
+  frozen-queue-replay:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check independent priority-arbiter equivalence and conservation
+        run: python3 research/v296/queued_temporal_correlation.py --self-test
+      - name: Evaluate frozen synthetic holdouts without retuning
+        run: |
+          set -o pipefail
+          python3 research/v296/queued_temporal_correlation.py --evaluate | tee v296_queued_temporal_result.json
+      - name: Preserve complete evidence including failed gates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-queued-temporal-frozen-result
+          path: v296_queued_temporal_result.json
+          if-no-files-found: warn
