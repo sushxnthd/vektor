@@ -1,0 +1,60 @@
+name: V296 prospective parallel-threshold RTL topology gate
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/PARALLEL_THRESHOLD_TOPOLOGY_PREREG_20261026.md'
+      - 'research/v296/v296_pairwise_parallel_threshold.sv'
+      - 'research/v296/tb_v296_parallel_threshold.sv'
+      - '.github/workflows/v296-parallel-threshold-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rtl-and-mapped-synthesis:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install RTL and synthesis tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys curl python3
+      - name: Exhaustive and seeded RTL equivalence
+        run: |
+          set -euo pipefail
+          mkdir -p build/v296/parallel_threshold
+          iverilog -g2012 -s tb_v296_parallel_threshold -o build/v296/parallel_threshold/test.vvp \
+            research/v296/v296_issue_core.sv \
+            research/v296/v296_scaling_arbiters.sv \
+            research/v296/v296_pairwise_parallel_threshold.sv \
+            research/v296/tb_v296_parallel_threshold.sv
+          vvp build/v296/parallel_threshold/test.vvp | tee build/v296/parallel_threshold/rtl.log
+          grep -q 'V296_PARALLEL_THRESHOLD_EQUIVALENCE_PASS checks=164976' build/v296/parallel_threshold/rtl.log
+      - name: Same-library three-way mapped area and logic-path proxies
+        run: |
+          set -euo pipefail
+          out=build/v296/parallel_threshold
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          curl -fL --retry 3 --max-time 180 \
+            "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib" \
+            -o "$out/nangate.lib"
+          sha256sum "$out/nangate.lib" > "$out/library.sha256"
+          yosys -V > "$out/yosys.version"
+          for top in v296_pairwise_arbiter v296_pairwise_parallel_threshold v296_onehot_scaling; do
+            yosys -Q -T -p "read_liberty -lib -ignore_miss_func -ignore_miss_dir $out/nangate.lib; \
+              read_verilog -sv research/v296/v296_issue_core.sv research/v296/v296_scaling_arbiters.sv research/v296/v296_pairwise_parallel_threshold.sv; \
+              hierarchy -check -top $top; synth -top $top; abc -liberty $out/nangate.lib; \
+              clean; check -assert; stat -liberty $out/nangate.lib; ltp -noff" \
+              > "$out/$top.synth.log" 2>&1
+            grep -q 'Chip area' "$out/$top.synth.log"
+          done
+          echo V296_PARALLEL_THRESHOLD_MAPPED_EVIDENCE_COMPLETE
+      - name: Preserve both positive and negative evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-parallel-threshold-rtl-synthesis
+          path: build/v296/parallel_threshold/
+          if-no-files-found: warn
