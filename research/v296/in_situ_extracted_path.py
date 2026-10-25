@@ -42,7 +42,7 @@ def instrument(text):
         raise ValueError("Changed 2x RC protocol")
     out = exactly_once(text, MARK, MARK + "\n" + INSERT)
     if not (out.index("read_spef") < out.index("V296_IN_SITU_SETUP_SLACK_BEGIN")
-            < out.index("write_def")):
+            < out.rfind("write_def")):
         raise ValueError("Instrumentation must follow extracted SPEF")
     return out
 
