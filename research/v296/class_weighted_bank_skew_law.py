@@ -175,6 +175,24 @@ def experiment():
         cases[hot] = {'q_exact':r['q_exact'], 'q':r['q'],
                       'relative_uniform_prediction_error':(uniform['q']/r['q']-1) if r['q'] else None,
                       'terminal_states':r['terminal_states']}
+    # Stronger counterexample: hold the ACTUAL same-bank operand probability
+    # fixed at 1/2 across different bank skews. rho must be recalibrated
+    # because Pr(A=B)=rho+(1-rho)*sum_i(w_i**2).
+    overlap_matched = {}
+    for hot in ('0.0625','0.25','0.5'):
+        h = Fraction(hot)
+        cold = (1-h)/15
+        collision = h*h+15*cold*cold
+        target = Fraction(1,2)
+        adjusted_rho = (target-collision)/(1-collision)
+        if not 0 <= adjusted_rho <= 1:
+            raise AssertionError('unachievable overlap control')
+        result = exact_grouped([(1,h),(15,cold)],s,ports,p,adjusted_rho)
+        overlap_matched[hot] = {'actual_same_bank_probability':str(target),
+                                'adjusted_rho':str(adjusted_rho),
+                                'q_exact':result['q_exact'],'q':result['q']}
+    if not overlap_matched['0.0625']['q']-overlap_matched['0.5']['q'] > 0.7:
+        raise AssertionError('matched-overlap counterexample disappeared')
     # Independent synthetic samples, not GPU holdouts.
     validations = []
     for hot, seed in [('0.25',541),('0.5',542),('0.75',543)]:
@@ -189,7 +207,8 @@ def experiment():
                             'exact_prediction':expected,'independent_sample':actual,
                             'abs_error':abs(actual-expected),'hoeffding_99p9_bound':tolerance})
     return {'uniform_q':uniform['q'], 'nominal':{'banks':b,'slots':s,'ports':ports,'p':p,'rho':rho},
-            'hotspot_sweep':cases, 'independent_synthetic_validations':validations,
+            'hotspot_sweep':cases, 'matched_actual_overlap_sweep':overlap_matched,
+            'independent_synthetic_validations':validations,
             'claim_limit':'No real GPU traces, equal-resource tile throughput or power measured; V296 and serial admissions identical.'}
 
 
