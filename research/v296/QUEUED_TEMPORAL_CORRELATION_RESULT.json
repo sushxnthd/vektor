@@ -1,0 +1,70 @@
+{
+  "evidence": "PROSPECTIVE_SYNTHETIC_NOT_GPU",
+  "protocol_commit": "e6e5601c267b992e22d8d9eefe9a3eef67564a3b",
+  "code_commit": "7b0a61ff478e2bbcba74f3e1d53d8cfce51dc925",
+  "calibration_cycles": 50000,
+  "warmup_cycles": 10000,
+  "evaluation_cycles": 80000,
+  "cases": [
+    {
+      "true_sticky": 0.35,
+      "calibration_seed": 296350,
+      "evaluation_seed": 297350,
+      "prediction_seed": 298350,
+      "request_only": {
+        "p": 0.800545,
+        "h": 0.749461164043387,
+        "sticky": 0.3482777618859809,
+        "within_cycle_collision": 0.5658766836307683,
+        "adjacent_cycle_collision": 0.23781490476051145,
+        "within_pairs": 192367,
+        "adjacent_pairs": 512655
+      },
+      "observed": {
+        "admissions_per_cycle": 3.0523,
+        "offered_per_cycle": 3.20045,
+        "dropped_per_cycle": 0.1481,
+        "blocked_per_cycle": 0.7160875,
+        "mean_queue_occupancy": 12.3727875,
+        "mismatch_cycles": 0
+      },
+      "temporal_prediction": 3.0548,
+      "iid_queued_baseline": 3.1625,
+      "no_queue_baseline": 1.760716670677648,
+      "absolute_error": 0.002500000000000391,
+      "iid_baseline_absolute_error": 0.1102000000000003,
+      "pass_gate": true
+    },
+    {
+      "true_sticky": 0.95,
+      "calibration_seed": 296950,
+      "evaluation_seed": 297950,
+      "prediction_seed": 298950,
+      "request_only": {
+        "p": 0.80062,
+        "h": 0.7497231718583928,
+        "sticky": 0.9450043039349977,
+        "within_cycle_collision": 0.5662607338017174,
+        "adjacent_cycle_collision": 0.5385560615960756,
+        "within_pairs": 192150,
+        "adjacent_pairs": 512695
+      },
+      "observed": {
+        "admissions_per_cycle": 1.9064625,
+        "offered_per_cycle": 3.194075,
+        "dropped_per_cycle": 1.2876125,
+        "blocked_per_cycle": 1.8937125,
+        "mean_queue_occupancy": 21.5105875,
+        "mismatch_cycles": 0
+      },
+      "temporal_prediction": 1.9389375,
+      "iid_queued_baseline": 3.16115,
+      "no_queue_baseline": 1.7600510127730065,
+      "absolute_error": 0.03247500000000003,
+      "iid_baseline_absolute_error": 1.2546875,
+      "pass_gate": true
+    }
+  ],
+  "all_gates_pass": true,
+  "source": "Local deterministic Python execution of frozen protocol; hosted execution not yet verified."
+}
