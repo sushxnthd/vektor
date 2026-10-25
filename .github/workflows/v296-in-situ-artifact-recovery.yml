@@ -4,6 +4,8 @@ on:
     branches: [research/v296-pairwise-bank-conflict]
     paths:
       - research/v296/in_situ_path_artifact_recovery.py
+      - research/v296/in_situ_endpoint_rtl_mapping.py
+      - research/v296/EXTRACTED_ENDPOINT_RTL_CONE_MAPPING_20261025.md
       - research/v296/ORIGINAL_IN_SITU_CRITICAL_ENDPOINT_RECOVERY_20261025.md
       - .github/workflows/v296-in-situ-artifact-recovery.yml
   workflow_dispatch:
@@ -29,7 +31,13 @@ jobs:
         run: |
           python3 research/v296/in_situ_path_artifact_recovery.py --pairwise-zip v296-pairwise.zip --serial-zip v296-serial.zip > recovered_paths.json
           python3 -c 'import json; d=json.load(open("recovered_paths.json")); assert d["decision"]=="EXTRACTED_CRITICAL_PATHS_IDENTIFIED_BOTH_INFEASIBLE"; print(d["decision"])'
+      - name: Independently map critical flops to synthesized RTL signals
+        run: |
+          python3 research/v296/in_situ_endpoint_rtl_mapping.py --self-test
+          python3 research/v296/in_situ_endpoint_rtl_mapping.py --pairwise-zip v296-pairwise.zip --serial-zip v296-serial.zip > mapped_critical_cones.json
       - uses: actions/upload-artifact@v4
         with:
           name: v296-original-extracted-paths-recovered
-          path: recovered_paths.json
+          path: |
+            recovered_paths.json
+            mapped_critical_cones.json
