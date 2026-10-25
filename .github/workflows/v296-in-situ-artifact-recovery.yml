@@ -5,6 +5,8 @@ on:
     paths:
       - research/v296/in_situ_path_artifact_recovery.py
       - research/v296/in_situ_endpoint_rtl_mapping.py
+      - research/v296/path_delay_decomposition.py
+      - research/v296/ORIGINAL_CRITICAL_PATH_DELAY_BUDGET_RESULTS.json
       - research/v296/EXTRACTED_ENDPOINT_RTL_CONE_MAPPING_20261025.md
       - research/v296/ORIGINAL_IN_SITU_CRITICAL_ENDPOINT_RECOVERY_20261025.md
       - .github/workflows/v296-in-situ-artifact-recovery.yml
@@ -35,9 +37,27 @@ jobs:
         run: |
           python3 research/v296/in_situ_endpoint_rtl_mapping.py --self-test
           python3 research/v296/in_situ_endpoint_rtl_mapping.py --pairwise-zip v296-pairwise.zip --serial-zip v296-serial.zip > mapped_critical_cones.json
+      - name: Independently check original worst-path delay budgets and frozen values
+        run: |
+          python3 research/v296/path_delay_decomposition.py v296-pairwise.zip v296-serial.zip > path_budget.json
+          python3 - <<'PY'
+          import json, math
+          actual=json.load(open("path_budget.json"))
+          frozen=json.load(open("research/v296/ORIGINAL_CRITICAL_PATH_DELAY_BUDGET_RESULTS.json"))
+          def same(a,b,path="root"):
+              if isinstance(a,dict) and isinstance(b,dict):
+                  assert set(a)==set(b),path
+                  for k in a:same(a[k],b[k],path+"."+k)
+              elif isinstance(a,(int,float)) and isinstance(b,(int,float)):
+                  assert math.isclose(a,b,rel_tol=0,abs_tol=1e-6),(path,a,b)
+              else:assert a==b,(path,a,b)
+          same(actual,frozen)
+          print("SHA-locked original path budgets and frozen values validated")
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: v296-original-extracted-paths-recovered
           path: |
             recovered_paths.json
             mapped_critical_cones.json
+            path_budget.json
