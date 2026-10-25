@@ -15,10 +15,21 @@ foreach f [list $netlist $def $spef $env(V296_LIB) $env(V296_TECH_LEF) $env(V296
 read_lef $env(V296_TECH_LEF)
 read_lef $env(V296_CELL_LEF)
 read_liberty $env(V296_LIB)
-read_verilog $netlist
+if {![info exists env(V296_RECONSTRUCTION_STAGE)]} { error "Missing stage" }
+if {$env(V296_RECONSTRUCTION_STAGE) eq "export"} {
+  # DEF includes post-route resized and inserted cells absent from mapped Verilog.
+  read_def $def
+  write_verilog "$root/$variant.postroute.v"
+  puts "V296_FORENSIC_DEF_VERILOG_EXPORTED $variant"
+  exit
+}
+if {$env(V296_RECONSTRUCTION_STAGE) ne "sta"} { error "Unknown stage" }
+set extracted_netlist "$root/$variant.postroute.v"
+if {![file isfile $extracted_netlist] || [file size $extracted_netlist] == 0} {
+  error "Missing exact DEF-exported postroute netlist"
+}
+read_verilog $extracted_netlist
 link_design v296_tile_slice
-# Merge the original physical DEF into the mapped design; never create a second chip.
-read_def -incremental $def
 create_clock -name coreclk -period 3.5 [get_ports clk]
 set_input_delay -clock coreclk 0.15 [all_inputs -no_clocks]
 set_output_delay -clock coreclk 0.15 [all_outputs]

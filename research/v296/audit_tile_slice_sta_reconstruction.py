@@ -58,6 +58,8 @@ def original_measurements(log, variant):
 def reconstructed_measurements(log, variant):
     if log.splitlines().count(f"V296_FORENSIC_DONE {variant}") != 1:
         raise ValueError("Reconstruction did not complete")
+    if "STA-1648" in log or "instance " in log and " not found." in log:
+        raise ValueError("Missing postroute instances in SPEF reconstruction")
     m = one(r"^V296_FORENSIC_COUNTS area_um2=([0-9.eE+\-]+) slew=(\d+) cap=(\d+)$",
             log, "reconstructed metric", re.M)
     result = dict(area_um2=float(m.group(1)), slew=int(m.group(2)), cap=int(m.group(3)))

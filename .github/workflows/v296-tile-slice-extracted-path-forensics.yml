@@ -51,12 +51,16 @@ jobs:
             for f in "$variant.v" "$variant.high.log" "$variant.high.cts45.def" "$variant.high.cts45.spef"; do
               test -s "original/$f"
             done
-            V296_ORIGINAL_ROOT=original V296_TILE_VARIANT="$variant" \
-            V296_LIB=platform/nangate.lib \
-            V296_TECH_LEF=platform/NangateOpenCellLibrary.tech.lef \
-            V296_CELL_LEF=platform/NangateOpenCellLibrary.macro.mod.lef \
-              openroad -exit research/v296/reconstruct_tile_slice_sta.tcl \
-              > "original/$variant.sta.log" 2>&1 || { cat "original/$variant.sta.log"; exit 4; }
+            for stage in export sta; do
+              V296_ORIGINAL_ROOT=original V296_TILE_VARIANT="$variant" \
+              V296_RECONSTRUCTION_STAGE="$stage" \
+              V296_LIB=platform/nangate.lib \
+              V296_TECH_LEF=platform/NangateOpenCellLibrary.tech.lef \
+              V296_CELL_LEF=platform/NangateOpenCellLibrary.macro.mod.lef \
+                openroad -exit research/v296/reconstruct_tile_slice_sta.tcl \
+                > "original/$variant.$stage.log" 2>&1 || { tail -120 "original/$variant.$stage.log"; exit 4; }
+            done
+            grep -q "V296_FORENSIC_DEF_VERILOG_EXPORTED $variant" "original/$variant.export.log"
             grep -q "V296_FORENSIC_DONE $variant" "original/$variant.sta.log"
           done
       - name: Independently trace six original cap violators through SPEF and DEF
@@ -88,6 +92,7 @@ jobs:
           name: v296-original-extracted-path-forensics
           path: |
             original/*.sta.log
+            original/*.export.log
             original/*forensics.version
             original/extracted-path-audit.json
             original/cap-topology.json
