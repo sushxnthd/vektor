@@ -1,0 +1,160 @@
+name: V296 matched balanced RF-return tree physical gate
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/RETURN_TREE_INTEGRATED_REPAIR_PREREG_20261026.md'
+      - 'research/v296/v296_tile_slice_return_tree.sv'
+      - 'research/v296/tb_v296_tile_slice_return_tree.sv'
+      - 'research/v296/run_tile_slice_return_tree.sh'
+      - '.github/workflows/v296-return-tree-physical.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rtl-equivalence:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install RTL simulator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog python3
+      - name: Frozen flow and independent audit self-tests
+        run: |
+          python3 research/v296/tile_slice_flow.py --self-test
+          python3 research/v296/audit_tile_slice.py --self-test
+      - name: Full matched two-port banked RF execution equivalence
+        run: |
+          set -euo pipefail
+          iverilog -g2012 -s tb_v296_tile_slice_return_tree -o /tmp/v296_return_tree.vvp \
+            rtl/vtile/steal_warp_scheduler.sv \
+            research/v295/v295_issue_core.sv \
+            research/v296/v296_issue_core.sv \
+            research/v296/v296_tile_slice.sv \
+            research/v296/v296_tile_slice_return_tree.sv \
+            research/v296/tb_v296_tile_slice_return_tree.sv
+          vvp /tmp/v296_return_tree.vvp | tee /tmp/v296_return_tree_rtl.log
+          grep -q 'V296_RETURN_TREE_FOURWAY_RTL_PASS checks=4096' /tmp/v296_return_tree_rtl.log
+      - name: Preserve RTL result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-return-tree-fourway-rtl
+          path: /tmp/v296_return_tree_rtl.log
+          if-no-files-found: warn
+  mapped-fourway:
+    needs: rtl-equivalence
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install mapped synthesis tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys curl python3
+      - name: Four-way same-library full-slice synthesis and depth proxies
+        run: |
+          set -euo pipefail
+          out=build/v296/return_tree_mapped
+          mkdir -p "$out"
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          curl -fL --retry 3 --max-time 180 \
+            "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib" \
+            -o "$out/nangate.lib"
+          sha256sum "$out/nangate.lib" > "$out/library.sha256"
+          sha256sum research/v296/v296_tile_slice.sv research/v296/v296_tile_slice_return_tree.sv > "$out/source.sha256"
+          yosys -V > "$out/yosys.version"
+          for spec in original_pairwise:0:1 original_serial:0:0 balanced_pairwise:1:1 balanced_serial:1:0; do
+            IFS=: read -r name balanced pairwise <<< "$spec"
+            if [ "$balanced" = 1 ]; then top=v296_tile_slice_return_tree; else top=v296_tile_slice; fi
+            yosys -Q -T -p "read_liberty -lib -ignore_miss_func -ignore_miss_dir $out/nangate.lib; \
+              read_verilog -sv rtl/vtile/steal_warp_scheduler.sv research/v295/v295_issue_core.sv \
+                research/v296/v296_issue_core.sv research/v296/v296_tile_slice.sv \
+                research/v296/v296_tile_slice_return_tree.sv; \
+              hierarchy -top $top -chparam PAIRWISE $pairwise; synth -top $top -flatten; \
+              dfflibmap -liberty $out/nangate.lib; abc -liberty $out/nangate.lib; \
+              clean; check -assert; stat -liberty $out/nangate.lib; ltp -noff" \
+              > "$out/$name.log" 2>&1
+            grep -q 'Chip area' "$out/$name.log"
+            echo "V296_RETURN_TREE_MAPPED_COMPLETE $name"
+          done
+      - name: Preserve all four mapped controls and source hashes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-return-tree-fourway-mapped
+          path: build/v296/return_tree_mapped/
+          if-no-files-found: warn
+  physical:
+    needs: rtl-equivalence
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        variant: [pairwise, serial_onehot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Yosys and OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/tile_slice
+          sha256sum /tmp/openroad-v296.deb > build/v296/tile_slice/openroad.deb.sha256
+      - name: Download pinned Nangate45 and OpenRCX models
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Execute integrated physical contestant
+        env:
+          V296_TILE_VARIANT: ${{ matrix.variant }}
+        run: |
+          set -euo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          bash research/v296/run_tile_slice_return_tree.sh
+      - name: Preserve complete or failed physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-return-tree-${{ matrix.variant }}
+          path: build/v296/tile_slice/
+          if-no-files-found: warn
+  independent-aggregate:
+    needs: [rtl-equivalence, physical]
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download both physical contestants
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v296-return-tree-*
+          path: build/v296/tile_slice/
+          merge-multiple: true
+      - name: Independent fail-closed matched integrated physical verdict
+        run: |
+          python3 research/v296/audit_tile_slice.py --self-test
+          python3 research/v296/audit_tile_slice.py --aggregate build/v296/tile_slice
+      - name: Preserve aggregate, including falsifications
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-return-tree-independent-audit
+          path: build/v296/tile_slice/aggregate.tile_slice.json
+          if-no-files-found: warn
