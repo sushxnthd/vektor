@@ -1,0 +1,56 @@
+{
+  "equal_clock_v296_vs_serial_gain": 0,
+  "evidence_tier": "exact finite synthetic enumeration + seeded independent synthetic simulation; not physical GPU throughput",
+  "exact": {
+    "banks": 3,
+    "exact_probability_mass": "1",
+    "exact_regret": "27172864/284765625",
+    "greedy": 1.9383356962414267,
+    "max_regret": 1,
+    "oracle": 2.033757550617284,
+    "positive_regret_frequency": 0.09542185437585735,
+    "regret": 0.09542185437585735,
+    "slots": 4
+  },
+  "predicted_near_no_win": {
+    "banks": 16,
+    "bound_half_width": 0.018794178826697087,
+    "greedy": 0.7889083333333333,
+    "max_regret": 1,
+    "n": 120000,
+    "oracle": 0.7890166666666667,
+    "p": 0.2,
+    "positive_regret_frequency": 0.00010833333333333333,
+    "regret": 0.00010833333333333333,
+    "regret_99pct_hoeffding_interval": [
+      0,
+      0.01890251216003042
+    ],
+    "rho": 0.2,
+    "seed": 296012,
+    "slots": 4
+  },
+  "predicted_oracle_win": {
+    "banks": 4,
+    "bound_half_width": 0.018794178826697087,
+    "greedy": 2.4536,
+    "max_regret": 1,
+    "n": 120000,
+    "oracle": 2.5595833333333333,
+    "p": 0.95,
+    "positive_regret_frequency": 0.10598333333333333,
+    "regret": 0.10598333333333333,
+    "regret_99pct_hoeffding_interval": [
+      0.08718915450663625,
+      0.12477751216003041
+    ],
+    "rho": 0.2,
+    "seed": 296011,
+    "slots": 4
+  },
+  "preregistered_gates": {
+    "high_contention_regret_gt_0p02": true,
+    "low_contention_regret_lt_0p01": true
+  },
+  "protocol": "OPTIMAL_SUBSET_ADMISSION_ORACLE_PREREG_20261025.md"
+}
