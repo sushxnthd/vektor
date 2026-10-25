@@ -59,6 +59,24 @@ jobs:
               > "original/$variant.sta.log" 2>&1 || { cat "original/$variant.sta.log"; exit 4; }
             grep -q "V296_FORENSIC_DONE $variant" "original/$variant.sta.log"
           done
+      - name: Independently trace six original cap violators through SPEF and DEF
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fLsS --retry 3 -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/sushxnthd/vektor/actions/artifacts/12585654946/zip" \
+            -o original/pairwise.original.zip
+          curl -fLsS --retry 3 -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/sushxnthd/vektor/actions/artifacts/12586607915/zip" \
+            -o original/serial_onehot.original.zip
+          python3 research/v296/cap_topology_audit.py \
+            --pairwise-zip original/pairwise.original.zip \
+            --serial-zip original/serial_onehot.original.zip \
+            --out original/cap-topology.json
       - name: Independently reconcile original and reconstructed STA
         run: |
           python3 research/v296/audit_tile_slice_sta_reconstruction.py \
@@ -72,4 +90,5 @@ jobs:
             original/*.sta.log
             original/*forensics.version
             original/extracted-path-audit.json
+            original/cap-topology.json
           if-no-files-found: warn
