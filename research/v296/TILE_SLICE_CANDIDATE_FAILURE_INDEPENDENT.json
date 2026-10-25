@@ -1,0 +1,40 @@
+{
+  "evidence_tier": "post-CTS detailed-route extracted RC; not signoff",
+  "candidate": "V296 pairwise RF slice",
+  "final_extracted": {
+    "area_um2": 17857.644252217142,
+    "setup_ns": -1.047895,
+    "hold_ns": -0.036622,
+    "slew": 0,
+    "cap": 3
+  },
+  "preregistered_gate": {
+    "setup_ns": 0.05,
+    "hold_ns": 0,
+    "cap": 0,
+    "slew": 0,
+    "area_um2": 30000
+  },
+  "failures": {
+    "setup_shortfall_ns": 1.097895,
+    "hold_shortfall_ns": 0.036622,
+    "cap_violation_count": 3
+  },
+  "passes_area_limit": true,
+  "passes_physical_gate": false,
+  "early_path_not_extracted_critical_path": {
+    "stage": "pre-CTS report_checks only",
+    "startpoint": "_15188_",
+    "startpoint_q": "\\candidate.issue.scheduler.rr1 [1]",
+    "endpoint": "_15156_",
+    "endpoint_q": "executed_data[7]"
+  },
+  "same_clock_admission_advantage": 0,
+  "control_physical_outcome": "PENDING_IN_THIS_REPORT",
+  "gpu_fmax_or_speedup": "NOT_MEASURED",
+  "source_sha256": {
+    "log": "284c4d7e6eae22fb09312a46b490069d224cc938f5b64b6e15181ad219603739",
+    "netlist": "782fb23a3ea26a36de29d58d7aa85c7a743692758d7451697223a8cc424c0114",
+    "audit": "46fa79adf1e08b7e58c7da2668808aa9b75911259fbc829d31cd8077ac9af4e9"
+  }
+}
