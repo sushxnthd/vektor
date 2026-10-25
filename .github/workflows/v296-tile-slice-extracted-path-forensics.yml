@@ -56,7 +56,7 @@ jobs:
             V296_TECH_LEF=platform/NangateOpenCellLibrary.tech.lef \
             V296_CELL_LEF=platform/NangateOpenCellLibrary.macro.mod.lef \
               openroad -exit research/v296/reconstruct_tile_slice_sta.tcl \
-              > "original/$variant.sta.log" 2>&1
+              > "original/$variant.sta.log" 2>&1 || { cat "original/$variant.sta.log"; exit 4; }
             grep -q "V296_FORENSIC_DONE $variant" "original/$variant.sta.log"
           done
       - name: Independently reconcile original and reconstructed STA

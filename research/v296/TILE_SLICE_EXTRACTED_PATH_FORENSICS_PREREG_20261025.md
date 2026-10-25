@@ -12,3 +12,6 @@ The original paired run 40156470550 failed timing and electrical checks for **bo
 
 ## Decision
 Either `EXTRACTED_PATHS_RECONSTRUCTED_BOTH_INFEASIBLE` with path/violation evidence, or `RECONSTRUCTION_MISMATCH_NO_PATH_CLAIM` / `INCOMPLETE` with the precise blocker. Neither changes the original failed physical gate. Same-clock arbitration throughput remains equal, power and equal-consumed-area GPU tile effects unmeasured. Keep prospective workload holdouts sealed.
+
+## Tool-compatibility correction (before any successful reconstruction)
+The initial diagnostic run 40168519865 preserved a 606-byte OpenROAD failure log: `ODB-0251 Chip already exists` from `read_verilog; link_design; read_def`. In pinned OpenROAD, the routed DEF is itself the authoritative complete logical/physical database. The read-only diagnostic now loads the DEF directly and retains the mapped Verilog for provenance checks. This is a reconstruction-loader correction, not a modification to physical evidence, constraints or the frozen acceptance thresholds. The workflow prints any subsequent tool failure verbatim.

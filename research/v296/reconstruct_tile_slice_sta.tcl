@@ -15,9 +15,9 @@ foreach f [list $netlist $def $spef $env(V296_LIB) $env(V296_TECH_LEF) $env(V296
 read_lef $env(V296_TECH_LEF)
 read_lef $env(V296_CELL_LEF)
 read_liberty $env(V296_LIB)
-read_verilog $netlist
-link_design v296_tile_slice
 read_def $def
+# DEF is the authoritative physical/logical database; mapped Verilog is retained as provenance.
+# The pinned OpenROAD rejects read_verilog/link_design followed by read_def (duplicate chip).
 create_clock -name coreclk -period 3.5 [get_ports clk]
 set_input_delay -clock coreclk 0.15 [all_inputs -no_clocks]
 set_output_delay -clock coreclk 0.15 [all_outputs]
