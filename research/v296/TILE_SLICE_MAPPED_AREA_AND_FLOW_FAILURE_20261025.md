@@ -18,7 +18,7 @@ From the **original paired** hosted [run 40156284582](https://github.com/sushxnt
 | Pairwise absolute saving | **73.948 um2** | reference |
 | Pairwise relative saving | **0.731714%** | reference |
 
-Both synthesis jobs completed before physical implementation. This is an **observed sub-1% whole-slice mapped-area saving** under a small flop-RF slice, not the historical 14.35% *post-CTS controller-only* area saving. Different synthesis/physical stages and netlist optimization prohibit directly subtracting those percentages. This already warns against multiplying controller area percentages into tile claims.
+Both synthesis jobs completed before physical implementation. This is an **observed sub-1% whole-slice mapped-area saving** under a small flop-RF slice, not the historical 14.35% *post-CTS controller-only* area saving. Different synthesis/physical stages and netlist optimization prohibit directly subtracting those percentages. The new hosted jobs report **Yosys 0.9 (git 1979e0b)**, whereas the original V296 mapped controller study reported **Yosys 0.33**; version drift is another reason not to attribute the smaller delta solely to RF integration. The new *within-run* pairwise/control comparison itself uses the same toolchain. This already warns against multiplying controller area percentages into tile claims.
 
 The frozen **>=1% integrated area-saving** threshold is **not met at the mapped-synthesis stage**. The preregistered acceptance threshold applies to **post-CTS extracted integrated cell area**, so the final gate remains **pending** rather than retroactively failed.
 
