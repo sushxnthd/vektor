@@ -1,0 +1,78 @@
+name: V296 original SPEF coupling activity boundary
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/ORIGINAL_SPEF_COUPLING_ACTIVITY_PREREG_20261025.md'
+      - 'research/v296/coupling_activity_boundary.py'
+      - '.github/workflows/v296-original-coupling-activity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  frozen-original-spef:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail-closed mathematical and SPEF parser adversarial self-tests
+        run: python3 research/v296/coupling_activity_boundary.py --self-test
+      - name: Download original immutable paired post-route artifact ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/v296-original-spef build/v296/coupling_activity
+          curl -fL --retry 3 --max-time 180 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/sushxnthd/vektor/actions/artifacts/12592692428/zip \
+            -o /tmp/v296-original-spef/pairwise.zip
+          curl -fL --retry 3 --max-time 180 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/sushxnthd/vektor/actions/artifacts/12594851895/zip \
+            -o /tmp/v296-original-spef/serial.zip
+          cd /tmp/v296-original-spef
+          echo "9ce2ede807ba5858efcd113b3cd4c2f9e8e5d4a6d97a7b04eb663dd354786259  pairwise.zip" | sha256sum -c -
+          echo "5c0f7ef91a2151ac2069553cd93a34b97d38c939d6f1106ea95ef4cc8b85706e  serial.zip" | sha256sum -c -
+      - name: Compute preregistered external capacitive-energy correlation boundary
+        run: |
+          set -euo pipefail
+          python3 research/v296/coupling_activity_boundary.py \
+            --pairwise /tmp/v296-original-spef/pairwise.zip \
+            --serial /tmp/v296-original-spef/serial.zip \
+            --output build/v296/coupling_activity/frozen_original_boundary.json
+      - name: Independently check original D_NET sums and algebraic corner invariants
+        run: |
+          python3 - <<'PY'
+          import json, math, zipfile, re
+          from pathlib import Path
+          r=json.loads(Path('build/v296/coupling_activity/frozen_original_boundary.json').read_text())
+          assert r['decision']=='COUPLING_ACTIVITY_PROXY_COMPUTED_NOT_PHYSICAL_CLOSURE'
+          assert r['physical_gate']=='BOTH_INFEASIBLE' and r['holdouts']=='SEALED'
+          for v,archive,expected in [('pairwise','pairwise.zip',51.5463190668),
+                                      ('serial_onehot','serial.zip',59.0860103061)]:
+              with zipfile.ZipFile('/tmp/v296-original-spef/'+archive) as z:
+                  s=z.read(v+'.high.cts45.spef').decode()
+              caps=[float(x) for x in re.findall(r'^\\*D_NET\\s+\\S+\\s+([\\d.eE+-]+)$',s,re.M)]
+              assert len(caps)==r[v]['net_count'] and abs(sum(caps)-expected)<1e-5
+              assert abs(sum(caps)-r[v]['sum_declared_dnet_pf'])<1e-8
+          p,s=r['pairwise'],r['serial_onehot']
+          for rho in (-1,0,1):
+              c=r['boundary']['equal_rho_corners'][str(rho)]
+              a=p['ground_cap_pf']+2*p['unique_coupling_cap_pf']*(1-rho)
+              b=s['ground_cap_pf']+2*s['unique_coupling_cap_pf']*(1-rho)
+              assert math.isclose(c['pairwise_effective_cap_pf'],a)
+              assert math.isclose(c['serial_effective_cap_pf'],b)
+              assert math.isclose(c['pairwise_activity_break_even'],b/a)
+          print('V296_ORIGINAL_SPEF_INDEPENDENT_BOUNDARY_CHECK_PASS')
+          PY
+      - name: Preserve complete positive or negative audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-original-spef-coupling-activity-audit
+          path: build/v296/coupling_activity/
+          if-no-files-found: warn
