@@ -1,0 +1,17 @@
+# V296 fixed-resource admission-optimality falsifier: frozen protocol (2026-10-25)
+
+**Scope and decision:** V296 remains the sole active hardware mechanism; V287 is retired. This is an algorithmic **upper-bound control**, not a new hardware candidate or an equal-cell-area implementation. Preserve original routed timing/electrical failures and existing prospective GPU holdouts. No hardware, RTL or existing workflow is changed.
+
+## Question, defined before evaluation
+The V296 pairwise arbiter and serial one-hot control implement the same ordered greedy selection. Does that shared policy leave admission opportunities on the table even at the **same number of issue slots and two read ports per bank**? Compare ordered greedy admissions with a maximum-cardinality feasible subset oracle. An oracle may reorder/skip older waves and is **not** a fair, physically implemented or equal-area competitor; use it only to bound the architectural admission headroom that V296 itself does not capture.
+
+## Frozen protocol
+- A request is invalid or is a pair of banks (a,b), with a,b in [0,B). A request consumes one read port at each bank (two if a=b). A feasible accepted subset consumes <=2 ports per bank and <=4 issue slots. Greedy visits slots in fixed priority order and accepts iff both operands fit. Oracle enumerates all 2^S subsets, maximizing number accepted; no fairness or future-cycle consequences.
+- **Exact small case:** B=3, S=4, independent slot validity p=4/5; a is uniform; b=a with probability rho=1/5 and otherwise independently uniform. Enumerate all (1+B^2)^S request vectors with exact Fraction probabilities. Verify probability mass=1, oracle >= greedy, per-bank capacity and greedy semantics.
+- **Synthetic high-contention predicted oracle-win:** B=4, S=4, p=0.95, rho=0.20, N=120000, random seed 296011. Predict positive mean oracle-minus-greedy admissions >0.02 per cycle. **Low-contention predicted near-no-win:** B=16, S=4, p=0.20, rho=0.20, N=120000, seed 296012. Predict mean regret <0.01 per cycle. All distributions, seeds, sample sizes and thresholds are frozen before running either simulation.
+- Independent oracle enumerates subsets by bitmask and checks per-bank occupancy; separate greedy checks requests sequentially. Validate exact small case against a second independent recursive oracle. Check bank-label permutation invariance and operand-order swap invariance.
+- Report mean greedy and oracle admissions, mean regret, positive-regret frequency, max regret, and a conservative 99% Hoeffding interval for paired regret in [0,4]. Do not fit to evaluation outcomes or change thresholds.
+- **Mandatory negative control:** at equal clock, resource counts, and identical request order, V296 and serial one-hot have exactly the same greedy admissions. Their predicted gain remains **zero** in both regimes. The oracle's improvement is not V296's improvement.
+
+## Falsification and limits
+A zero/negative oracle regret falsifies the hypothesized admission headroom; a positive regret is evidence of a scheduling-policy opportunity, **not** a V296 performance advantage. The oracle must be physically implemented, proven fair, synthesized and routed under matched area/timing/power, and evaluated on unseen workload traces before it could become a legitimate strongest equal-resource control. No extrapolation to GPU IPC, tile clock, RTX-5090 equivalence, or measured power. Both original integrated V296 and serial implementations remain infeasible at the frozen 3.5 ns physical gate.
