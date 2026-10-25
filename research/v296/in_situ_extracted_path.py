@@ -79,6 +79,29 @@ def parse_slack(text):
         raise ValueError("Ambiguous extracted slack")
     return float(hits[0])
 
+def parse_critical_paths(block, measured_worst_slack, label):
+    """Fail closed unless named endpoints carry the same extracted worst slack.
+
+    A generic report_checks invocation can emit a valid but noncritical path.
+    Attribution therefore requires a numeric path slack that independently
+    matches report_worst_slack in the same extracted physical run.
+    """
+    starts = re.findall(r"^Startpoint:\s*(.+)$", block, re.M)
+    ends = re.findall(r"^Endpoint:\s*(.+)$", block, re.M)
+    slacks = re.findall(
+        r"^\s*slack\s+(?:\([A-Za-z ]+\)\s+)?(-?(?:\d+(?:\.\d*)?|\.\d+))\s*$",
+        block, re.M)
+    if not starts or len(starts) != len(ends) or len(slacks) != len(starts):
+        raise ValueError("Unattributable or incomplete extracted paths: " + label)
+    values = [float(x) for x in slacks]
+    if not all(math.isfinite(x) for x in values):
+        raise ValueError("Nonfinite extracted path slack: " + label)
+    if abs(min(values) - measured_worst_slack) > .005:
+        raise ValueError("Reported path is not the measured worst slack: " + label)
+    return [{"start": a.strip(), "end": b.strip(), "slack_ns": v}
+            for a, b, v in zip(starts[:5], ends[:5], values[:5])]
+
+
 def analyze(root):
     manifest = json.loads((root / "in_situ_manifest.json").read_text())
     src = (root / "cts45_tile.tcl").read_text()
@@ -107,11 +130,8 @@ def analyze(root):
         paths = {}
         for stage in ("SETUP", "HOLD"):
             block = section(log, stage + "_PATHS")
-            starts = re.findall(r"^Startpoint:\s*(.+)$", block, re.M)
-            ends = re.findall(r"^Endpoint:\s*(.+)$", block, re.M)
-            if not starts or len(starts) != len(ends):
-                raise ValueError("Missing path endpoints for " + variant + " " + stage)
-            paths[stage.lower()] = [{"start": a.strip(), "end": b.strip()} for a,b in zip(starts[:5], ends[:5])]
+            paths[stage.lower()] = parse_critical_paths(
+                block, s if stage == "SETUP" else h, variant + " " + stage)
         rows[variant] = {"setup_ns": s, "hold_ns": h, "paths": paths,
                          "area_um2": f["area_um2"], "cap_violations": f["cap"],
                          "slew_violations": f["slew"], "feasible": physical["feasible"],
@@ -140,6 +160,18 @@ def self_test():
         try: instrument(bad)
         except ValueError: pass
         else: raise AssertionError("Fail-open probe generator")
+    valid = ("Startpoint: flop/Q\nEndpoint: issue_valid[0]\n"
+             "  slack (VIOLATED) -1.047895\n")
+    assert parse_critical_paths(valid, -1.047895, "setup")[0]["slack_ns"] == -1.047895
+    for invalid, measured in (
+        (valid, -0.050000),
+        (valid.replace("slack (VIOLATED) -1.047895", ""), -1.047895),
+        (valid.replace("Endpoint: issue_valid[0]", ""), -1.047895),
+        (valid.replace("-1.047895", "nan"), -1.047895),
+    ):
+        try: parse_critical_paths(invalid, measured, "adversarial")
+        except ValueError: pass
+        else: raise AssertionError("Noncritical or incomplete path passed")
     print("V296_IN_SITU_PATH_SELFTEST_PASS")
 
 def main():
