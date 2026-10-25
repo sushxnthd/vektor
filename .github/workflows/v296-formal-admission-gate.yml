@@ -31,10 +31,12 @@ jobs:
           set -euo pipefail
           out=build/v296/formal_admission
           sources='research/v296/v296_issue_core.sv research/v296/v296_scaling_arbiters.sv research/v296/v296_pairwise_parallel_threshold.sv research/v296/v296_formal_admission_miter.sv'
-          if yosys -Q -T -p "read_verilog -formal -sv $sources; prep -top v296_formal_mutation_miter -flatten; sat -verify -prove bad 0 -show-inputs -show-outputs -timeout 300" > "$out/mutation.log" 2>&1; then
-            echo 'V296_MUTATION_CONTROL_INVALID_NO_COUNTEREXAMPLE'
-            exit 1
-          fi
+          # Yosys 0.9's -verify exits immediately on a failed proof and prints
+          # only "ERROR: Called with -verify and proof did fail!", suppressing
+          # the counterexample/model marker.  Run the negative control without
+          # -verify and insist on the actual SAT FAIL model marker instead.
+          # A tool error, timeout or missing witness is INCONCLUSIVE.
+          yosys -Q -T -p "read_verilog -formal -sv $sources; prep -top v296_formal_mutation_miter -flatten; sat -prove bad 0 -show-inputs -show-outputs -timeout 300" > "$out/mutation.log" 2>&1
           if ! grep -Eq 'model found: FAIL|SAT proof finished.*FAIL' "$out/mutation.log"; then
             echo 'V296_MUTATION_CONTROL_INCONCLUSIVE_TOOL_FAILURE_OR_TIMEOUT'
             tail -n 80 "$out/mutation.log"
