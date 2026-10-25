@@ -1,0 +1,75 @@
+name: V296 read-only extracted RF-slice critical-path forensics
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/TILE_SLICE_EXTRACTED_PATH_FORENSICS_PREREG_20261025.md'
+      - 'research/v296/reconstruct_tile_slice_sta.tcl'
+      - 'research/v296/audit_tile_slice_sta_reconstruction.py'
+      - '.github/workflows/v296-tile-slice-extracted-path-forensics.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  reconstruct-original:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Independent fail-closed audit self-tests
+        run: python3 research/v296/audit_tile_slice_sta_reconstruction.py --self-test
+      - name: Download original unmodified physical contestants
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 40156470550
+          pattern: v296-tile-slice-*
+          merge-multiple: true
+          path: original
+          github-token: ${{ github.token }}
+      - name: Install pinned original OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p platform
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o platform/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "platform/$f"
+          done
+          openroad -version | tee original/openroad-forensics.version
+      - name: Reconstruct extracted timing without any physical modification
+        run: |
+          set -euo pipefail
+          for variant in pairwise serial_onehot; do
+            for f in "$variant.v" "$variant.high.log" "$variant.high.cts45.def" "$variant.high.cts45.spef"; do
+              test -s "original/$f"
+            done
+            V296_ORIGINAL_ROOT=original V296_TILE_VARIANT="$variant" \
+            V296_LIB=platform/nangate.lib \
+            V296_TECH_LEF=platform/NangateOpenCellLibrary.tech.lef \
+            V296_CELL_LEF=platform/NangateOpenCellLibrary.macro.mod.lef \
+              openroad -exit research/v296/reconstruct_tile_slice_sta.tcl \
+              > "original/$variant.sta.log" 2>&1
+            grep -q "V296_FORENSIC_DONE $variant" "original/$variant.sta.log"
+          done
+      - name: Independently reconcile original and reconstructed STA
+        run: |
+          python3 research/v296/audit_tile_slice_sta_reconstruction.py \
+            --root original --out original/extracted-path-audit.json
+      - name: Preserve raw reconstructed path reports even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-original-extracted-path-forensics
+          path: |
+            original/*.sta.log
+            original/*forensics.version
+            original/extracted-path-audit.json
+          if-no-files-found: warn
