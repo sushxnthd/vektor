@@ -1,0 +1,35 @@
+name: V296 original extracted critical path artifact audit
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - research/v296/in_situ_path_artifact_recovery.py
+      - research/v296/ORIGINAL_IN_SITU_CRITICAL_ENDPOINT_RECOVERY_20261025.md
+      - .github/workflows/v296-in-situ-artifact-recovery.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  independent-immutable-artifact-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download original SHA-pinned paired physical artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/sushxnthd/vektor/actions/artifacts/12604708352/zip" -o v296-pairwise.zip
+          curl -fsSL --retry 3 -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/sushxnthd/vektor/actions/artifacts/12605743701/zip" -o v296-serial.zip
+      - name: Adversarial parser self-test
+        run: python3 research/v296/in_situ_path_artifact_recovery.py --self-test
+      - name: Independent matched extracted-path audit
+        run: |
+          python3 research/v296/in_situ_path_artifact_recovery.py --pairwise-zip v296-pairwise.zip --serial-zip v296-serial.zip > recovered_paths.json
+          python3 -c 'import json; d=json.load(open("recovered_paths.json")); assert d["decision"]=="EXTRACTED_CRITICAL_PATHS_IDENTIFIED_BOTH_INFEASIBLE"; print(d["decision"])'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v296-original-extracted-paths-recovered
+          path: recovered_paths.json
