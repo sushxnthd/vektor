@@ -23,11 +23,11 @@ module tb_v296_tile_slice;
   reg [7:0] reference_rf [0:31];
   reg [31:0] expected_exec=0;
   function [7:0] oracle_read;
-    input [127:0] table;
+    input [127:0] bank_map;
     input [4:0] id;
     reg [3:0] bank;
     begin
-      bank=table[id*4 +:4];
+      bank=bank_map[id*4 +:4];
       oracle_read=reference_rf[2*bank+id[0]];
     end
   endfunction
