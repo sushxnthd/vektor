@@ -1,0 +1,26 @@
+name: V296 latent bank dependence exact oracle
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - research/v296/latent_hotbank_correlation.py
+      - research/v296/LATENT_HOTBANK_CORRELATION_PREREG_20261025.md
+      - research/v296/LATENT_HOTBANK_CORRELATION_FALSIFICATION_20261025.md
+      - .github/workflows/v296-latent-hotbank-law.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-independent-oracle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exact DP versus independent exhaustive bank-port oracle
+        run: python3 research/v296/latent_hotbank_correlation.py --self-test
+      - name: Evaluate prospectively frozen regimes
+        run: python3 research/v296/latent_hotbank_correlation.py --evaluate > latent_hotbank_result.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v296-latent-hotbank-exact-model
+          path: latent_hotbank_result.json
