@@ -18,10 +18,10 @@ puts "V296_IN_SITU_HOLD_SLACK_BEGIN"
 report_worst_slack -min -digits 6
 puts "V296_IN_SITU_HOLD_SLACK_END"
 puts "V296_IN_SITU_SETUP_PATHS_BEGIN"
-report_checks -path_delay max -group_path_count 5 -fields {slew capacitance fanout} -digits 6
+report_checks -path_delay max -digits 6
 puts "V296_IN_SITU_SETUP_PATHS_END"
 puts "V296_IN_SITU_HOLD_PATHS_BEGIN"
-report_checks -path_delay min -group_path_count 5 -fields {slew capacitance fanout} -digits 6
+report_checks -path_delay min -digits 6
 puts "V296_IN_SITU_HOLD_PATHS_END"
 puts "V296_IN_SITU_DONE"
 """
@@ -131,6 +131,9 @@ def self_test():
     probe = instrument(tcl)
     assert probe.replace(MARK + "\n" + INSERT, MARK) == tcl
     assert probe.count("V296_IN_SITU_DONE") == 1
+    assert "-group_path_count" not in probe
+    assert "report_checks -path_delay max -digits 6" in probe
+    assert "report_checks -path_delay min -digits 6" in probe
     assert "in_situ_extracted_path.py --instrument" in wrapper()
     assert parse_slack(section("V296_IN_SITU_SETUP_SLACK_BEGIN\nworst slack -1.2\nV296_IN_SITU_SETUP_SLACK_END\n", "SETUP_SLACK")) == -1.2
     for bad in (tcl.replace(MARK, ""), tcl.replace(MARK, MARK + MARK)):
