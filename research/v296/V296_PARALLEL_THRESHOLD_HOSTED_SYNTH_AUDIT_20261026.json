@@ -1,0 +1,32 @@
+{
+  "artifact_sha256": "1a2782cd35befa806fb49179d83b289473ada29a21ae693796bae97f3b35e861",
+  "source_commit": "a9904d3a75ba0b8d3acad5d009cfa2f35ffa644f",
+  "workflow_run": 40224543790,
+  "artifact_id": 12612060538,
+  "liberty_sha256": "8d540a4d4cf6d09d27c87ad067857a9c0c2eeb023ab7a56e058cd3113db4e9b1",
+  "yosys_version": "Yosys 0.9 (git sha1 1979e0b)",
+  "rtl_checks": 164976,
+  "independent_oracle_cases": 164976,
+  "evidence_tier": "same-library mapped combinational area and Yosys topological depth only",
+  "tops": {
+    "v296_pairwise_arbiter": {
+      "area_um2": 278.236,
+      "mapped_cells": 204,
+      "longest_topological_path_edges": 11
+    },
+    "v296_pairwise_parallel_threshold": {
+      "area_um2": 257.754,
+      "mapped_cells": 201,
+      "longest_topological_path_edges": 13
+    },
+    "v296_onehot_scaling": {
+      "area_um2": 727.244,
+      "mapped_cells": 677,
+      "longest_topological_path_edges": 20
+    }
+  },
+  "threshold_vs_original_area_change_pct": -7.361376673040143,
+  "threshold_vs_original_cell_count_change_pct": -1.4705882352941124,
+  "threshold_vs_original_ltp_edge_change_pct": 18.181818181818187,
+  "conclusion": "mapped-area benefit, mapped-depth regression; no physical timing claim"
+}
