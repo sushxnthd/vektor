@@ -1,0 +1,62 @@
+name: V296 unrestricted SAT admission-equivalence gate
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/FORMAL_ALL_INPUT_ADMISSION_EQUIVALENCE_PREREG_20261026.md'
+      - 'research/v296/v296_formal_admission_miter.sv'
+      - 'research/v296/v296_issue_core.sv'
+      - 'research/v296/v296_scaling_arbiters.sv'
+      - 'research/v296/v296_pairwise_parallel_threshold.sv'
+      - '.github/workflows/v296-formal-admission-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  all-input-admission-sat:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Yosys and pin evidence
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys
+          mkdir -p build/v296/formal_admission
+          yosys -V | tee build/v296/formal_admission/yosys.version
+          sha256sum research/v296/v296_issue_core.sv research/v296/v296_scaling_arbiters.sv research/v296/v296_pairwise_parallel_threshold.sv research/v296/v296_formal_admission_miter.sv > build/v296/formal_admission/sources.sha256
+      - name: Mutation control must yield a genuine SAT counterexample
+        run: |
+          set -euo pipefail
+          out=build/v296/formal_admission
+          sources='research/v296/v296_issue_core.sv research/v296/v296_scaling_arbiters.sv research/v296/v296_pairwise_parallel_threshold.sv research/v296/v296_formal_admission_miter.sv'
+          if yosys -Q -T -p "read_verilog -formal -sv $sources; prep -top v296_formal_mutation_miter -flatten; sat -verify -prove bad 0 -show-inputs -show-outputs -timeout 300" > "$out/mutation.log" 2>&1; then
+            echo 'V296_MUTATION_CONTROL_INVALID_NO_COUNTEREXAMPLE'
+            exit 1
+          fi
+          if ! grep -Eq 'model found: FAIL|SAT proof finished.*FAIL' "$out/mutation.log"; then
+            echo 'V296_MUTATION_CONTROL_INCONCLUSIVE_TOOL_FAILURE_OR_TIMEOUT'
+            tail -n 80 "$out/mutation.log"
+            exit 1
+          fi
+          echo 'V296_MUTATION_CONTROL_SAT_COUNTEREXAMPLE_PASS'
+      - name: Prove all 36 input bits for three unchanged arbiters
+        run: |
+          set -euo pipefail
+          out=build/v296/formal_admission
+          sources='research/v296/v296_issue_core.sv research/v296/v296_scaling_arbiters.sv research/v296/v296_pairwise_parallel_threshold.sv research/v296/v296_formal_admission_miter.sv'
+          yosys -Q -T -p "read_verilog -formal -sv $sources; prep -top v296_formal_miter -flatten; sat -verify -prove bad 0 -show-inputs -show-outputs -timeout 300" > "$out/equivalence.log" 2>&1
+          if ! grep -Eq 'no model found: SUCCESS|SAT proof finished.*SUCCESS' "$out/equivalence.log"; then
+            echo 'V296_FORMAL_EQUIVALENCE_INCONCLUSIVE_NO_PROOF_MARKER'
+            tail -n 80 "$out/equivalence.log"
+            exit 1
+          fi
+          echo 'V296_FORMAL_ALL_INPUT_ADMISSION_EQUIVALENCE_PASS'
+      - name: Preserve positive and negative solver evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-unrestricted-sat-admission-evidence
+          path: build/v296/formal_admission/
+          if-no-files-found: warn
