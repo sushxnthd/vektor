@@ -1,0 +1,42 @@
+{
+  "source_run": 40173311725,
+  "decision": "TAIL_FALSIFIES_UNIFORM_SCALING_BOTH_PHYSICALLY_INFEASIBLE",
+  "pairwise": {
+    "zip_sha256": "9ce2ede807ba5858efcd113b3cd4c2f9e8e5d4a6d97a7b04eb663dd354786259",
+    "spef_net_count": 9123,
+    "sum_reported_net_cap_pf": 51.5463190668,
+    "p99_net_cap_ff": 51.41202400000046,
+    "max_net_cap_ff": 117.44200000000001,
+    "nets_above_50ff": 96,
+    "routed_wire_um": 205993,
+    "routed_vias": 84490,
+    "area_um2": 17857.644252217142,
+    "setup_ns": -1.047895,
+    "hold_ns": -0.036622,
+    "slew_violations": 0,
+    "cap_violations": 3
+  },
+  "serial_onehot": {
+    "zip_sha256": "5c0f7ef91a2151ac2069553cd93a34b97d38c939d6f1106ea95ef4cc8b85706e",
+    "spef_net_count": 9450,
+    "sum_reported_net_cap_pf": 59.0860103061,
+    "p99_net_cap_ff": 49.29051500000005,
+    "max_net_cap_ff": 113.71000000000001,
+    "nets_above_50ff": 91,
+    "routed_wire_um": 230023,
+    "routed_vias": 94181,
+    "area_um2": 18953.830505097358,
+    "setup_ns": -1.859922,
+    "hold_ns": -0.019796,
+    "slew_violations": 0,
+    "cap_violations": 3
+  },
+  "matched_physical_tcl_sha256": "30b0a072ec197a47c5e2264567fee50f908b85a8d946e607765083221c0fcf3d",
+  "relative_wire_reduction_pct": 10.446781408815642,
+  "relative_cap_sum_reduction_pct": 12.760535362330272,
+  "uniform_scaling_p99_prediction_ff": 43.000781403150334,
+  "observed_p99_ff": 51.41202400000046,
+  "p99_excess_over_uniform_null_pct": 19.560673835182673,
+  "activity_ratio_break_even_toy": 1.1462702162986487,
+  "limitations": "Not switched power, timing closure, critical-path attribution, equal consumed area, or GPU speedup."
+}
