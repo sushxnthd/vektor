@@ -1,0 +1,51 @@
+name: V296 matched-walltime bank-memory prospective transfer
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/matched_walltime_workload.py'
+      - 'research/v296/MATCHED_WALLTIME_BANK_MEMORY_PREREG_20261025.md'
+      - 'research/v296/MATCHED_WALLTIME_BANK_MEMORY_TRANSFER_20261025.md'
+      - '.github/workflows/v296-matched-walltime-bank-memory.yml'
+  workflow_dispatch:
+jobs:
+  prospective-synthetic-falsification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify standalone independent priority oracle
+        run: |
+          python3 -m py_compile research/v296/matched_walltime_workload.py
+          python3 research/v296/matched_walltime_workload.py --self-test
+      - name: Replay frozen calibration and prospective timestamped traces
+        run: |
+          python3 research/v296/matched_walltime_workload.py --evaluate calibration > calibration.json
+          python3 research/v296/matched_walltime_workload.py --evaluate prospective > prospective.json
+      - name: Fail closed on frozen prospective predictions
+        run: |
+          python3 - <<'PY'
+          import json
+          p = json.load(open('prospective.json'))
+          c = p['cases']
+          assert p['experiment'] == 'prospective' and p['original_integrated_gate'] == 'BOTH_INFEASIBLE'
+          assert [r['seed'] for r in c] == [296201, 296202, 296203, 296204]
+          ranges = [(1.15, 1.23), (.995, 1.005), (.995, 1.005), (.995, 1.005)]
+          for row, (lo, hi) in zip(c, ranges):
+              assert lo <= row['throughput_ratio'] <= hi, row
+              a, b = row['serial'], row['candidate']
+              assert a['offered_per_ns'] == b['offered_per_ns']
+              for v in (a, b):
+                  assert v['independent_oracle'] and v['fifo_conservation']
+                  assert v['traffic_gbs'] <= row['bandwidth_gbs'] + 1e-9
+          print('V296_MATCHED_TIME_PROSPECTIVE_FROZEN_GATES_PASS')
+          PY
+      - name: Preserve synthetic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-matched-time-synthetic-${{ github.sha }}
+          path: |
+            calibration.json
+            prospective.json
+          if-no-files-found: warn
