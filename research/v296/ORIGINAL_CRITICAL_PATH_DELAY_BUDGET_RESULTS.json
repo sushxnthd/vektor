@@ -1,0 +1,101 @@
+{
+  "evidence_tier": "SHA-verified original post-route extracted OpenSTA worst setup path per design",
+  "warning": "STA cell-output increments include upstream interconnect; not intrinsic gate/wire split, not a physical repair or signoff",
+  "pairwise": {
+    "variant": "pairwise",
+    "artifact_sha256": "239a648829c41f5cd0229ec1ca6663463ca2a253d9186321bb476869223e640e",
+    "startpoint": "_15189_",
+    "endpoint": "_15164_",
+    "setup_slack_ns": -1.047895,
+    "target_slack_ns": 0.05,
+    "required_recovery_ns": 1.097895,
+    "arrival_ns": 4.740173,
+    "required_ns": 3.692278,
+    "launch_clock_ns": 0.247074,
+    "clock_to_q_ns": 0.159392,
+    "functional_attributed_ns": 3.178597,
+    "buffer_attributed_ns": 1.155046,
+    "nonbuffer_attributed_ns": 3.338052,
+    "functional_cell_count": 58,
+    "buffer_count": 36,
+    "largest_buffer_chain": {
+      "count": 9,
+      "delay_ns": 0.249885,
+      "start": "wire165/Z",
+      "end": "max_cap157/Z"
+    },
+    "hypothetical_fractional_buffer_saving": {
+      "0": {
+        "buffer_saving_ns": 0,
+        "additional_nonbuffer_saving_required_ns": 1.097895
+      },
+      "1": {
+        "buffer_saving_ns": 1.155046,
+        "additional_nonbuffer_saving_required_ns": 0
+      },
+      "0.25": {
+        "buffer_saving_ns": 0.2887615,
+        "additional_nonbuffer_saving_required_ns": 0.8091335
+      },
+      "0.5": {
+        "buffer_saving_ns": 0.577523,
+        "additional_nonbuffer_saving_required_ns": 0.520372
+      },
+      "0.75": {
+        "buffer_saving_ns": 0.8662845,
+        "additional_nonbuffer_saving_required_ns": 0.2316105
+      }
+    }
+  },
+  "serial_onehot": {
+    "variant": "serial_onehot",
+    "artifact_sha256": "d755641eba65a4b89c36f1226ae23e55ce647b390dc910e649d157360d538815",
+    "startpoint": "_15350_",
+    "endpoint": "_15342_",
+    "setup_slack_ns": -1.859922,
+    "target_slack_ns": 0.05,
+    "required_recovery_ns": 1.909922,
+    "arrival_ns": 5.539272,
+    "required_ns": 3.67935,
+    "launch_clock_ns": 0.222353,
+    "clock_to_q_ns": 0.172698,
+    "functional_attributed_ns": 3.691466,
+    "buffer_attributed_ns": 1.452727,
+    "nonbuffer_attributed_ns": 3.864197,
+    "functional_cell_count": 65,
+    "buffer_count": 44,
+    "largest_buffer_chain": {
+      "count": 20,
+      "delay_ns": 0.524563,
+      "start": "max_cap945/Z",
+      "end": "max_cap339/Z"
+    },
+    "hypothetical_fractional_buffer_saving": {
+      "0": {
+        "buffer_saving_ns": 0,
+        "additional_nonbuffer_saving_required_ns": 1.909922
+      },
+      "1": {
+        "buffer_saving_ns": 1.452727,
+        "additional_nonbuffer_saving_required_ns": 0.457195
+      },
+      "0.25": {
+        "buffer_saving_ns": 0.36318175,
+        "additional_nonbuffer_saving_required_ns": 1.54674025
+      },
+      "0.5": {
+        "buffer_saving_ns": 0.7263635,
+        "additional_nonbuffer_saving_required_ns": 1.1835585
+      },
+      "0.75": {
+        "buffer_saving_ns": 1.08954525,
+        "additional_nonbuffer_saving_required_ns": 0.82037675
+      }
+    }
+  },
+  "paired": {
+    "slack_lead_ns": 0.812027,
+    "buffer_attributed_difference_ns": 0.297681,
+    "nonbuffer_attributed_difference_ns": 0.526145
+  }
+}
