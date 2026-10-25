@@ -34,11 +34,11 @@ module v296_tile_slice #(parameter integer PAIRWISE = 1)(
   assign wave_id[3] = issue_wave3;
 
   function [3:0] lookup_bank;
-    input [127:0] table;
+    input [127:0] bank_map;
     input [4:0] id;
     reg [127:0] shifted;
     begin
-      shifted = table >> (id*4);
+      shifted = bank_map >> (id*4);
       lookup_bank = shifted[3:0];
     end
   endfunction
