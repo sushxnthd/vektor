@@ -1,0 +1,28 @@
+name: V296 prospective latent hotspot law
+on:
+  push:
+    branches:
+      - research/v296-pairwise-bank-conflict
+    paths:
+      - 'research/v296/latent_hotspot_identifiability.py'
+      - 'research/v296/LATENT_HOTSPOT_PROSPECTIVE_PREREG_20261025.md'
+      - '.github/workflows/v296-latent-hotspot.yml'
+  workflow_dispatch:
+jobs:
+  prospective-synthetic-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exact enumeration, adversarial checks, frozen prospective synthetic transfer
+        run: |
+          python3 research/v296/latent_hotspot_identifiability.py --self-test | tee v296-latent-hotspot-results.jsonlog
+          grep -q 'V296_LATENT_HOTSPOT_SELFTEST_PASS' v296-latent-hotspot-results.jsonlog
+          grep -q '"pass": true' v296-latent-hotspot-results.jsonlog
+      - name: Preserve validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-latent-hotspot-synthetic
+          path: v296-latent-hotspot-results.jsonlog
+          if-no-files-found: error
