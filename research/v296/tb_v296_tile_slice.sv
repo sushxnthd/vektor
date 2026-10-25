@@ -19,6 +19,30 @@ module tb_v296_tile_slice;
   integer cycles, checked, admitted;
   integer ports [0:15];
   integer k,j,bank_a,bank_b;
+  // Independent direct-index RF oracle, deliberately without shared-port muxes.
+  reg [7:0] reference_rf [0:31];
+  reg [31:0] expected_exec=0;
+  function [7:0] oracle_read;
+    input [127:0] table;
+    input [4:0] id;
+    reg [3:0] bank;
+    begin
+      bank=table[id*4 +:4];
+      oracle_read=reference_rf[2*bank+id[0]];
+    end
+  endfunction
+  always @(posedge clk)
+    if(rf_write_en)
+      reference_rf[{rf_write_bank,rf_write_word}] <= rf_write_data;
+  integer z;
+  always @(posedge clk or negedge rst_n) begin
+    if(!rst_n) expected_exec<=0;
+    else for(z=0;z<4;z=z+1)
+      if(vp[z])
+        expected_exec[8*z +:8] <=
+          oracle_read(src0_bank_by_wave,wid[z]) +
+          (oracle_read(src1_bank_by_wave,wid[z]) ^ {3'b000,wid[z]});
+  end
   always #5 clk=~clk;
 
   v296_tile_slice #(.PAIRWISE(1)) pairwise(
@@ -42,6 +66,8 @@ module tb_v296_tile_slice;
       $fatal(1,"INTEGRATED_EQUIVALENCE_FAIL cycle=%0d",cycles);
     if (^dp === 1'bx || ^dc === 1'bx)
       $fatal(1,"UNINITIALIZED_EXECUTION_DATA cycle=%0d",cycles);
+    if(dp !== expected_exec)
+      $fatal(1,"INDEPENDENT_RF_EXECUTION_ORACLE_FAIL cycle=%0d observed=%h expected=%h",cycles,dp,expected_exec);
     for(k=0;k<16;k=k+1) ports[k]=0;
     for(k=0;k<4;k=k+1) if(vp[k]) begin
       if (!wave_valid[wid[k]] || !wave_ready[wid[k]])
