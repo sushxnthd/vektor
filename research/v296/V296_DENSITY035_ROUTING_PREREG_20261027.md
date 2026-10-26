@@ -1,0 +1,17 @@
+# V296 matched placement-density routing diagnostic (frozen before experiment, 2026-10-27)
+
+## Motivation and causal hypothesis
+
+The canonical decoded post-CTS physical experiment (run 40359299905) right-censored V296 after eight completed detailed-route iterations. At iteration 3 its candidate had 12,020 DRC violations versus 5,281 for the fifth-stage-optimized serial control; at iteration 4 it had 10,441 versus 3,083. At iteration 8 the candidate still had 7,930 versus 361. Candidate metal2/metal3 shorts numbered 6,581/7,930. Despite 5.82% less total routed wire and 5.91% less intermediate cell area, V296 routed substantially worse. The specific cause is unknown. A symmetric placement-density perturbation can test whether local packing is a dominant contributor without changing the mechanism or using an optimistic new serial baseline.
+
+**Single intervention:** Set `V296_PLACE_DENSITY` from 0.45 to 0.35 in the generated decoded post-CTS runner for BOTH V296 pairwise and the independently optimized fifth-stage serial control. Keep the 260 um die, 240 um core, Nangate45, 3.5 ns clock, I/O loads, CTS, routing Tcl, 2x RC, bank ports, RTL, arbitration semantics, and extra serial repair unchanged. Do not edit the original frozen runner, its manifest, or the original artifact ZIPs. Generate a separately hashed runner and manifest; the original experiment remains canonical for physical claims. This exploratory placement perturbation is NOT signoff under the frozen density-0.45 protocol.
+
+## Frozen discriminating prediction
+
+At completed detailed-route iteration **3**, a packing-dominated explanation predicts both (a) candidate DRC <= 70% of the original candidate count 12,020, i.e. <= 8,414, and (b) the candidate-to-serial DRC ratio under density 0.35 <= 75% of the original ratio 12,020/5,281, i.e. <= 1.7071. These thresholds are fixed before running the new flow. The paired control is essential: a density change that benefits both equally does not establish V296-specific local congestion relief. Iteration 4 and layer-short counts are secondary descriptive evidence only, not threshold-retuning opportunities.
+
+If both criteria hold, the result supports a *routing diagnostic*, not a physical mechanism win; the full original +50 ps setup, nonnegative hold, zero cap/slew/DRC, complete routing, equal-resource and realistic workload gates still apply. If either criterion fails, reject this density intervention as a sufficient routing explanation. If either contestant fails to complete iteration 3 within the 75-minute bound, report INCOMPLETE, not a negative DRC count or a win. Preserve partial logs and the exit code. Do not extend time or adapt thresholds in this trial.
+
+## Negative controls and evidence tiers
+
+The generator must fail if the 0.45 anchor is absent/duplicated, the fifth-stage serial repair disappears, the derived runner differs by more than the single placement-density substitution, source RTL hashes differ, or physical Tcl changes. The checker must treat unfinished DRC iterations as right-censored and refuse a feasible-clock or GPU-performance claim. Local self-tests use deliberately malformed anchors, a baseline-as-trial negative control, a supported synthetic positive, and incomplete iterations. Hosted work is an exploratory physical ablation with separately preserved artifacts, not a full rerun of the original 160-minute signoff attempt. No new architecture mechanism, branch, PR, workload holdout opening, or Kernellum mutation is permitted.
