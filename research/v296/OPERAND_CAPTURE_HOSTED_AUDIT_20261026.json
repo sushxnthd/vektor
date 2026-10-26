@@ -1,0 +1,44 @@
+{
+  "artifact_sha256": {
+    "mapped": "0de959a98a7185bde3bbcebbb7412c0cfb56900c4e18cdef497ff3468b181a74",
+    "pairwise": "a3d96cfd3967c535531e7ef9ebb0cb8d0bfe5dfeadf6005b424e34646a6c9c6e",
+    "serial": "60e63f1d7f330bd8d3786a511830c80c7e55f5c069a69252cdafd09432b52a15"
+  },
+  "evidence_tier": "PRECTS_GLOBAL_ROUTE_ESTIMATED_PARASITICS_NOT_SIGNOFF",
+  "mapped_um2": {
+    "original_pairwise": 8880.676,
+    "original_serial": 9589.3,
+    "retimed_pairwise": 9374.106,
+    "retimed_serial": 10217.858
+  },
+  "physical": {
+    "pairwise": {
+      "area_um2": 15818.22139939959,
+      "cap_violations": 0,
+      "critical_end": "_12646_",
+      "critical_start": "_12667_",
+      "hold_slack_ns": 0.112872,
+      "setup_slack_ns": -0.025959,
+      "slew_violations": 0
+    },
+    "serial": {
+      "area_um2": 16932.49629397542,
+      "cap_violations": 0,
+      "critical_end": "_13363_",
+      "critical_start": "_13413_",
+      "hold_slack_ns": 0.112877,
+      "setup_slack_ns": -0.406435,
+      "slew_violations": 0
+    }
+  },
+  "relative": {
+    "candidate_guard_deficit_ps": 75.959,
+    "candidate_mapped_area_saving_pct": 8.257621117850732,
+    "candidate_prects_area_saving_pct": 6.5806888436897975,
+    "candidate_retiming_mapped_area_cost_pct": 5.556221170550524,
+    "candidate_setup_lead_ps": 380.476,
+    "serial_guard_deficit_ps": 456.435,
+    "serial_retiming_mapped_area_cost_pct": 6.554785020804443
+  },
+  "source_run": 40288329940
+}
