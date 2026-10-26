@@ -1,0 +1,73 @@
+name: V296 matched fourth-round critical cone (pre-CTS only)
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/FOURTH_CONE_PREREG_20261026.md'
+      - 'research/v296/fourth_cone_flow.py'
+      - '.github/workflows/v296-fourth-cone.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  paired-cone:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        variant: [pairwise, serial_onehot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned OpenROAD and synthesis tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/tile_slice
+          sha256sum /tmp/openroad-v296.deb > build/v296/tile_slice/openroad.deb.sha256
+      - name: Fetch original pinned Nangate45 and RCX platform
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Generate anchored paired pre-CTS diagnostic
+        run: |
+          set -euo pipefail
+          python3 research/v296/fourth_cone_flow.py --self-test --build
+          test -s build/v296/tile_slice/cts45_fourth_diag.tcl
+          ! grep -q 'clock_tree_synthesis' build/v296/tile_slice/cts45_fourth_diag.tcl
+          ! grep -q 'detailed_route -output_drc' build/v296/tile_slice/cts45_fourth_diag.tcl
+      - name: Execute paired bounded cone localization
+        env:
+          V296_TILE_VARIANT: ${{ matrix.variant }}
+        run: |
+          set -euo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          timeout --signal=TERM --kill-after=60s 55m bash build/v296/tile_slice/run_fourth_diag.sh
+          log="build/v296/tile_slice/$V296_TILE_VARIANT.high.log"
+          grep -q 'V296_FOURTH_CONE_DONE' "$log"
+          grep -q 'V296_FOURTH_CONE_SETUP_PATH_BEGIN' "$log"
+          grep -q 'V296_FOURTH_CONE_SETUP_PATH_END' "$log"
+          grep -q 'Startpoint:' "$log"
+          grep -q 'Endpoint:' "$log"
+          test -s "build/v296/tile_slice/$V296_TILE_VARIANT.high.fourth_diag.def"
+          echo "V296_FOURTH_CONE_PRECTS_ONLY_COMPLETE $V296_TILE_VARIANT"
+      - name: Preserve successful and failed logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-fourth-cone-${{ matrix.variant }}
+          path: build/v296/tile_slice/
+          if-no-files-found: warn
