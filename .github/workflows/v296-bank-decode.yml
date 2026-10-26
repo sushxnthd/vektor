@@ -1,0 +1,158 @@
+name: V296 symmetric operand capture RTL mapped and pre-CTS falsification
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/BANK_DECODE_SHARED_ONEHOT_PREREG_20261026.md'
+      - 'research/v296/v296_tile_slice_bank_decode.sv'
+      - 'research/v296/tb_v296_tile_slice_bank_decode.sv'
+      - 'research/v296/bank_decode_pre_cts.py'
+      - '.github/workflows/v296-bank-decode.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  delayed-rtl-oracle:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install simulator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog python3
+      - name: Check anchored physical-generator invariants
+        run: |
+          python3 research/v296/fourth_cone_flow.py --self-test
+          python3 research/v296/bank_decode_pre_cts.py --self-test
+      - name: Check issue equivalence, RF oracle, one-edge delayed execution
+        run: |
+          set -euo pipefail
+          iverilog -g2012 -s tb_v296_tile_slice_bank_decode -o /tmp/v296_bank_decode.vvp \
+            rtl/vtile/steal_warp_scheduler.sv \
+            research/v295/v295_issue_core.sv \
+            research/v296/v296_issue_core.sv \
+            research/v296/v296_tile_slice.sv \
+            research/v296/v296_tile_slice_return_tree.sv \
+            research/v296/v296_tile_slice_operand_capture.sv \
+            research/v296/v296_tile_slice_bank_decode.sv \
+            research/v296/tb_v296_tile_slice_bank_decode.sv
+          vvp /tmp/v296_bank_decode.vvp | tee /tmp/v296_bank_decode_rtl.log
+          grep -q 'V296_BANK_DECODE_DELAYED_RTL_PASS checks=4096 delayed=2048' /tmp/v296_bank_decode_rtl.log
+      - name: Preserve RTL evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-bank-decode-delayed-rtl
+          path: /tmp/v296_bank_decode_rtl.log
+          if-no-files-found: warn
+  fourway-mapped:
+    needs: delayed-rtl-oracle
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install synthesis and fetch pinned Nangate45
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys curl python3
+          mkdir -p build/v296/bank_decode_mapped
+          out=build/v296/bank_decode_mapped
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          curl -fL --retry 3 --max-time 180 \
+            "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib" \
+            -o "$out/nangate.lib"
+          sha256sum "$out/nangate.lib" > "$out/library.sha256"
+      - name: Same-library four-way synthesis with register/area/depth evidence
+        run: |
+          set -euo pipefail
+          out=build/v296/bank_decode_mapped
+          yosys -V > "$out/yosys.version"
+          sha256sum research/v296/v296_tile_slice_return_tree.sv \
+            research/v296/v296_tile_slice_operand_capture.sv \
+            research/v296/v296_tile_slice_bank_decode.sv \
+            research/v296/v296_issue_core.sv research/v295/v295_issue_core.sv > "$out/source.sha256"
+          for spec in baseline_pairwise:0:1 baseline_serial:0:0 decode_pairwise:1:1 decode_serial:1:0; do
+            IFS=: read -r name retimed pairwise <<< "$spec"
+            if [ "$retimed" = 1 ]; then top=v296_tile_slice_bank_decode; else top=v296_tile_slice_operand_capture; fi
+            yosys -Q -T -p "read_liberty -lib -ignore_miss_func -ignore_miss_dir $out/nangate.lib; \
+              read_verilog -sv rtl/vtile/steal_warp_scheduler.sv research/v295/v295_issue_core.sv \
+                research/v296/v296_issue_core.sv research/v296/v296_tile_slice_return_tree.sv \
+            research/v296/v296_tile_slice_operand_capture.sv \
+                research/v296/v296_tile_slice_bank_decode.sv; \
+              hierarchy -top $top -chparam PAIRWISE $pairwise; synth -top $top -flatten; \
+              dfflibmap -liberty $out/nangate.lib; abc -liberty $out/nangate.lib; \
+              clean; check -assert; stat -liberty $out/nangate.lib; ltp -noff" \
+              > "$out/$name.log" 2>&1
+            grep -q 'Chip area' "$out/$name.log"
+            echo "V296_BANK_DECODE_MAPPED_COMPLETE $name"
+          done
+      - name: Preserve four matched mapped reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-bank-decode-fourway-mapped
+          path: build/v296/bank_decode_mapped/
+          if-no-files-found: warn
+  paired-prects:
+    needs: delayed-rtl-oracle
+    runs-on: ubuntu-22.04
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        variant: [pairwise, serial_onehot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned physical and synthesis tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/tile_slice
+          sha256sum /tmp/openroad-v296.deb > build/v296/tile_slice/openroad.deb.sha256
+      - name: Fetch original pinned Nangate45 and RCX platform
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Derive identical pre-CTS checkpoint for retimed contestants
+        run: |
+          set -euo pipefail
+          python3 research/v296/bank_decode_pre_cts.py --self-test --build
+          test -s build/v296/tile_slice/run_bank_decode_fourth.sh
+          ! grep -q 'v296_tile_slice_return_tree' build/v296/tile_slice/run_bank_decode_fourth.sh
+          ! grep -q 'clock_tree_synthesis' build/v296/tile_slice/cts45_fourth_diag.tcl
+      - name: Execute bounded matched fourth-stage physical diagnostic
+        env:
+          V296_TILE_VARIANT: ${{ matrix.variant }}
+        run: |
+          set -euo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          timeout --signal=TERM --kill-after=60s 55m bash build/v296/tile_slice/run_bank_decode_fourth.sh
+          log="build/v296/tile_slice/$V296_TILE_VARIANT.high.log"
+          grep -q 'V296_FOURTH_CONE_DONE' "$log"
+          grep -q 'V296_FOURTH_CONE_SETUP_PATH_BEGIN' "$log"
+          grep -q 'Startpoint:' "$log"
+          grep -q 'Endpoint:' "$log"
+          test -s "build/v296/tile_slice/$V296_TILE_VARIANT.high.fourth_diag.def"
+          echo "V296_BANK_DECODE_PRECTS_ONLY_COMPLETE $V296_TILE_VARIANT"
+      - name: Preserve success or physical falsification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-bank-decode-prects-${{ matrix.variant }}
+          path: build/v296/tile_slice/
+          if-no-files-found: warn
