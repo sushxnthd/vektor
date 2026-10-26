@@ -1,0 +1,38 @@
+name: V296 retiming dependency boundary oracle
+on:
+  push:
+    branches:
+      - research/v296-pairwise-bank-conflict
+    paths:
+      - research/v296/retiming_dependency_boundary.py
+      - research/v296/RETIME_DEPENDENCY_BOUNDARY_FALSIFICATION_20261026.md
+      - .github/workflows/v296-retiming-dependency-boundary.yml
+  workflow_dispatch:
+jobs:
+  synthetic-dependency-falsification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Independent randomized event oracle
+        run: python3 research/v296/retiming_dependency_boundary.py --self-test
+      - name: Freeze exploratory synthetic results and check kill regimes
+        run: |
+          python3 research/v296/retiming_dependency_boundary.py --study > /tmp/v296_retime_dependency.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/v296_retime_dependency.json'))
+          assert d['independent_hypothetical_win']['compute_gain'] > 0
+          assert d['single_wavefront_loss']['compute_gain'] < -0.4
+          assert d['medium_occupancy_loss']['compute_gain'] < 0
+          assert d['bandwidth_saturated']['ideal_bandwidth_capped_gain'] == 0
+          assert d['mixed_seed72811']['compute_gain'] < 0
+          assert d['high_occupancy_seed72811']['compute_gain'] > 0
+          assert all(x['evidence'].endswith('NOT_PHYSICAL_GPU') for x in d.values())
+          print('V296_DEPENDENCY_SYNTHETIC_REGIMES_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v296-retiming-dependency-exploratory
+          path: /tmp/v296_retime_dependency.json
+          retention-days: 30
