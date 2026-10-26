@@ -22,7 +22,11 @@ jobs:
           python3 research/v296/v296_density035_route_ablation.py --self-test --build
           grep -q 'V296_PLACE_DENSITY=0.35' build/v296/tile_slice/run_bank_decode_density035.sh
           ! grep -q 'V296_PLACE_DENSITY=0.45' build/v296/tile_slice/run_bank_decode_density035.sh
+          grep -q 'cts45_tile_density035.tcl' build/v296/tile_slice/run_bank_decode_density035.sh
           grep -q 'serial_onehot) param=0; extra=1' build/v296/tile_slice/run_bank_decode_density035.sh
+          grep -Fq 'V296_PLACE_DENSITY) ne "0.35"' build/v296/tile_slice/cts45_tile_density035.tcl
+          grep -Fq 'V296_PLACE_DENSITY) ne "0.45"' build/v296/tile_slice/cts45_tile.tcl
+          test -s build/v296/tile_slice/cts45_tile_density035.tcl
           test -s build/v296/tile_slice/density035_manifest.json
   matched-early-route:
     needs: verify-generator
