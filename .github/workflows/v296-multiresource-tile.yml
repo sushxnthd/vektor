@@ -1,0 +1,32 @@
+name: V296 prospective multi-resource tile law transfer
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/MULTIRESOURCE_TILE_TRANSFER_PREREG_20261026.md'
+      - 'research/v296/v296_multi_resource_tile.py'
+      - '.github/workflows/v296-multiresource-tile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-transfer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frozen prospective independent bank-port simulation
+        run: |
+          set -euo pipefail
+          mkdir -p build/v296/multiresource
+          python3 research/v296/v296_multi_resource_tile.py --self-test | tee build/v296/multiresource/transfer.json
+          grep -q 'SYNTHETIC_TRANSFER_PASS_NO_PHYSICAL_GPU_CLAIM' build/v296/multiresource/transfer.json
+          sha256sum research/v296/v296_multi_resource_tile.py research/v296/MULTIRESOURCE_TILE_TRANSFER_PREREG_20261026.md > build/v296/multiresource/sources.sha256
+          python3 --version > build/v296/multiresource/python.version
+      - name: Preserve prospective predictions and all holdout results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-multiresource-tile-synthetic-transfer
+          path: build/v296/multiresource/
+          if-no-files-found: warn
