@@ -1,0 +1,103 @@
+name: V296 symmetric placement-density routing diagnostic
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - '.github/workflows/v296-density035-route-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v296-density035-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify-generator:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify preregistered single-variable intervention
+        run: |
+          set -euo pipefail
+          python3 research/v296/v296_density035_route_ablation.py --self-test --build
+          grep -q 'V296_PLACE_DENSITY=0.35' build/v296/tile_slice/run_bank_decode_density035.sh
+          ! grep -q 'V296_PLACE_DENSITY=0.45' build/v296/tile_slice/run_bank_decode_density035.sh
+          grep -q 'serial_onehot) param=0; extra=1' build/v296/tile_slice/run_bank_decode_density035.sh
+          test -s build/v296/tile_slice/density035_manifest.json
+  matched-early-route:
+    needs: verify-generator
+    runs-on: ubuntu-22.04
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        variant: [pairwise, serial_onehot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Yosys and OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/tile_slice
+      - name: Download frozen Nangate45 and OpenRCX platform
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Generate and verify density-only runner
+        run: |
+          set -euo pipefail
+          python3 research/v296/v296_density035_route_ablation.py --self-test --build
+      - name: Run bounded exploratory detailed route, preserve censoring
+        env:
+          V296_TILE_VARIANT: ${{ matrix.variant }}
+        run: |
+          set -uo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          timeout --signal=TERM --kill-after=30s 75m bash build/v296/tile_slice/run_bank_decode_density035.sh
+          rc=$?
+          echo "V296_DENSITY035_EXPLORATORY_EXIT_CODE=$rc" | tee "build/v296/tile_slice/${V296_TILE_VARIANT}.density035.exit.txt"
+          exit 0
+      - name: Preserve all complete and incomplete physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-density035-${{ matrix.variant }}
+          path: build/v296/tile_slice/
+          if-no-files-found: warn
+  independent-diagnostic:
+    needs: [verify-generator, matched-early-route]
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve original paired diagnostic artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v296-density035-*
+          path: build/v296/tile_slice/
+          merge-multiple: true
+      - name: Audit single-variable provenance and frozen early-DRC criterion
+        run: |
+          set -euo pipefail
+          python3 research/v296/v296_density035_route_ablation.py --self-test
+          python3 research/v296/v296_density035_route_ablation.py --audit build/v296/tile_slice/
+      - name: Preserve prospective result or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-density035-independent-result
+          path: build/v296/tile_slice/density035_result.json
+          if-no-files-found: warn
