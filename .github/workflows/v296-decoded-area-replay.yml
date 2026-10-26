@@ -1,0 +1,39 @@
+name: V296 decoded-area prospective replay
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/decoded_area_matched_budget.py'
+      - 'research/v296/DECODED_AREA_REPLAY_RESULTS_20261026.json'
+      - '.github/workflows/v296-decoded-area-replay.yml'
+  workflow_dispatch:
+jobs:
+  independent-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify preregistered port-exact replay and independent reference
+        run: |
+          python3 research/v296/decoded_area_matched_budget.py --self-test --evaluate --output /tmp/v296-decoded-area.json
+          python3 - <<'PY'
+          import json, math
+          from pathlib import Path
+          a=json.loads(Path('research/v296/DECODED_AREA_REPLAY_RESULTS_20261026.json').read_text())
+          b=json.loads(Path('/tmp/v296-decoded-area.json').read_text())
+          assert a.keys()==b.keys()
+          assert len(a['results'])==len(b['results'])==16
+          def check(x,y,path='root'):
+              if isinstance(x,(float,int)) and not isinstance(x,bool):
+                  assert isinstance(y,(float,int)) and math.isclose(x,y,rel_tol=1e-10,abs_tol=1e-10),(path,x,y)
+              elif isinstance(x,dict):
+                  assert x.keys()==y.keys(),path
+                  for k in x: check(x[k],y[k],path+'.'+k)
+              elif isinstance(x,list):
+                  assert len(x)==len(y),path
+                  for i,(xx,yy) in enumerate(zip(x,y)): check(xx,yy,path+'.'+str(i))
+              else:
+                  assert x==y,(path,x,y)
+          check(a,b)
+          print('V296_DECODED_AREA_HOSTED_FROZEN_REPLAY_PASS')
+          PY
