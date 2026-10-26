@@ -1,0 +1,37 @@
+{
+  "evidence_tier": "PAIRED_PRECTS_ESTIMATED_PARASITICS_NOT_ROUTED_SIGNOFF",
+  "source_run_id": 40337484954,
+  "candidate": {
+    "artifact_sha256": "c5ec1f863b0cd23cc88fc9f0f468de87a90e1cb1dc0a3698e2af5d872a01cd2c",
+    "variant": "pairwise",
+    "stage": "PRECTS_GLOBAL_ROUTE_ESTIMATED_PARASITICS_NOT_SIGNOFF",
+    "area_um2": 16089.542143049584,
+    "setup_slack_ns": 0.050206,
+    "hold_slack_ns": 0.112877,
+    "max_slew_violations": 0,
+    "max_cap_violations": 0,
+    "meets_50ps_prects_setup_guard": true
+  },
+  "serial": {
+    "artifact_sha256": "52fd64575ac2124b171ecea3bcb27857b249589a11dc1624daeed179b33138b4",
+    "variant": "serial_onehot",
+    "stage": "PRECTS_GLOBAL_ROUTE_ESTIMATED_PARASITICS_NOT_SIGNOFF",
+    "area_um2": 17301.969634786474,
+    "setup_slack_ns": -0.681592,
+    "hold_slack_ns": 0.112877,
+    "max_slew_violations": 0,
+    "max_cap_violations": 0,
+    "meets_50ps_prects_setup_guard": false
+  },
+  "area_saving_pct": 7.007453586667054,
+  "setup_slack_advantage_ns": 0.731798,
+  "candidate_margin_above_50ps_guard_ps": 0.206,
+  "serial_shortfall_to_50ps_guard_ps": 731.592,
+  "mapped_area_order_reverses_at_prects": true,
+  "fifth_stage_serial_not_included": true,
+  "hypothetical_17serial_area_budget_um2": 294133.48379137006,
+  "hypothetical_18candidate_area_um2": 289611.75857489253,
+  "hypothetical_18candidate_spare_area_um2": 4521.725216477527,
+  "hypothetical_18candidate_spare_pct": 1.561305811175559,
+  "not_physically_placed_replicated_tile": true
+}
