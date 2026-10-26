@@ -1,0 +1,86 @@
+{
+  "schema": "v296-return-tree-timeout-forensics-v1",
+  "source_run": 40244774412,
+  "run_status": "completed",
+  "run_conclusion": "cancelled",
+  "physical_jobs": {
+    "pairwise": "cancelled_after_180_min",
+    "serial_onehot": "cancelled_after_180_min"
+  },
+  "source_artifacts": {
+    "pairwise": {
+      "id": 12624420514,
+      "log_sha256": "9f68536beace12b49ccbc33b29a1b0d5b3b1f6c6ea3d598366ee50784700bf9b"
+    },
+    "serial_onehot": {
+      "id": 12624490016,
+      "log_sha256": "b4d3b78618d81debd6ff733d9799ec95ad691937162c9ca320aebe4b51a32678"
+    }
+  },
+  "postcts_global_route": {
+    "pairwise": {
+      "cell_area_um2": 16509.556388655255,
+      "reported_worst_slack_ns": -0.270312,
+      "estimated_slew_violations": 0,
+      "estimated_cap_violations": 0
+    },
+    "serial_onehot": {
+      "cell_area_um2": 19443.27010505731,
+      "reported_worst_slack_ns": -0.842638,
+      "estimated_slew_violations": 0,
+      "estimated_cap_violations": 0
+    },
+    "candidate_area_saving_fraction": 0.15088581810314805,
+    "candidate_reported_slack_lead_ns": 0.572326,
+    "setup_guard_ns": 0.05,
+    "candidate_setup_guard_deficit_ns": 0.320312,
+    "serial_setup_guard_deficit_ns": 0.892638
+  },
+  "detailed_route": {
+    "pairwise": {
+      "drc_after_iteration": [
+        21257,
+        20071,
+        18326,
+        13121,
+        11240,
+        10576,
+        10191,
+        10062,
+        9672
+      ],
+      "next_iteration_started": 9
+    },
+    "serial_onehot": {
+      "drc_after_iteration": [
+        27937,
+        22052,
+        20639,
+        10926,
+        8585,
+        7110,
+        6433,
+        5683,
+        4480,
+        4178,
+        2167,
+        1374,
+        1111,
+        560,
+        390
+      ],
+      "next_iteration_started": 15
+    },
+    "matched_iteration": 8,
+    "matched_iteration_pairwise_drc": 9672,
+    "matched_iteration_serial_drc": 4480,
+    "completed": false,
+    "extracted_spef_available": false,
+    "final_def_available": false,
+    "final_electrical_gate": "UNMEASURED"
+  },
+  "decision": "INCOMPLETE_TIMEOUT_NO_PHYSICAL_CLAIM",
+  "same_clock_admission_gain": 0,
+  "holdouts": "SEALED",
+  "limitations": "Retrospective checkpoint comparison. Global-route timing is not final extracted STA. DRC counts are router intermediate progress, not final DRC signoff or a topology-isolated causal attribution. Physical clocks, power, and GPU throughput unmeasured."
+}
