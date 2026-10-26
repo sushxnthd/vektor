@@ -1,0 +1,38 @@
+{
+  "common_fourth_stage": {
+    "candidate_area_reduction_pct": 12.680858199795077,
+    "candidate_setup_slack_lead_ns": 0.48480599999999996,
+    "pairwise": {
+      "area_um2": 16149.657611208568,
+      "slack_ns": -0.270212
+    },
+    "serial_onehot": {
+      "area_um2": 18494.97976991188,
+      "slack_ns": -0.755018
+    }
+  },
+  "evidence_tier": "INCOMPLETE_PRECTS_POSTCTS_NO_SIGNOFF",
+  "hosted_run": 40263375059,
+  "matched_postcts_comparison_available": false,
+  "no_speedup_or_electrical_claim": true,
+  "pairwise": {
+    "area_um2": 16509.556388655255,
+    "artifact_sha256": "6c1d43d33dab96fd67721479f5987ad68c12f323aeede396df31cc8b4eccacc5",
+    "cap_violations": 0,
+    "checkpoint": "cts45_postcts_global",
+    "diagnostic_status": "STA-0563",
+    "post_route_signoff": false,
+    "slew_violations": 0,
+    "worst_slack_ns": -0.270312
+  },
+  "serial_onehot": {
+    "area_um2": 18785.451416647447,
+    "artifact_sha256": "ba1ab686ea81720bed3c4cf9cd9988ee0607e527b3670286e08be80eba234570",
+    "cap_violations": 0,
+    "checkpoint": "cts45_clock_tree",
+    "diagnostic_status": "CENSORED_TIMEOUT_70_MIN",
+    "post_route_signoff": false,
+    "slew_violations": 0,
+    "worst_slack_ns": -1.0037
+  }
+}
