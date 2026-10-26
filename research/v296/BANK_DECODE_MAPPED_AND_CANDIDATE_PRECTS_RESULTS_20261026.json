@@ -1,0 +1,52 @@
+{
+  "evidence_tier": "FOURWAY_NANGATE45_MAPPED_ONLY_NO_PHYSICAL_TIMING",
+  "source_run_id": 40337484954,
+  "artifact_id": 12658617718,
+  "artifact_sha256": "0cafd08a8a4cbd2164336c9f2ad11e6037c3fac02aa42243ebd1a7641d704ba2",
+  "contestants": {
+    "baseline_pairwise": {
+      "area_um2": 9519.608,
+      "logic_depth": 247,
+      "cells": 6396,
+      "flops": 388
+    },
+    "baseline_serial": {
+      "area_um2": 9902.648,
+      "logic_depth": 264,
+      "cells": 6796,
+      "flops": 388
+    },
+    "decode_pairwise": {
+      "area_um2": 10426.402,
+      "logic_depth": 238,
+      "cells": 7295,
+      "flops": 388
+    },
+    "decode_serial": {
+      "area_um2": 10143.112,
+      "logic_depth": 280,
+      "cells": 7097,
+      "flops": 388
+    }
+  },
+  "candidate_area_growth_pct": 9.525539286911823,
+  "serial_area_growth_pct": 2.4282797894058294,
+  "baseline_candidate_area_saving_pct": 3.868056301708378,
+  "decoded_candidate_area_saving_pct": -2.7929298227210797,
+  "frozen_10pct_growth_gate": "PASS",
+  "area_reinvestment_survives_decoder": false,
+  "prects_candidate": {
+    "artifact_id": 12659251024,
+    "artifact_sha256": "c5ec1f863b0cd23cc88fc9f0f468de87a90e1cb1dc0a3698e2af5d872a01cd2c",
+    "stage": "FOURTH_PRECTS_GLOBAL_ROUTE_ESTIMATED_PARASITICS",
+    "area_um2": 16089.542143049584,
+    "setup_slack_ns": 0.050206,
+    "hold_slack_ns": 0.112877,
+    "cap_violations": 0,
+    "slew_violations": 0,
+    "setup_guard_ns": 0.05,
+    "margin_over_guard_ps": 0.206,
+    "note": "Single candidate only; serial paired physical job incomplete at initial audit; not routed signoff."
+  },
+  "decision": "MAP_10PCT_GATE_PASS_BUT_AREA_ORDER_REVERSED_AND_PRECTS_MARGIN_TINY_NO_GPU_CLAIM"
+}
