@@ -1,0 +1,52 @@
+name: V296 warp scoreboard latency-port falsification
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/warp_latency_port_boundary.py'
+      - 'research/v296/WARP_SCOREBOARD_LATENCY_PORT_PREREG_20261026.md'
+      - '.github/workflows/v296-warp-scoreboard-latency.yml'
+  pull_request:
+    paths:
+      - 'research/v296/warp_latency_port_boundary.py'
+      - 'research/v296/WARP_SCOREBOARD_LATENCY_PORT_PREREG_20261026.md'
+      - '.github/workflows/v296-warp-scoreboard-latency.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  falsification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Independent scheduler and port-limit tests
+        run: python3 research/v296/warp_latency_port_boundary.py --self-test
+      - name: Frozen synthetic holdout evaluation
+        run: |
+          python3 research/v296/warp_latency_port_boundary.py --evaluate > v296-warp-scoreboard-results.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('v296-warp-scoreboard-results.json'))
+          x=d['cases']
+          assert len(x)==8
+          assert [(c['warps'],c['hotspot'],c['seed']) for c in x] == [
+            (2,0.0,91371),(4,0.0,91372),(8,0.0,91371),
+            (16,0.0,91372),(32,0.0,91371),(8,0.8,91372),
+            (16,0.8,91371),(32,0.8,91372)]
+          assert x[0]['equal_clock_gain'] < -.35
+          assert x[1]['equal_clock_gain'] < -.35
+          assert x[2]['equal_clock_gain'] < -.03
+          assert all(abs(c['equal_clock_gain']) < .01 for c in x[3:5])
+          assert all(abs(c['equal_clock_gain']) < .05 for c in x[5:])
+          for c in x:
+            assert c['serial']['ops_per_cycle'] <= c['optimistic_occupancy_ceiling_serial'] + 1e-9
+            assert c['retimed']['ops_per_cycle'] <= c['optimistic_occupancy_ceiling_retimed'] + 1e-9
+          print('FROZEN_WARP_SCOREBOARD_HOLDOUT_PASS 8/8 synthetic cells')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v296-warp-scoreboard-synthetic
+          path: v296-warp-scoreboard-results.json
+          if-no-files-found: ignore
