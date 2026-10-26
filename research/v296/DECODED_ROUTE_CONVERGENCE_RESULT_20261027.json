@@ -1,0 +1,56 @@
+{
+  "run_id": 40359299905,
+  "checkpoint_iteration": 8,
+  "original_artifact_sha256": {
+    "pairwise": "34fc90009fdb35954e66b8e87065404721fa3679adc834a22c24b69fc095a295",
+    "serial_onehot": "36c9ce00caadf2416082510a6b9a84cbbd5c8a4b26dce646b7ecb19ed7682713"
+  },
+  "matched_drc_0_to_8": {
+    "pairwise": [
+      22343,
+      20278,
+      17245,
+      12020,
+      10441,
+      9305,
+      8865,
+      8445,
+      7930
+    ],
+    "serial_onehot": [
+      21145,
+      16581,
+      14993,
+      5281,
+      3083,
+      2071,
+      1219,
+      689,
+      361
+    ]
+  },
+  "candidate_drc_reduction_pct": 64.50789956585955,
+  "serial_drc_reduction_pct": 98.2927406006148,
+  "iteration_8_drc_ratio": 21.966759002770083,
+  "iteration_8_wire_um": {
+    "pairwise": 216566,
+    "serial_onehot": 229944
+  },
+  "iteration_8_metal2_metal3_shorts": {
+    "pairwise": 6581,
+    "serial_onehot": 295
+  },
+  "postcts_global_area_um2": {
+    "pairwise": 16857.484297361225,
+    "serial_onehot": 17917.228589681145
+  },
+  "candidate_route_status": "TIMED_OUT_AT_160_MINUTES_AFTER_ITERATION_8_BEFORE_ITERATION_9_SUMMARY",
+  "candidate_extracted_rc": false,
+  "serial_route_status": "COMPLETED_ZERO_DRC_ITERATION_18",
+  "serial_extracted_rc": true,
+  "serial_extracted_setup_slack_ns": -1.328847,
+  "serial_extracted_hold_slack_ns": -0.01345,
+  "serial_max_cap_violations": 4,
+  "verdict": "INCOMPLETE_NO_GPU_CLAIM",
+  "claim_limit": "Right-censored candidate route; no candidate extracted STA, feasible Fmax, power or GPU throughput."
+}
