@@ -1,0 +1,55 @@
+{
+  "evidence_tier": "PRECTS_FOURTH_GLOBAL_ROUTE_ESTIMATED_RC_NOT_SIGNOFF",
+  "run_id": 40270157106,
+  "artifact_ids": {
+    "pairwise": 12628653770,
+    "serial_onehot": 12628959676
+  },
+  "artifact_sha256": {
+    "pairwise": "0e19aad4f16a01ad513218c8eb21f199f265e2638b5a1c75ae05049d0080a6c4",
+    "serial_onehot": "c54f81fe263e94a8f5cd72c08a6c844e45aabf59015bfbf207227085fedac178"
+  },
+  "clock_ns": 3.5,
+  "serial_fifth_repair_included": false,
+  "pairwise": {
+    "start_q": "candidate.issue.scheduler.rr3[0]",
+    "end_q": "executed_data[31]",
+    "setup_slack_ns": -0.270212,
+    "data_arrival_ns": 3.729346,
+    "path_cells": 83,
+    "buffer_inverter_cells": 31,
+    "buffer_inverter_delay_ns": 0.864292,
+    "other_cell_delay_ns": 2.865023,
+    "longest_contiguous_buffer_run": {
+      "cells": 15,
+      "delay_ns": 0.414697
+    },
+    "worst_path_max_capacitance_fF": 66.699532,
+    "minimum_ideal_path_reduction_for_50ps_setup_guard_ns": 0.320212,
+    "optimistic_fraction_of_buffer_delay_to_remove": 0.370491
+  },
+  "serial_onehot": {
+    "start_q": "strongest_serial.issue.scheduler.rr1[2]",
+    "end_q": "executed_data[7]",
+    "setup_slack_ns": -0.755018,
+    "data_arrival_ns": 4.210938,
+    "path_cells": 99,
+    "buffer_inverter_cells": 42,
+    "buffer_inverter_delay_ns": 1.26262,
+    "other_cell_delay_ns": 2.948262,
+    "longest_contiguous_buffer_run": {
+      "cells": 9,
+      "delay_ns": 0.253844
+    },
+    "worst_path_max_capacitance_fF": 177.389664,
+    "minimum_ideal_path_reduction_for_50ps_setup_guard_ns": 0.805018,
+    "optimistic_fraction_of_buffer_delay_to_remove": 0.637577
+  },
+  "comparison": {
+    "setup_slack_lead_ns": 0.484806,
+    "arrival_gap_ns": 0.481592,
+    "buffer_delay_gap_ns": 0.398328,
+    "buffer_gap_fraction_of_arrival_gap": 0.827107
+  },
+  "interpretation": "Different worst paths and an unmatched serial fifth repair: decomposition is descriptive only, not causal or signoff; neither design meets setup guard."
+}
