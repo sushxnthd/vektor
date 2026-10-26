@@ -1,0 +1,101 @@
+{
+  "experiment": "V296_density035_symmetric_early_route",
+  "date": "2026-10-27",
+  "run_id": 40411106938,
+  "baseline_run_id": 40359299905,
+  "verdict": "INCOMPLETE_CONTROL_CENSORED_NO_CAUSAL_CLAIM",
+  "evidence_tier": "original_SHA256_verified_hosted_artifacts_local_independent_forensics",
+  "artifacts": {
+    "density035_pairwise": {
+      "id": 12696913319,
+      "sha256": "91b76619bf0ee803bc10c861e45d7f40ed33dd8fbb481d3be85741f2c814a380"
+    },
+    "density035_serial": {
+      "id": 12697398068,
+      "sha256": "21796d521923f66b7722890042bfaf015848570a2b8486459c8fc303f2db9b08"
+    },
+    "density045_pairwise": {
+      "id": 12683960271,
+      "sha256": "34fc90009fdb35954e66b8e87065404721fa3679adc834a22c24b69fc095a295"
+    },
+    "density045_serial": {
+      "id": 12681568761,
+      "sha256": "36c9ce00caadf2416082510a6b9a84cbbd5c8a4b26dce646b7ecb19ed7682713"
+    }
+  },
+  "frozen": {
+    "clock_ns": 3.5,
+    "rc_multiplier": 2,
+    "original_density": 0.45,
+    "trial_density": 0.35,
+    "serial_extra_repair": true,
+    "early_route_timeout_min": 75,
+    "iteration3_candidate_max_drc": 8414,
+    "iteration3_relative_ratio_max": 0.75
+  },
+  "drc_trajectories": {
+    "density035_pairwise": [
+      15575,
+      11566,
+      9720,
+      3632,
+      1662,
+      1019
+    ],
+    "density035_serial": [],
+    "density045_pairwise": [
+      22343,
+      20278,
+      17245,
+      12020,
+      10441,
+      9305,
+      8865,
+      8445,
+      7930
+    ],
+    "density045_serial": [
+      21145,
+      16581,
+      14993,
+      5281,
+      3083,
+      2071,
+      1219,
+      689,
+      361,
+      216,
+      83,
+      72,
+      58,
+      58,
+      43,
+      5,
+      2,
+      2,
+      0
+    ]
+  },
+  "candidate_drc_reduction_fraction_at_iterations": {
+    "3": 0.6978369384359401,
+    "4": 0.840819844842448,
+    "5": 0.8904889844169801
+  },
+  "required_density035_serial_drc_at_iteration3_to_pass_relative_gate_min": 2128,
+  "candidate_postcts_global": {
+    "density035": {
+      "area_um2": 17213.9245080416,
+      "setup_slack_ns": 0.055559
+    },
+    "density045": {
+      "area_um2": 16857.484297361225,
+      "setup_slack_ns": 0.089278
+    }
+  },
+  "candidate_postcts_global_area_increase_percent": 2.1144329983814325,
+  "candidate_postcts_global_setup_slack_change_ps": -33.719,
+  "serial_censoring": "Timeout during strongest fifth-stage timing repair; no completed detailed-route iteration; not zero DRC",
+  "physical_signoff": false,
+  "gpu_speedup_claim": false,
+  "real_workload_holdouts": "SEALED"
+}
