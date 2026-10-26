@@ -1,0 +1,66 @@
+{
+  "adverse_area_sensitivity": {
+    "0pct_candidate_up_serial_down": {
+      "candidate_area_um2": "1160824/125",
+      "first_extra_copy_threshold": 17,
+      "serial_area_um2": "4922463/500"
+    },
+    "2pct_candidate_up_serial_down": {
+      "candidate_area_um2": "29601012/3125",
+      "first_extra_copy_threshold": 54,
+      "serial_area_um2": "241200687/25000"
+    },
+    "5pct_candidate_up_serial_down": {
+      "candidate_area_um2": "6094326/625",
+      "first_extra_copy_threshold": null,
+      "serial_area_um2": "93526797/10000"
+    }
+  },
+  "area_saving_pct": 5.671286914701035,
+  "equal_clock_period_ns": "7/2",
+  "evidence_tier": "exact_conditional_mapped_area_accounting_not_routed_GPU",
+  "first_extra_copy_threshold": 17,
+  "frozen_scenarios": {
+    "seventeen_slices_bandwidth_no_win": {
+      "gain_fraction": "0",
+      "gain_pct": 0,
+      "pairwise_copies": 18,
+      "pairwise_waves_per_second": "2500000000",
+      "serial_copies": 17,
+      "serial_waves_per_second": "2500000000",
+      "shared_bandwidth_GBps": "10"
+    },
+    "seventeen_slices_conditional_win": {
+      "gain_fraction": "1/17",
+      "gain_pct": 5.882352941176471,
+      "pairwise_copies": 18,
+      "pairwise_waves_per_second": "215448497325/14",
+      "serial_copies": 17,
+      "serial_waves_per_second": "406958272725/28",
+      "shared_bandwidth_GBps": "100"
+    },
+    "single_slice_no_win": {
+      "gain_fraction": "0",
+      "gain_pct": 0,
+      "pairwise_copies": 1,
+      "pairwise_waves_per_second": "23938721925/28",
+      "serial_copies": 1,
+      "serial_waves_per_second": "23938721925/28",
+      "shared_bandwidth_GBps": "100"
+    },
+    "sixteen_slices_no_win": {
+      "gain_fraction": "0",
+      "gain_pct": 0,
+      "pairwise_copies": 16,
+      "pairwise_waves_per_second": "95754887700/7",
+      "serial_copies": 16,
+      "serial_waves_per_second": "95754887700/7",
+      "shared_bandwidth_GBps": "100"
+    }
+  },
+  "nominal_q_waves_per_cycle_per_slice": "957548877/320000000",
+  "pairwise_mapped_area_um2": "1160824/125",
+  "provenance": "Actions 40244774412 / artifact 12618038449 / 2026-10-26",
+  "self_test": "PASS: 1000 independent enumerations, exact thresholds, three frozen regimes, adverse sensitivity, caps and invalid inputs",
+  "serial_mapped_area_um2": "4922463/500"
+}
