@@ -1,0 +1,49 @@
+{
+  "artifact_type": "mapped_yosys_only_not_postroute",
+  "hosted_run": 40244774412,
+  "hosted_artifact_id": 12618038449,
+  "artifact_zip_sha256": "0d88dfab95f6d01fb1b6e0798af7f815bee148aef0da632e12a1558d546b9df1",
+  "yosys": "Yosys 0.9 (git sha1 1979e0b)",
+  "nangate45_sha256": "8d540a4d4cf6d09d27c87ad067857a9c0c2eeb023ab7a56e058cd3113db4e9b1",
+  "source_sha256": {
+    "research/v296/v296_tile_slice.sv": "60e0c3ceb9e0eade3523563cd716da5cecc9909b1b646da2d9b72542d28b02c4",
+    "research/v296/v296_tile_slice_return_tree.sv": "3987384d3cc4c1982c27632d87ce8fdd1ee950334065e247c3dd4787d0b33a2d"
+  },
+  "results": {
+    "original_pairwise": {
+      "area_um2": 9620.954,
+      "ltp_edges": 268
+    },
+    "original_serial": {
+      "area_um2": 10029.264,
+      "ltp_edges": 262
+    },
+    "balanced_pairwise": {
+      "area_um2": 9286.592,
+      "ltp_edges": 235
+    },
+    "balanced_serial": {
+      "area_um2": 9844.926,
+      "ltp_edges": 279
+    }
+  },
+  "comparisons": {
+    "pairwise_return_tree_vs_original": {
+      "area_pct": -3.475351820619854,
+      "depth_pct": -12.313432835820892
+    },
+    "serial_return_tree_vs_original": {
+      "area_pct": -1.8380012730744744,
+      "depth_pct": 6.488549618320616
+    },
+    "balanced_pairwise_vs_balanced_serial": {
+      "area_pct": -5.671286914701024,
+      "depth_pct": -15.77060931899642
+    }
+  },
+  "integrity_tests": {
+    "pinned_log_digest_tamper_rejected": true,
+    "library_tamper_rejected": true
+  },
+  "physical_closure": "pending; mapped synthesis does not establish feasible frequency"
+}
