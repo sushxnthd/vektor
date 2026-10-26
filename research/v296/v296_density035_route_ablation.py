@@ -14,6 +14,14 @@ OUT = Path('build/v296/tile_slice')
 ROOT = Path('research/v296')
 BASE = 'run_bank_decode_postcts.sh'
 TRIAL = 'run_bank_decode_density035.sh'
+ORIGINAL_TCL = 'cts45_tile.tcl'
+TRIAL_TCL = 'cts45_tile_density035.tcl'
+TCL_ANCHOR = '"$root/cts45_tile.tcl"'
+TCL_CHANGE = '"$root/cts45_tile_density035.tcl"'
+GUARD_OLD = '$env(V296_PLACE_DENSITY) ne "0.45"'
+GUARD_NEW = '$env(V296_PLACE_DENSITY) ne "0.35"'
+MESSAGE_OLD = 'CTS45 frozen high-RC 2x and placement density 0.45'
+MESSAGE_NEW = 'CTS45 frozen high-RC 2x and placement density 0.35'
 MANIFEST = 'density035_manifest.json'
 ANCHOR = 'V296_PLACE_DENSITY=0.45'
 CHANGE = 'V296_PLACE_DENSITY=0.35'
@@ -27,14 +35,28 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def derive_tcl(text):
+    """Change only the assertion that checks the trial density; never physical commands."""
+    if text.count(GUARD_OLD) != 1 or text.count(MESSAGE_OLD) != 1:
+        raise ValueError('Frozen CTS density guard absent or ambiguous')
+    if GUARD_NEW in text or MESSAGE_NEW in text:
+        raise ValueError('CTS density guard already modified')
+    changed = text.replace(GUARD_OLD, GUARD_NEW).replace(MESSAGE_OLD, MESSAGE_NEW)
+    if changed.replace(GUARD_NEW, GUARD_OLD).replace(MESSAGE_NEW, MESSAGE_OLD) != text:
+        raise ValueError('CTS guard-only derivation failed')
+    return changed
+
+
 def derive(text):
     if text.count(ANCHOR) != 1 or CHANGE in text:
         raise ValueError('Original 0.45 placement-density anchor absent or ambiguous')
+    if text.count(TCL_ANCHOR) != 1 or TCL_CHANGE in text:
+        raise ValueError('Original physical Tcl invocation absent or ambiguous')
     if 'serial_onehot) param=0; extra=1' not in text:
         raise ValueError('Independently repaired fifth-stage serial control missing')
-    changed = text.replace(ANCHOR, CHANGE)
-    if changed.replace(CHANGE, ANCHOR) != text:
-        raise ValueError('More than one physical intervention')
+    changed = text.replace(ANCHOR, CHANGE).replace(TCL_ANCHOR, TCL_CHANGE)
+    if changed.replace(CHANGE, ANCHOR).replace(TCL_CHANGE, TCL_ANCHOR) != text:
+        raise ValueError('Runner differs by more than density and separate diagnostic Tcl path')
     return changed
 
 
@@ -44,6 +66,9 @@ def build():
     original = (OUT / BASE).read_bytes()
     trial = derive(original.decode()).encode()
     (OUT / TRIAL).write_bytes(trial)
+    original_tcl = (OUT / ORIGINAL_TCL).read_bytes()
+    trial_tcl = derive_tcl(original_tcl.decode()).encode()
+    (OUT / TRIAL_TCL).write_bytes(trial_tcl)
     parent = json.loads((OUT / 'bank_decode_postcts_manifest.json').read_text())
     assert sha(original) == parent['derived_runner_sha256']
     assert sha((OUT / 'cts45_tile.tcl').read_bytes()) == parent['unchanged_generated_physical_tcl_sha256']
@@ -57,7 +82,10 @@ def build():
         'same_trial_for_both': True,
         'original_runner_sha256': sha(original),
         'trial_runner_sha256': sha(trial),
-        'physical_tcl_sha256': sha((OUT / 'cts45_tile.tcl').read_bytes()),
+        'physical_tcl_sha256': sha(original_tcl),
+        'diagnostic_guard_tcl_sha256': sha(trial_tcl),
+        'tcl_guard_only_change': True,
+        'execution_amendment': 'research/v296/DENSITY035_EXECUTION_BLOCKER_AND_GUARD_REPAIR_20261027.md',
         'rtl_sha256': parent['source_rtl_sha256'],
         'frozen_clock_ns': parent['frozen_clock_ns'],
         'frozen_rc_multiplier': parent['frozen_rc_multiplier'],
@@ -102,10 +130,13 @@ def verdict(pairwise, serial):
 def audit(folder):
     m = json.loads((folder / MANIFEST).read_text())
     for name, key in ((BASE, 'original_runner_sha256'), (TRIAL, 'trial_runner_sha256'),
-                      ('cts45_tile.tcl', 'physical_tcl_sha256')):
+                      (ORIGINAL_TCL, 'physical_tcl_sha256'),
+                      (TRIAL_TCL, 'diagnostic_guard_tcl_sha256')):
         if sha((folder / name).read_bytes()) != m[key]:
             raise ValueError('Physical input hash mismatch: ' + name)
     if (derive((folder / BASE).read_text()).encode() != (folder / TRIAL).read_bytes() or
+            derive_tcl((folder / ORIGINAL_TCL).read_text()).encode() != (folder / TRIAL_TCL).read_bytes() or
+            m.get('tcl_guard_only_change') is not True or
             m['placement_density_original'] != 0.45 or m['placement_density_trial'] != 0.35 or
             m['frozen_clock_ns'] != 3.5 or m['frozen_rc_multiplier'] != 2.0 or
             m['same_trial_for_both'] is not True or
@@ -131,9 +162,15 @@ def audit(folder):
 
 
 def self_test():
-    example = 'serial_onehot) param=0; extra=1\nV296_PLACE_DENSITY=0.45\n'
-    assert derive(example).replace(CHANGE, ANCHOR) == example
-    for broken in (example + ANCHOR, example.replace(ANCHOR, CHANGE), example.replace('extra=1', 'extra=0')):
+    example = 'serial_onehot) param=0; extra=1\\nV296_PLACE_DENSITY=0.45\\n"$root/cts45_tile.tcl"\\n'
+    assert derive(example).replace(CHANGE, ANCHOR).replace(TCL_CHANGE, TCL_ANCHOR) == example
+    original_tcl = 'if {$env(V296_PLACE_DENSITY) ne "0.45"} {\\n  error "CTS45 frozen high-RC 2x and placement density 0.45"\\n}\\n'
+    assert derive_tcl(original_tcl).replace(GUARD_NEW, GUARD_OLD).replace(MESSAGE_NEW, MESSAGE_OLD) == original_tcl
+    for bad_tcl in (original_tcl + GUARD_OLD, original_tcl.replace(GUARD_OLD, GUARD_NEW), original_tcl.replace(MESSAGE_OLD, 'missing')):
+        try: derive_tcl(bad_tcl)
+        except ValueError: pass
+        else: raise AssertionError('Invalid density guard accepted')
+    for broken in (example + ANCHOR, example.replace(ANCHOR, CHANGE), example.replace('extra=1', 'extra=0'), example.replace(TCL_ANCHOR, TCL_CHANGE)):
         try: derive(broken)
         except ValueError: pass
         else: raise AssertionError('Protocol mutation not rejected')
