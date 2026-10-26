@@ -1,0 +1,28 @@
+name: V296 fixed-warp joint area and latency falsification
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/joint_occupancy_area_packing.py'
+      - 'research/v296/JOINT_OCCUPANCY_AREA_PACKING_PREREG_20261026.md'
+      - '.github/workflows/v296-joint-area-occupancy.yml'
+  workflow_dispatch:
+jobs:
+  prospective-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Independent scheduler and physical-resource accounting checks
+        run: python3 research/v296/joint_occupancy_area_packing.py --self-test
+      - name: Frozen prospective paired synthetic workloads
+        run: python3 research/v296/joint_occupancy_area_packing.py --evaluate
+      - name: Preserve machine-readable results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-joint-area-occupancy-prospective
+          path: research/v296/JOINT_OCCUPANCY_AREA_PACKING_RESULTS_20261026.json
+          if-no-files-found: warn
