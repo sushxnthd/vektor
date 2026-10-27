@@ -1,0 +1,77 @@
+{
+  "source_run": 40427986118,
+  "evidence": "ORIGINAL_SHA_PINNED_ARTIFACTS",
+  "extracted_path_traces_missing": true,
+  "contestants": {
+    "pairwise": {
+      "sha256": "c0d90c6652deba498c46e6b01e9d3e1ce0317505caf833eea51323b54e6f49a7",
+      "post_CTS_global_slack_ns": 0.055559,
+      "extracted_RC_worst_slack_ns": -0.220829,
+      "slack_change_ns": -0.276388,
+      "required_setup_improvement_ns": 0.270829,
+      "extracted_cap_violations": 3,
+      "extracted_critical_path_available": false,
+      "pre_CTS_paths": [
+        {
+          "start": "candidate.issue.scheduler.rr3 [2]",
+          "end": "staged_operand_data[1] [3]",
+          "reported_cells": 74,
+          "buffer_cells": 32,
+          "longest_buffer_chain": {
+            "count": 15,
+            "cell_delay_ns": 0.3603,
+            "first": "wire299/Z",
+            "last": "wire275/Z"
+          }
+        },
+        {
+          "start": "candidate.issue.scheduler.rr3 [1]",
+          "end": "staged_operand_data[7] [1]",
+          "reported_cells": 75,
+          "buffer_cells": 32,
+          "longest_buffer_chain": {
+            "count": 15,
+            "cell_delay_ns": 0.3416,
+            "first": "wire299/Z",
+            "last": "wire275/Z"
+          }
+        }
+      ]
+    },
+    "serial_onehot": {
+      "sha256": "928adb671004dea251dc9c1c558f87a34fc3d3ff233e66d41ddd311d3d305ea4",
+      "post_CTS_global_slack_ns": -0.339133,
+      "extracted_RC_worst_slack_ns": -0.711405,
+      "slack_change_ns": -0.372272,
+      "required_setup_improvement_ns": 0.761405,
+      "extracted_cap_violations": 0,
+      "extracted_critical_path_available": false,
+      "pre_CTS_paths": [
+        {
+          "start": "wave_valid[23]",
+          "end": "staged_operand_data[1] [5]",
+          "reported_cells": 72,
+          "buffer_cells": 18,
+          "longest_buffer_chain": {
+            "count": 5,
+            "cell_delay_ns": 0.1255,
+            "first": "rebuffer490/Z",
+            "last": "rebuffer354/Z"
+          }
+        },
+        {
+          "start": "strongest_serial.issue.scheduler.rr1 [2]",
+          "end": "staged_operand_data[1] [4]",
+          "reported_cells": 72,
+          "buffer_cells": 17,
+          "longest_buffer_chain": {
+            "count": 2,
+            "cell_delay_ns": 0.0688,
+            "first": "max_cap804/Z",
+            "last": "max_cap18/Z"
+          }
+        }
+      ]
+    }
+  }
+}
