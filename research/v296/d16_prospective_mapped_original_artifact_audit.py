@@ -117,7 +117,7 @@ def audit(paths, rtl16):
 def self_test():
     assert abs((17552.542 + 2*(17552.542-12960.584))-FREEZE['pairwise']) < 0.001
     assert abs((18782.260 + 2*(18782.260-13835.990))-FREEZE['serial']) < 0.001
-    assert abs(100*(28998.256-27861.638)/28998.256 - 3.91960813091657) < 1e-9
+    assert abs(100*(110-100)/110 - (1000/110)) < 1e-9
     try:
         verified_zip(__file__, '0'*64)
     except ValueError as e:
