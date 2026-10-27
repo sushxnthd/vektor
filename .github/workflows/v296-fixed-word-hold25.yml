@@ -3,7 +3,7 @@ on:
   push:
     branches: [research/v296-pairwise-bank-conflict]
     paths:
-      - '.github/workflows/v296-fixed-word-hold25-strong-control.yml'
+      - '.github/workflows/v296-fixed-word-hold25.yml'
   workflow_dispatch:
 permissions:
   contents: read
