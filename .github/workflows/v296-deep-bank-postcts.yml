@@ -1,0 +1,148 @@
+name: V296 D4 D8 dynamic RF matched extracted RC falsification
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/DEEP_BANK_D4_D8_ROUTED_PREREG_20261027.md'
+      - 'research/v296/deep_bank_postcts.py'
+      - 'research/v296/v296_tile_slice_deep_bank.sv'
+      - '.github/workflows/v296-deep-bank-postcts.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v296-deep-bank-postcts-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  frozen-rtl-oracle:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        word_bits: [2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install RTL simulator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog python3
+      - name: Independent cycle-exact dynamic RF oracle
+        run: |
+          set -euo pipefail
+          bits=${{ matrix.word_bits }}
+          python3 research/v296/deep_bank_postcts.py --self-test
+          iverilog -g2012 -s tb_v296_tile_slice_deep_bank \
+            -Ptb_v296_tile_slice_deep_bank.WORD_BITS="$bits" \
+            -o /tmp/v296_deep_bank.vvp \
+            rtl/vtile/steal_warp_scheduler.sv \
+            research/v295/v295_issue_core.sv \
+            research/v296/v296_issue_core.sv \
+            research/v296/v296_tile_slice_deep_bank.sv \
+            research/v296/tb_v296_tile_slice_deep_bank.sv
+          vvp /tmp/v296_deep_bank.vvp | tee /tmp/v296_deep_bank_rtl.log
+          depth=$((1 << bits))
+          grep -q "V296_DEEP_BANK_DYNAMIC_RTL_PASS depth=$depth cycles=2048" /tmp/v296_deep_bank_rtl.log
+      - name: Preserve RTL evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-deep-route-rtl-bits${{ matrix.word_bits }}
+          path: /tmp/v296_deep_bank_rtl.log
+          if-no-files-found: warn
+  matched-full-route:
+    needs: frozen-rtl-oracle
+    runs-on: ubuntu-22.04
+    timeout-minutes: 190
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        word_bits: [2, 3]
+        variant: [pairwise, serial_onehot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Yosys and OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/tile_slice
+          sha256sum /tmp/openroad-v296.deb > build/v296/tile_slice/openroad.deb.sha256
+      - name: Fetch pinned Nangate45 and OpenRCX models
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Verify frozen physical generator and construct matched contestant
+        run: |
+          set -euo pipefail
+          bits=${{ matrix.word_bits }}
+          python3 research/v296/deep_bank_postcts.py --self-test --build --word-bits "$bits"
+          python3 research/v296/audit_tile_slice.py --self-test
+          test -s build/v296/tile_slice/deep_bank_hold25_manifest.json
+          grep -Fq 'serial_onehot) param=0; extra=1' build/v296/tile_slice/run_deep_bank_hold25_postcts.sh
+          grep -Fq -- '-chparam WORD_BITS $bits' build/v296/tile_slice/run_deep_bank_hold25_postcts.sh
+          grep -Fq 'repair_timing -hold -slack_margin 0.025' build/v296/tile_slice/cts45_hold25_tile.tcl
+          grep -Fq 'detailed_route -output_drc' build/v296/tile_slice/cts45_hold25_tile.tcl
+      - name: Run bounded extracted RC physical trial; preserve failures and timeouts
+        env:
+          V296_TILE_VARIANT: ${{ matrix.variant }}
+          V296_DEEP_WORD_BITS: ${{ matrix.word_bits }}
+        run: |
+          set -uo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          set +e
+          timeout --signal=TERM --kill-after=60s 165m \
+            bash build/v296/tile_slice/run_deep_bank_hold25_postcts.sh
+          rc=$?
+          set -e
+          echo "EXIT_CODE=$rc" | tee "build/v296/tile_slice/${V296_TILE_VARIANT}.deep_bank.exit.txt"
+          exit 0
+      - name: Preserve complete or censored physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-deep-route-bits${{ matrix.word_bits }}-${{ matrix.variant }}
+          path: build/v296/tile_slice/
+          if-no-files-found: warn
+  independent-aggregate:
+    needs: [frozen-rtl-oracle, matched-full-route]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        word_bits: [2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve both physical contestants at frozen depth
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v296-deep-route-bits${{ matrix.word_bits }}-*
+          path: build/v296/tile_slice/
+          merge-multiple: true
+      - name: Reconstruct frozen derivation and independent electrical verdict
+        run: |
+          set -euo pipefail
+          bits=${{ matrix.word_bits }}
+          python3 research/v296/deep_bank_postcts.py --self-test --build --word-bits "$bits"
+          python3 research/v296/deep_bank_postcts.py --audit --word-bits "$bits"
+      - name: Preserve positive, negative or censored aggregate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-deep-route-audit-bits${{ matrix.word_bits }}
+          path: build/v296/tile_slice/aggregate.deep_bank_bits${{ matrix.word_bits }}.json
+          if-no-files-found: warn
