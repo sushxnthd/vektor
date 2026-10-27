@@ -1,0 +1,81 @@
+{
+  "experiment": "V296_SYMMETRIC_DENSITY035_EXTENDED_MATCHED_ROUTED_REPLAY",
+  "source_run": 40427986118,
+  "source_date": "2026-10-27",
+  "frozen_protocol": "research/v296/DENSITY035_EXTENDED_MATCHED_ROUTE_PREREG_20261027.md",
+  "evidence_tier": "ORIGINAL_GITHUB_ACTIONS_ZIP_SHA256_VERIFIED_EXTRACTED_RC",
+  "original_artifacts": {
+    "pairwise": {
+      "id": 12703514184,
+      "sha256": "c0d90c6652deba498c46e6b01e9d3e1ce0317505caf833eea51323b54e6f49a7"
+    },
+    "serial_onehot": {
+      "id": 12703682763,
+      "sha256": "928adb671004dea251dc9c1c558f87a34fc3d3ff233e66d41ddd311d3d305ea4"
+    },
+    "hosted_independent_checkpoint": {
+      "id": 12703802645,
+      "sha256": "6686e3a757658c4bc5ed48c644b9e3801f6e1b2ab3c97dfda26a532c5c1e8fff"
+    }
+  },
+  "physical_inputs": {
+    "clock_ns": 3.5,
+    "rc_multiplier": 2,
+    "density": 0.35,
+    "die_um": 260,
+    "core_um": 240,
+    "serial_fifth_stage_repair": true
+  },
+  "checkpoint": {
+    "iteration": 3,
+    "baseline_density045_pairwise_drc": 12020,
+    "baseline_density045_serial_drc": 5281,
+    "candidate_drc": 3632,
+    "serial_drc": 2119,
+    "candidate_only_reduction": 0.6978369384359401,
+    "normalized_ratio": 0.7530548032655972,
+    "required_ratio_max": 0.75,
+    "required_candidate_drc_max": 8414,
+    "verdict": "FALSIFIED",
+    "iteration4_exploratory": {
+      "pairwise": 1662,
+      "serial_onehot": 693
+    }
+  },
+  "extracted": {
+    "pairwise": {
+      "drc": 0,
+      "routed": true,
+      "area_um2": 17213.9245080416,
+      "setup_ns": -0.220829,
+      "hold_ns": -0.010023,
+      "cap_violations": 3,
+      "slew_violations": 0,
+      "feasible": false
+    },
+    "serial_onehot": {
+      "drc": 0,
+      "routed": true,
+      "area_um2": 17994.89979248392,
+      "setup_ns": -0.711405,
+      "hold_ns": -0.013032,
+      "cap_violations": 0,
+      "slew_violations": 0,
+      "feasible": false
+    }
+  },
+  "derived": {
+    "candidate_area_saving_fraction": 0.04339981291635292,
+    "candidate_setup_lead_ns": 0.490576,
+    "candidate_setup_guard_shortfall_ns": 0.270829,
+    "serial_setup_guard_shortfall_ns": 0.761405
+  },
+  "audit_caveat": "Existing generic tile auditor rejects density 0.35 as a frozen density 0.45 setting AFTER complete detailed route and extraction; this is a diagnostic-auditor scope mismatch, not missing physical measurements. Both original runner exit codes 3; OpenROAD reached V296_CTS45_DONE.",
+  "decision": "REJECT_DECODED_V296_DENSITY035_PHYSICAL_REPAIR",
+  "v296_mechanism_status": "PROVISIONAL_UNVALIDATED",
+  "v287_status": "RETIRED",
+  "gpu_speedup_established": false,
+  "strict_equal_consumed_area": false,
+  "workload_holdouts": "SEALED",
+  "power_measured": false
+}
