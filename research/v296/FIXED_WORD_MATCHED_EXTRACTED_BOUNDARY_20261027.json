@@ -1,0 +1,38 @@
+{
+  "source_run": 40469489684,
+  "verdict": "BOTH_INFEASIBLE_NO_MATCHED_PARETO",
+  "contestants": {
+    "pairwise": {
+      "artifact_id": 12721519936,
+      "zip_sha256": "7342c8e1b16b5193279c6d2ad5d15ddb6cb849c9fc0aa06a984297efeef6404b",
+      "area_um2": 13379.001906344001,
+      "setup_ns": 0.074236,
+      "hold_ns": -0.012622,
+      "cap": 0,
+      "slew": 0,
+      "drc": 0,
+      "feasible": false,
+      "fifth_stage_serial_repair": false
+    },
+    "serial_onehot": {
+      "artifact_id": 12724948549,
+      "zip_sha256": "56781fca03ab151661e2c3c393639caa5e71862358fbbe50e0be1dfc278d6050",
+      "area_um2": 15779.651363345693,
+      "setup_ns": -0.75154,
+      "hold_ns": -0.00943,
+      "cap": 1,
+      "slew": 0,
+      "drc": 0,
+      "feasible": false,
+      "fifth_stage_serial_repair": true
+    }
+  },
+  "area_saving_pct": 15.21357729473113,
+  "setup_lead_ps": 825.776,
+  "hold_recovery_min_ps": 12.622,
+  "setup_deterioration_max_ps": 24.236,
+  "conditional_18v16_overhead_um2_per_candidate_slice": 647.3548610743928,
+  "holdouts": "SEALED",
+  "signoff": false,
+  "gpu_speedup": false
+}
