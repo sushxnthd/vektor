@@ -21,3 +21,9 @@ Source run: https://github.com/sushxnthd/vektor/actions/runs/40427986118
 5. Regardless of success, the density-0.35 decoded repair remains rejected. The experiment is diagnostic only and cannot establish feasible GPU speedup, power improvement, or RTX-5090 equivalence. Sealed workload holdouts stay unopened.
 
 The read-only reconstruction may fail if the exported DEF cannot reproduce OpenROAD's internal post-route timing network, propagated clock, or timing constraints. Such failure is **not** evidence that the original routed results are wrong. Preserve both failed logs and do not relax the 1 ps threshold post hoc.
+
+## Execution amendment after first replay failure (2026-10-27)
+
+The first hosted read-only replay [#40450922762](https://github.com/sushxnthd/vektor/actions/runs/40450922762) loaded both SHA-verified original artifacts, routed DEF, and extracted SPEF and reproduced both original setup and hold worst-slack values exactly to six decimal places. However, pinned OpenROAD rejected `report_checks -group_path_count 10` as an unknown option (`STA-0563`) before printing named paths. The original ten-path diagnostic is therefore **INCOMPLETE**, not a physical timing pass.
+
+The amended read-only probe removes only the unsupported path-count flag, yielding the pinned binary's default **single worst named setup and hold path**. Label any resulting path attribution `SINGLE_WORST_PATH_DIAGNOSTIC`, not ten-path coverage. Original ZIP SHA-256 pins, OpenROAD build, extracted SPEF, timing constraints, 1 ps agreement threshold, first-path/worst-slack consistency gate, rejected implementation status, and zero GPU speedup claim remain unchanged. This amendment is disclosed **before seeing any named extracted path**. A ten-path follow-up requires a separately frozen compatible command/protocol.
