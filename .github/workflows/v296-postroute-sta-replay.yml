@@ -4,6 +4,7 @@ on:
     branches: [research/v296-pairwise-bank-conflict]
     paths:
       - '.github/workflows/v296-postroute-sta-replay.yml'
+      - 'research/v296/v296_postroute_sta_replay.py'
   workflow_dispatch:
 permissions:
   contents: read
