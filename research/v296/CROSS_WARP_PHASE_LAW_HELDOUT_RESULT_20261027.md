@@ -49,3 +49,14 @@ python3 research/v296/cross_warp_phase_law.py --evaluate --output research/v296/
 ```
 
 The checked-in CSV preserves all 15 observed integer admission totals and the two independent accounting verdicts. This result is an exact statement about a controlled generator, not a proof of novelty in probability theory or a general transfer law for actual GPU warp traces. V296 remains the sole provisional architecture mechanism; V287 retired; Kernellum PR #119 and sealed holdouts unchanged.
+
+## Independent fail-closed CSV replay audit
+
+A separately committed [independent auditor](audit_cross_warp_phase_holdout.py) does **not** import the phase-mixture implementation. It reconstructs every batch from the frozen seed using a distinct cumulative-distribution bank sampler and demand-counter admission oracle, checks all 15 exact integer admission totals in the committed CSV, independently recomputes the frozen formula from the preexisting IID dynamic program, and rejects missing/duplicate cells, changed regimes, altered sample counts, bad pass flags, or threshold failures. Local audit output: `V296_PHASE_INDEPENDENT_CSV_AUDIT_PASS cells=15 max_error=0.00642203`.
+
+```bash
+python3 research/v296/audit_cross_warp_phase_holdout.py --self-test
+python3 research/v296/audit_cross_warp_phase_holdout.py --csv research/v296/CROSS_WARP_PHASE_HELDOUT_20261027.csv
+```
+
+This provides independent event replay, **not** independent physical validation or proof of transfer to real GPU traces.
