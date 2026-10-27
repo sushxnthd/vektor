@@ -1,0 +1,42 @@
+name: V296 independent final gate reconciliation
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/deep_bank_guard_reconciliation.py'
+      - 'research/v296/DEEP_BANK_FINAL_GATE_RECONCILIATION_20261028.md'
+      - '.github/workflows/v296-final-gate-reconciliation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconcile original measurements against actual final acceptance gate
+        run: |
+          set -euo pipefail
+          python3 research/v296/deep_bank_guard_reconciliation.py \
+            research/v296/DEEP_BANK_D4_D8_EXTRACTED_ROUTE_FALSIFICATION_20261028.json \
+            research/v296/audit_tile_slice.py \
+            research/v296/deep_bank_postcts.py --self-test \
+            --output /tmp/v296_final_gate_reconciliation.json
+          python3 - <<'PY'
+          import json
+          from decimal import Decimal
+          r = json.load(open('/tmp/v296_final_gate_reconciliation.json'))
+          assert r['any_matched_feasible'] is False
+          assert r['final_acceptance_guard_ns'] == '0.050'
+          assert Decimal(r['rows']['D8_pairwise']['setup_recovery_to_actual_gate_ns']) == Decimal('0.734592')
+          assert Decimal(r['rows']['D4_serial_onehot']['setup_recovery_to_actual_gate_ns']) == Decimal('1.366510')
+          print('V296_ORIGINAL_SOURCE_GUARD_AUDIT_PASS')
+          PY
+      - name: Preserve independent arithmetic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-final-gate-reconciliation
+          path: /tmp/v296_final_gate_reconciliation.json
+          if-no-files-found: warn
