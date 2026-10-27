@@ -1,0 +1,58 @@
+{
+  "decision": "REPRODUCED_EXTRACTED_WORST_PATH_TOPOLOGY_NOT_SIGNOFF",
+  "physically_feasible": false,
+  "gpu_speedup_claim": false,
+  "source_run": 40456767609,
+  "results": [
+    {
+      "variant": "pairwise",
+      "replay_artifact_id": 12713255529,
+      "replay_zip_sha256": "06f0807c85f0d4e073bf9654cebaabe94d0f97472e67f6335cff88f48fc26da9",
+      "evidence_tier": "ONE_WORST_EXTRACTED_PATH_ONLY",
+      "setup": {
+        "startpoint": "_13159_",
+        "endpoint": "_13098_",
+        "slack_ns": -0.220829,
+        "timed_cell_pin_rows": 80,
+        "buffer_pin_rows": 35,
+        "longest_consecutive_buffer_chain": 15,
+        "chain_incremental_path_delay_ns": 0.35826,
+        "chain_first_pin": "wire299/Z",
+        "chain_last_pin": "wire275/Z"
+      },
+      "hold": {
+        "startpoint": "rf_write_data[3]",
+        "endpoint": "_13026_",
+        "slack_ns": -0.010023,
+        "timed_cell_pin_rows": 4,
+        "buffer_pin_rows": 0,
+        "longest_consecutive_buffer_chain": 0
+      }
+    },
+    {
+      "variant": "serial_onehot",
+      "replay_artifact_id": 12713435714,
+      "replay_zip_sha256": "ca2929b12d123af888f13772cc2ad3dc2ff3f53d7f50323b27417f845dfec6a6",
+      "evidence_tier": "ONE_WORST_EXTRACTED_PATH_ONLY",
+      "setup": {
+        "startpoint": "_13099_",
+        "endpoint": "_13046_",
+        "slack_ns": -0.711405,
+        "timed_cell_pin_rows": 80,
+        "buffer_pin_rows": 23,
+        "longest_consecutive_buffer_chain": 2,
+        "chain_incremental_path_delay_ns": 0.056041,
+        "chain_first_pin": "rebuffer2217/Z",
+        "chain_last_pin": "max_cap279/Z"
+      },
+      "hold": {
+        "startpoint": "rf_write_data[3]",
+        "endpoint": "_12878_",
+        "slack_ns": -0.013032,
+        "timed_cell_pin_rows": 5,
+        "buffer_pin_rows": 1,
+        "longest_consecutive_buffer_chain": 1
+      }
+    }
+  ]
+}
