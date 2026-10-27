@@ -6,8 +6,8 @@ import re
 from pathlib import Path
 
 NAMES = ("decoded_pairwise", "decoded_serial", "fixed_pairwise", "fixed_serial")
-AREA_RE = re.compile(r"Chip area for module[^:\n]*:\\s*([0-9]+(?:\\.[0-9]+)?)")
-CELL_RE = re.compile(r"^\\s*(?:([A-Za-z_][A-Za-z_0-9]*)\\s+(\\d+)|(\\d+)\\s+([A-Za-z_][A-Za-z_0-9]*))\\s*$", re.M)
+AREA_RE = re.compile(r"Chip area for module[^:\n]*:\s*([0-9]+(?:\.[0-9]+)?)")
+CELL_RE = re.compile(r"^\s*(?:([A-Za-z_][A-Za-z_0-9]*)\s+(\d+)|(\d+)\s+([A-Za-z_][A-Za-z_0-9]*))\s*$", re.M)
 
 def parse(s):
     a = AREA_RE.findall(s)
