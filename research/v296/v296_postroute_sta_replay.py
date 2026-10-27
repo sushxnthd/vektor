@@ -55,10 +55,10 @@ puts "V296_REPLAY_HOLD_WORST_BEGIN"
 report_worst_slack -min -digits 6
 puts "V296_REPLAY_HOLD_WORST_END"
 puts "V296_REPLAY_SETUP_PATHS_BEGIN"
-report_checks -path_delay max -group_path_count 10 -fields {slew capacitance fanout} -digits 6
+report_checks -path_delay max -fields {slew capacitance fanout} -digits 6
 puts "V296_REPLAY_SETUP_PATHS_END"
 puts "V296_REPLAY_HOLD_PATHS_BEGIN"
-report_checks -path_delay min -group_path_count 10 -fields {slew capacitance fanout} -digits 6
+report_checks -path_delay min -fields {slew capacitance fanout} -digits 6
 puts "V296_REPLAY_HOLD_PATHS_END"
 puts "V296_REPLAY_DONE"
 '''
@@ -150,6 +150,8 @@ def self_test():
             pass
         else:
             raise AssertionError('Invalid replay accepted')
+    assert '-group_path_count' not in TCL
+    assert 'report_checks -path_delay max -fields {slew capacitance fanout} -digits 6' in TCL
     assert 'adjust_rc ' not in '\n'.join(line for line in TCL.splitlines() if not line.startswith('#'))
     assert 'detailed_route ' not in TCL
     print('V296_POSTROUTE_STA_REPLAY_SELFTEST_PASS')
