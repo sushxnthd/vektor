@@ -100,7 +100,192 @@ def paths(text):
             continue
         start = re.search(r'^Startpoint:\s*(.+)$', p, re.M)
         end = re.search(r'^Endpoint:\s*(.+)$', p, re.M)
-        slack = re.findall(r'^\s*slack\s+(?:\([^)]*\)\s+)?(-?(?:\d+(?:\.\d*)?|\.\d+))\s*$', p, re.M)
+        # Pinned OpenSTA prints `<value> slack (VIOLATED)`; accept the
+        # alternate `slack (VIOLATED) <value>` layout in synthetic checks.
+        num = r'(-?(?:\d+(?:\.\d*)?|\.\d+))'
+        slack = re.findall(r'^\s*' + num + r'\s+slack(?:\s+\([^)]*\))?\s*
+        if not start or not end or len(slack) != 1:
+            raise ValueError('Incomplete extracted path report')
+        rows.append({'start': start[1].strip(), 'end': end[1].strip(), 'slack_ns': float(slack[0])})
+    if not rows:
+        raise ValueError('No named paths')
+    return rows
+
+
+def audit(log, variant):
+    if variant not in ORIGINAL:
+        raise ValueError('Unknown variant')
+    if log.splitlines().count('V296_REPLAY_DONE') != 1:
+        raise ValueError('Incomplete replay')
+    if log.splitlines().count('V296_REPLAY_EVIDENCE_TIER POSTROUTE_SPEF_DEF_RECONSTRUCTION') != 1:
+        raise ValueError('Missing evidence tier')
+    s = worst(block(log, 'SETUP_WORST'))
+    h = worst(block(log, 'HOLD_WORST'))
+    setup_paths = paths(block(log, 'SETUP_PATHS'))
+    hold_paths = paths(block(log, 'HOLD_PATHS'))
+    if abs(setup_paths[0]['slack_ns'] - s) > TOL_NS or abs(hold_paths[0]['slack_ns'] - h) > TOL_NS:
+        raise ValueError('Reported path not the measured worst path')
+    original = ORIGINAL[variant]
+    if abs(s - original['setup_ns']) > TOL_NS or abs(h - original['hold_ns']) > TOL_NS:
+        raise ValueError(f'Reconstructed STA does not reproduce original routed slacks: setup {s}, hold {h}')
+    return {'decision': 'POSTROUTE_REPLAY_REPRODUCED', 'variant': variant,
+            'source_run': 40427986118, 'original_artifact_id': original['artifact_id'],
+            'original_zip_sha256': original['zip_sha256'], 'replay_log_sha256': sha(log.encode()),
+            'setup_ns': s, 'hold_ns': h, 'setup_paths': setup_paths,
+            'hold_paths': hold_paths, 'physically_feasible': False,
+            'new_route_or_timing_repair': False, 'gpu_speedup_claim': False}
+
+
+def self_test():
+    sample = ('V296_REPLAY_EVIDENCE_TIER POSTROUTE_SPEF_DEF_RECONSTRUCTION\n'
+              'V296_REPLAY_SETUP_WORST_BEGIN\nworst slack -0.220829\nV296_REPLAY_SETUP_WORST_END\n'
+              'V296_REPLAY_HOLD_WORST_BEGIN\nworst slack -0.010023\nV296_REPLAY_HOLD_WORST_END\n'
+              'V296_REPLAY_SETUP_PATHS_BEGIN\nStartpoint: a/Q\nEndpoint: b/D\n'
+              'slack (VIOLATED) -0.220829\nV296_REPLAY_SETUP_PATHS_END\n'
+              'V296_REPLAY_HOLD_PATHS_BEGIN\nStartpoint: c/Q\nEndpoint: d/D\n'
+              'slack (VIOLATED) -0.010023\nV296_REPLAY_HOLD_PATHS_END\nV296_REPLAY_DONE\n')
+    assert audit(sample, 'pairwise')['decision'] == 'POSTROUTE_REPLAY_REPRODUCED'
+    # Verify the actual pinned OpenSTA slack ordering, not just synthetic format.
+    reverse = sample.replace('slack (VIOLATED) -0.220829', '-0.220829 slack (VIOLATED)').replace('slack (VIOLATED) -0.010023', '-0.010023 slack (VIOLATED)')
+    assert audit(reverse, 'pairwise')['decision'] == 'POSTROUTE_REPLAY_REPRODUCED'
+    for bad in (sample.replace('V296_REPLAY_DONE', ''), sample.replace('-0.220829', '-0.120829'),
+                sample.replace('Endpoint: b/D', ''), sample.replace('V296_REPLAY_SETUP_PATHS_END', '')):
+        try:
+            audit(bad, 'pairwise')
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('Invalid replay accepted')
+    assert '-group_path_count' not in TCL
+    assert 'report_checks -path_delay max -fields {slew capacitance fanout} -digits 6' in TCL
+    assert 'adjust_rc ' not in '\n'.join(line for line in TCL.splitlines() if not line.startswith('#'))
+    assert 'detailed_route ' not in TCL
+    print('V296_POSTROUTE_STA_REPLAY_SELFTEST_PASS')
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--self-test', action='store_true')
+    p.add_argument('--generate', type=Path)
+    p.add_argument('--audit-log', type=Path)
+    p.add_argument('--variant', choices=tuple(ORIGINAL))
+    p.add_argument('--output', type=Path)
+    a = p.parse_args()
+    if a.self_test:
+        self_test()
+    if a.generate:
+        generate(a.generate)
+    if a.audit_log:
+        if not a.variant:
+            p.error('--variant required with --audit-log')
+        try:
+            result = audit(a.audit_log.read_text(errors='replace'), a.variant)
+        except (ValueError, OSError) as exc:
+            result = {'decision': 'INCOMPLETE_NO_EXTRACTED_PATH_CLAIM', 'variant': a.variant,
+                      'error': str(exc), 'gpu_speedup_claim': False}
+        output = json.dumps(result, indent=2, sort_keys=True) + '\n'
+        if a.output:
+            a.output.write_text(output)
+        print(output)
+        if result['decision'] != 'POSTROUTE_REPLAY_REPRODUCED':
+            raise SystemExit(3)
+    if not (a.self_test or a.generate or a.audit_log):
+        p.error('Select an action')
+
+
+if __name__ == '__main__':
+    main()
+, p, re.M)
+        slack += re.findall(r'^\s*slack\s+(?:\([^)]*\)\s+)?' + num + r'\s*
+        if not start or not end or len(slack) != 1:
+            raise ValueError('Incomplete extracted path report')
+        rows.append({'start': start[1].strip(), 'end': end[1].strip(), 'slack_ns': float(slack[0])})
+    if not rows:
+        raise ValueError('No named paths')
+    return rows
+
+
+def audit(log, variant):
+    if variant not in ORIGINAL:
+        raise ValueError('Unknown variant')
+    if log.splitlines().count('V296_REPLAY_DONE') != 1:
+        raise ValueError('Incomplete replay')
+    if log.splitlines().count('V296_REPLAY_EVIDENCE_TIER POSTROUTE_SPEF_DEF_RECONSTRUCTION') != 1:
+        raise ValueError('Missing evidence tier')
+    s = worst(block(log, 'SETUP_WORST'))
+    h = worst(block(log, 'HOLD_WORST'))
+    setup_paths = paths(block(log, 'SETUP_PATHS'))
+    hold_paths = paths(block(log, 'HOLD_PATHS'))
+    if abs(setup_paths[0]['slack_ns'] - s) > TOL_NS or abs(hold_paths[0]['slack_ns'] - h) > TOL_NS:
+        raise ValueError('Reported path not the measured worst path')
+    original = ORIGINAL[variant]
+    if abs(s - original['setup_ns']) > TOL_NS or abs(h - original['hold_ns']) > TOL_NS:
+        raise ValueError(f'Reconstructed STA does not reproduce original routed slacks: setup {s}, hold {h}')
+    return {'decision': 'POSTROUTE_REPLAY_REPRODUCED', 'variant': variant,
+            'source_run': 40427986118, 'original_artifact_id': original['artifact_id'],
+            'original_zip_sha256': original['zip_sha256'], 'replay_log_sha256': sha(log.encode()),
+            'setup_ns': s, 'hold_ns': h, 'setup_paths': setup_paths,
+            'hold_paths': hold_paths, 'physically_feasible': False,
+            'new_route_or_timing_repair': False, 'gpu_speedup_claim': False}
+
+
+def self_test():
+    sample = ('V296_REPLAY_EVIDENCE_TIER POSTROUTE_SPEF_DEF_RECONSTRUCTION\n'
+              'V296_REPLAY_SETUP_WORST_BEGIN\nworst slack -0.220829\nV296_REPLAY_SETUP_WORST_END\n'
+              'V296_REPLAY_HOLD_WORST_BEGIN\nworst slack -0.010023\nV296_REPLAY_HOLD_WORST_END\n'
+              'V296_REPLAY_SETUP_PATHS_BEGIN\nStartpoint: a/Q\nEndpoint: b/D\n'
+              'slack (VIOLATED) -0.220829\nV296_REPLAY_SETUP_PATHS_END\n'
+              'V296_REPLAY_HOLD_PATHS_BEGIN\nStartpoint: c/Q\nEndpoint: d/D\n'
+              'slack (VIOLATED) -0.010023\nV296_REPLAY_HOLD_PATHS_END\nV296_REPLAY_DONE\n')
+    assert audit(sample, 'pairwise')['decision'] == 'POSTROUTE_REPLAY_REPRODUCED'
+    for bad in (sample.replace('V296_REPLAY_DONE', ''), sample.replace('-0.220829', '-0.120829'),
+                sample.replace('Endpoint: b/D', ''), sample.replace('V296_REPLAY_SETUP_PATHS_END', '')):
+        try:
+            audit(bad, 'pairwise')
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('Invalid replay accepted')
+    assert '-group_path_count' not in TCL
+    assert 'report_checks -path_delay max -fields {slew capacitance fanout} -digits 6' in TCL
+    assert 'adjust_rc ' not in '\n'.join(line for line in TCL.splitlines() if not line.startswith('#'))
+    assert 'detailed_route ' not in TCL
+    print('V296_POSTROUTE_STA_REPLAY_SELFTEST_PASS')
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--self-test', action='store_true')
+    p.add_argument('--generate', type=Path)
+    p.add_argument('--audit-log', type=Path)
+    p.add_argument('--variant', choices=tuple(ORIGINAL))
+    p.add_argument('--output', type=Path)
+    a = p.parse_args()
+    if a.self_test:
+        self_test()
+    if a.generate:
+        generate(a.generate)
+    if a.audit_log:
+        if not a.variant:
+            p.error('--variant required with --audit-log')
+        try:
+            result = audit(a.audit_log.read_text(errors='replace'), a.variant)
+        except (ValueError, OSError) as exc:
+            result = {'decision': 'INCOMPLETE_NO_EXTRACTED_PATH_CLAIM', 'variant': a.variant,
+                      'error': str(exc), 'gpu_speedup_claim': False}
+        output = json.dumps(result, indent=2, sort_keys=True) + '\n'
+        if a.output:
+            a.output.write_text(output)
+        print(output)
+        if result['decision'] != 'POSTROUTE_REPLAY_REPRODUCED':
+            raise SystemExit(3)
+    if not (a.self_test or a.generate or a.audit_log):
+        p.error('Select an action')
+
+
+if __name__ == '__main__':
+    main()
+, p, re.M)
         if not start or not end or len(slack) != 1:
             raise ValueError('Incomplete extracted path report')
         rows.append({'start': start[1].strip(), 'end': end[1].strip(), 'slack_ns': float(slack[0])})
