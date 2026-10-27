@@ -1,0 +1,100 @@
+name: V296 dynamic two-port deep-bank transfer
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/DEEP_BANK_DYNAMIC_TWO_PORT_PREREG_20261027.md'
+      - 'research/v296/v296_tile_slice_deep_bank.sv'
+      - 'research/v296/tb_v296_tile_slice_deep_bank.sv'
+      - '.github/workflows/v296-deep-bank-dynamic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v296-deep-bank-dynamic-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  rtl-oracle:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        word_bits: [2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open RTL simulator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+      - name: Cycle-exact independent deep-bank oracle
+        run: |
+          set -euo pipefail
+          bits=${{ matrix.word_bits }}
+          iverilog -g2012 -s tb_v296_tile_slice_deep_bank \
+            -Ptb_v296_tile_slice_deep_bank.WORD_BITS="$bits" \
+            -o /tmp/v296_deep_bank.vvp \
+            rtl/vtile/steal_warp_scheduler.sv \
+            research/v295/v295_issue_core.sv \
+            research/v296/v296_issue_core.sv \
+            research/v296/v296_tile_slice_deep_bank.sv \
+            research/v296/tb_v296_tile_slice_deep_bank.sv
+          vvp /tmp/v296_deep_bank.vvp | tee /tmp/v296_deep_bank_rtl.log
+          depth=$((1 << bits))
+          grep -q "V296_DEEP_BANK_DYNAMIC_RTL_PASS depth=$depth cycles=2048" /tmp/v296_deep_bank_rtl.log
+      - name: Preserve RTL evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-deep-bank-rtl-bits${{ matrix.word_bits }}
+          path: /tmp/v296_deep_bank_rtl.log
+          if-no-files-found: warn
+  matched-mapped:
+    needs: rtl-oracle
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        word_bits: [2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned open synthesis and standard-cell library
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys curl python3
+          mkdir -p build/v296/deep_bank_mapped
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          curl -fL --retry 3 --max-time 180 \
+            "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib" \
+            -o build/v296/deep_bank_mapped/nangate.lib
+      - name: Equal-resource V296 vs serial mapped area and logic depth
+        run: |
+          set -euo pipefail
+          out=build/v296/deep_bank_mapped
+          bits=${{ matrix.word_bits }}
+          yosys -V > "$out/yosys.version"
+          sha256sum research/v296/v296_tile_slice_deep_bank.sv \
+            research/v296/v296_issue_core.sv research/v295/v295_issue_core.sv \
+            "$out/nangate.lib" > "$out/source_library.sha256"
+          for spec in pairwise:1 serial:0; do
+            IFS=: read -r name pairwise <<< "$spec"
+            yosys -Q -T -p "read_liberty -lib -ignore_miss_func -ignore_miss_dir $out/nangate.lib; \
+              read_verilog -sv rtl/vtile/steal_warp_scheduler.sv research/v295/v295_issue_core.sv \
+                research/v296/v296_issue_core.sv research/v296/v296_tile_slice_deep_bank.sv; \
+              hierarchy -top v296_tile_slice_deep_bank -chparam PAIRWISE $pairwise -chparam WORD_BITS $bits; \
+              synth -top v296_tile_slice_deep_bank -flatten; \
+              dfflibmap -liberty $out/nangate.lib; abc -liberty $out/nangate.lib; \
+              clean; check -assert; stat -liberty $out/nangate.lib; ltp -noff" \
+              > "$out/depth$((1 << bits))_$name.log" 2>&1
+            grep -q 'Chip area' "$out/depth$((1 << bits))_$name.log"
+          done
+          echo "MAPPED_ONLY_NO_PHYSICAL_SIGNOFF depth=$((1 << bits))" | tee "$out/evidence_tier.txt"
+      - name: Preserve matched synthesis including failed results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-deep-bank-mapped-bits${{ matrix.word_bits }}
+          path: build/v296/deep_bank_mapped/
+          if-no-files-found: warn
