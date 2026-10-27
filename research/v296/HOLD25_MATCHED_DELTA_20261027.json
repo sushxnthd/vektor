@@ -1,0 +1,89 @@
+{
+  "evidence_tier": "MATCHED_POSTCTS_DETAILED_ROUTE_OPENRCX_NOT_SIGNOFF",
+  "run_original": 40469489684,
+  "run_hold25": 40494515995,
+  "sha256": {
+    "base_pairwise": "7342c8e1b16b5193279c6d2ad5d15ddb6cb849c9fc0aa06a984297efeef6404b",
+    "base_serial": "56781fca03ab151661e2c3c393639caa5e71862358fbbe50e0be1dfc278d6050",
+    "hold25_pairwise": "6265bc15d8be03d62ec8b8f4c3f435b0e30c355f42ed75c5e7316fed40efc625",
+    "hold25_serial": "1847b10524877f02791b335a0aed4afc99ba1c21a8143d070122489b8017e9c8"
+  },
+  "source_rtl_sha256": "1d798344ede7aee67d84f6dab5fd266dbd65c3c164f65694206c3d6b921eb8f2",
+  "clock_ns": 3.5,
+  "rc_multiplier": 2,
+  "hold_margin_target_ps": 25,
+  "area_limit_um2": 30000,
+  "setup_guard_ps": 50,
+  "rows": {
+    "base_pairwise": {
+      "area_um2": 13379.001906344001,
+      "setup_ps": 74.236,
+      "hold_ps": -12.622,
+      "cap": 0,
+      "slew": 0,
+      "drc": 0,
+      "wire_um": 149199,
+      "vias": 56915,
+      "netlist_sha256": "ba201934346a482eb808e33fb5368ec53eefa9e7c0474b1bd59fa5bc185bc8e5"
+    },
+    "base_serial": {
+      "area_um2": 15779.651363345693,
+      "setup_ps": -751.54,
+      "hold_ps": -9.43,
+      "cap": 1,
+      "slew": 0,
+      "drc": 0,
+      "wire_um": 176658,
+      "vias": 67500,
+      "netlist_sha256": "cd4804c9661c6b2daa50691ac10def0f098f625a1a76db09c457e0d71cace0b6"
+    },
+    "hold25_pairwise": {
+      "area_um2": 13382.194019584404,
+      "setup_ps": 93.778,
+      "hold_ps": 14.704,
+      "cap": 0,
+      "slew": 0,
+      "drc": 0,
+      "wire_um": 149346,
+      "vias": 57064,
+      "netlist_sha256": "ba201934346a482eb808e33fb5368ec53eefa9e7c0474b1bd59fa5bc185bc8e5"
+    },
+    "hold25_serial": {
+      "area_um2": 15783.642837163825,
+      "setup_ps": -731.487,
+      "hold_ps": 3.399,
+      "cap": 2,
+      "slew": 0,
+      "drc": 0,
+      "wire_um": 176742,
+      "vias": 67656,
+      "netlist_sha256": "cd4804c9661c6b2daa50691ac10def0f098f625a1a76db09c457e0d71cace0b6"
+    }
+  },
+  "deltas": {
+    "pairwise": {
+      "setup_improvement_ps": 19.542,
+      "hold_improvement_ps": 27.326,
+      "area_increase_um2": 3.192113,
+      "wire_increase_um": 147,
+      "via_increase": 149,
+      "cap_violation_delta": 0
+    },
+    "serial": {
+      "setup_improvement_ps": 20.053,
+      "hold_improvement_ps": 12.829,
+      "area_increase_um2": 3.991474,
+      "wire_increase_um": 84,
+      "via_increase": 156,
+      "cap_violation_delta": 1
+    }
+  },
+  "candidate_feasible_after_hold25": true,
+  "serial_feasible_after_hold25": false,
+  "matched_feasible_pareto": false,
+  "same_clock_admission_gain": 0,
+  "nonnegative_setup_cost_law_falsified_by_observation": true,
+  "causal_identification_of_path_delay_transfer": false,
+  "production_gpu_claim": false,
+  "holdouts": "SEALED"
+}
