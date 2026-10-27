@@ -1,0 +1,112 @@
+name: V296 deep-bank immutable extracted critical-path replay
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/deep_bank_extracted_path_replay.py'
+      - '.github/workflows/v296-deep-bank-extracted-path-replay.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: v296-deep-bank-extracted-path-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  sha-pinned-readonly-sta:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - case: D8_pairwise
+            variant: pairwise
+            artifact: 12769775926
+            digest: 92a84c3923eb62cd506241bcb1d8da06cfcfbd6a13328c8e050b14f301086f4b
+          - case: D4_serial_onehot
+            variant: serial_onehot
+            artifact: 12769708334
+            digest: edeb136bc054eddf7434119115df198e7d4403c9bd01c0a726df7fb30519755b
+    steps:
+      - uses: actions/checkout@v4
+      - name: Self-test frozen independent checker and generate read-only STA
+        run: |
+          set -euo pipefail
+          python3 research/v296/deep_bank_extracted_path_replay.py --self-test
+          python3 research/v296/deep_bank_extracted_path_replay.py --generate build/v296/replay.tcl
+      - name: Install pinned OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y curl unzip python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/original
+      - name: Recover immutable original and verify all physical provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ matrix.artifact }}
+          EXPECTED_SHA: ${{ matrix.digest }}
+          CASE: ${{ matrix.case }}
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --max-time 180 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            "https://api.github.com/repos/sushxnthd/vektor/actions/artifacts/$ARTIFACT_ID/zip" \
+            -o build/v296/original.zip
+          echo "$EXPECTED_SHA  build/v296/original.zip" | sha256sum --check
+          python3 research/v296/deep_bank_extracted_path_replay.py \
+            --verify-zip build/v296/original.zip --case "$CASE" \
+            --output build/v296/original_provenance.json
+          unzip -q build/v296/original.zip -d build/v296/original
+      - name: Fetch SHA-pinned Nangate45 liberty and LEFs
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          echo '8d540a4d4cf6d09d27c87ad067857a9c0c2eeb023ab7a56e058cd3113db4e9b1  build/v296/nangate.lib' | sha256sum --check
+          echo '834a79295054cd4209178d1bade67c353863c47bb4b3c22ee38b862b7cec37f2  build/v296/platform/NangateOpenCellLibrary.tech.lef' | sha256sum --check
+          echo 'a43aea339f12a57a63497783e508ba16f3da2dc056d3247dec7d99707c2dedef  build/v296/platform/NangateOpenCellLibrary.macro.mod.lef' | sha256sum --check
+      - name: Reconstruct actual extracted worst paths without rerouting
+        env:
+          V296_REPLAY_ROOT: build/v296/original
+          V296_REPLAY_VARIANT: ${{ matrix.variant }}
+          V296_LIB: build/v296/nangate.lib
+          V296_TECH_LEF: build/v296/platform/NangateOpenCellLibrary.tech.lef
+          V296_CELL_LEF: build/v296/platform/NangateOpenCellLibrary.macro.mod.lef
+          CASE: ${{ matrix.case }}
+        run: |
+          set -uo pipefail
+          set +e
+          timeout 15m openroad -exit build/v296/replay.tcl > build/v296/replay.log 2>&1
+          rc=$?
+          set -e
+          echo "$rc" > build/v296/replay.exit
+          if [ "$rc" -ne 0 ]; then
+            echo "Read-only OpenSTA failed; no extracted endpoint claim" >&2
+            tail -100 build/v296/replay.log
+            exit "$rc"
+          fi
+          python3 research/v296/deep_bank_extracted_path_replay.py \
+            --audit-log build/v296/replay.log --case "$CASE" \
+            --output build/v296/extracted_paths.json
+      - name: Preserve successful or failed extracted path evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-deep-bank-extracted-path-${{ matrix.case }}
+          path: |
+            build/v296/replay.tcl
+            build/v296/original_provenance.json
+            build/v296/replay.log
+            build/v296/replay.exit
+            build/v296/extracted_paths.json
+          if-no-files-found: warn
