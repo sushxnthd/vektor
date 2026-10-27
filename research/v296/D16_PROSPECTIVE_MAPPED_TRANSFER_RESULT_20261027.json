@@ -1,0 +1,64 @@
+{
+  "evidence_tier": "SHA_VERIFIED_RTL_AND_MAPPED_SYNTHESIS_ONLY",
+  "run_id": 40542155911,
+  "head_sha": "831ec79865d4c0b85f8bc25904737eb7c73a702b",
+  "frozen_before_run": {
+    "pairwise_area_um2": 26736.458,
+    "serial_area_um2": 28674.8,
+    "maximum_relative_error": 0.15,
+    "ordering": "pairwise < serial"
+  },
+  "measured": {
+    "D4": {
+      "pairwise_um2": 12960.584,
+      "serial_um2": 13835.99
+    },
+    "D8": {
+      "pairwise_um2": 17552.542,
+      "serial_um2": 18782.26
+    },
+    "D16": {
+      "pairwise_um2": 27861.638,
+      "serial_um2": 28998.256
+    }
+  },
+  "D16": {
+    "candidate_relative_prediction_error": 0.04208410852327561,
+    "serial_relative_prediction_error": 0.011280148423005634,
+    "area_saving_um2": 1136.618,
+    "area_saving_percent": 3.91960813091657,
+    "predicted_area_saving_um2": 1938.342,
+    "advantage_overprediction_percent": 41.361328393028586,
+    "prospective_model_gate": "PASS",
+    "integer_slices_under_30000um2": {
+      "pairwise": 1,
+      "serial": 1
+    },
+    "break_even_condition": "candidate_extra_physical_overhead_minus_serial_extra_physical_overhead < 1136.618 um2"
+  },
+  "artifacts": {
+    "D4_mapped": {
+      "id": 12752126503,
+      "sha256": "cdeee83a0b3e22f0734c3c107181ef2a9231fec1c71c52d55d73bc592cfd28c6"
+    },
+    "D8_mapped": {
+      "id": 12751094117,
+      "sha256": "efe40ce43c0d4ad37a7a83902ccb566e671633b59287631e2f38c4f3d255e8d4"
+    },
+    "D16_mapped": {
+      "id": 12752960026,
+      "sha256": "f1733131d283e6cedcc96cddd3070773a9d9d98f2ec16f6eb04d7a6c9140b008"
+    },
+    "D16_rtl": {
+      "id": 12750287978,
+      "sha256": "29ed1b595edc447c621fe68644c1a4b733d42e2648b22cb423cfa5c0980dbe37"
+    }
+  },
+  "limitations": [
+    "No extracted-RC physical signoff at D16",
+    "Serial not independently physically feasible",
+    "No bandwidth/throughput/energy measurement",
+    "8-bit flop RF proxy, not SRAM macro",
+    "LTP -noff is not timing"
+  ]
+}
