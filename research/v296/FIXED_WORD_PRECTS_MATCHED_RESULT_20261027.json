@@ -1,0 +1,40 @@
+{
+  "source_run": 40457696916,
+  "evidence_tier": "MATCHED_PRECTS_GLOBAL_ROUTE_ESTIMATED_PARASITICS_NOT_SIGNOFF",
+  "candidate": {
+    "variant": "pairwise",
+    "artifact_sha256": "cebe917377f0a3195a43e9bdb3917a0b8036e198ed8444250d7fca019c10f349",
+    "area_um2": 12806.570026668851,
+    "setup_slack_ns": 0.230183,
+    "hold_slack_ns": 0.112255,
+    "cap_violations": 0,
+    "slew_violations": 0,
+    "setup_guard_pass": true,
+    "worst_setup_startpoint": "_10530_",
+    "worst_setup_endpoint": "_10411_"
+  },
+  "serial": {
+    "variant": "serial_onehot",
+    "artifact_sha256": "6455f4b21faf1919c2b38b5d9887bb4942f98b061ec9ec6901628adaaa53b3c3",
+    "area_um2": 15103.745809597058,
+    "setup_slack_ns": -0.193882,
+    "hold_slack_ns": 0.113217,
+    "cap_violations": 0,
+    "slew_violations": 0,
+    "setup_guard_pass": false,
+    "worst_setup_startpoint": "_11505_",
+    "worst_setup_endpoint": "_11521_"
+  },
+  "candidate_area_saving_fraction": 0.1520931172893919,
+  "setup_slack_advantage_ns": 0.424065,
+  "candidate_setup_margin_above_guard_ps": 180.183,
+  "maximum_net_postcts_extraction_setup_penalty_to_preserve_guard_ps": 180.183,
+  "serial_setup_shortfall_to_guard_ps": 243.882,
+  "conditional_18_candidate_per_16_serial_area_overhead_budget_fraction": 0.04833314484636397,
+  "conditional_19_candidate_per_16_serial_area_overhead_budget_fraction": -0.006842283829760487,
+  "strongest_serial_fifth_stage_included": false,
+  "extracted_rc_timing_pass": false,
+  "routed_drc_pass": false,
+  "gpu_throughput_claim": false,
+  "decision": "CANDIDATE_PRECTS_GUARD_PASS_ROUTE_TRIAL_JUSTIFIED_NOT_SIGNOFF"
+}
