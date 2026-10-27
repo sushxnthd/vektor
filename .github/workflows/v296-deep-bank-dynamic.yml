@@ -56,7 +56,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        word_bits: [2, 3]
+        # D16 prediction and 15% falsification gate frozen in DEEP_BANK_DYNAMIC_MAPPED_TRANSFER_AND_D16_FREEZE_20261027.md before this trial.
+        word_bits: [2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - name: Install pinned open synthesis and standard-cell library
