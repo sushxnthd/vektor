@@ -1,0 +1,113 @@
+name: V296 fixed-word matched strong-control post-CTS extracted-RC falsification
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - '.github/workflows/v296-fixed-word-postcts-strong-control.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v296-fixed-word-postcts-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify-frozen-protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify fail-closed full-route derivation and independent checker
+        run: |
+          set -euo pipefail
+          python3 research/v296/fixed_word_postcts_flow.py --self-test --build
+          python3 research/v296/fixed_word_postcts_independent_audit.py --self-test
+          python3 research/v296/fixed_word_prects_sha_audit.py --self-test
+          test -s build/v296/tile_slice/run_fixed_word_postcts.sh
+          grep -Fq 'serial_onehot) param=0; extra=1' build/v296/tile_slice/run_fixed_word_postcts.sh
+          grep -Fq 'V296_TOP="v296_tile_slice_fixed_word"' build/v296/tile_slice/run_fixed_word_postcts.sh
+          grep -Fq 'clock_tree_synthesis' build/v296/tile_slice/cts45_tile.tcl
+          grep -Fq 'detailed_route -output_drc' build/v296/tile_slice/cts45_tile.tcl
+          grep -Fq 'repair_timing -setup -slack_margin 0.250' build/v296/tile_slice/cts45_tile.tcl
+  matched-postcts-extracted:
+    needs: verify-frozen-protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 190
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        variant: [pairwise, serial_onehot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Yosys and OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/tile_slice
+          sha256sum /tmp/openroad-v296.deb > build/v296/tile_slice/openroad.deb.sha256
+      - name: Download revision-pinned Nangate45 and OpenRCX platform
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Derive exact matched RTL and frozen physical constraints
+        run: |
+          set -euo pipefail
+          python3 research/v296/fixed_word_postcts_flow.py --self-test --build
+          python3 research/v296/fixed_word_postcts_independent_audit.py --self-test
+          test -s build/v296/tile_slice/fixed_word_postcts_manifest.json
+      - name: Execute bounded full-route physical trial and preserve censoring
+        env:
+          V296_TILE_VARIANT: ${{ matrix.variant }}
+        run: |
+          set -uo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          set +e
+          timeout --signal=TERM --kill-after=60s 165m bash build/v296/tile_slice/run_fixed_word_postcts.sh
+          rc=$?
+          set -e
+          echo "V296_FIXED_WORD_POSTCTS_RUN_EXIT_CODE=$rc" | tee "build/v296/tile_slice/${V296_TILE_VARIANT}.fixed_word_postcts.exit.txt"
+          exit 0
+      - name: Preserve complete or failed physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-fixed-word-postcts-${{ matrix.variant }}
+          path: build/v296/tile_slice/
+          if-no-files-found: warn
+  independent-aggregate:
+    needs: [verify-frozen-protocol, matched-postcts-extracted]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve both original contestant artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v296-fixed-word-postcts-*
+          path: build/v296/tile_slice/
+          merge-multiple: true
+      - name: Fail-closed extracted-RC and strongest-control verdict
+        run: |
+          set -euo pipefail
+          python3 research/v296/fixed_word_postcts_independent_audit.py --self-test
+          python3 research/v296/fixed_word_postcts_independent_audit.py --aggregate build/v296/tile_slice/
+      - name: Preserve positive or negative independent result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-fixed-word-postcts-independent-verdict
+          path: build/v296/tile_slice/aggregate.fixed_word_postcts.json
+          if-no-files-found: warn
