@@ -1,0 +1,57 @@
+{
+  "tier": "synthetic exact joint Markov + independent Monte Carlo",
+  "configuration": {
+    "banks": 4,
+    "slots": 3,
+    "ports_per_bank": 2,
+    "rho": 0.2,
+    "refill": 1,
+    "capacity": 2,
+    "p_low": 0.05,
+    "p_high": 0.95,
+    "cycles": 150000,
+    "burn": 10000,
+    "seeds": [
+      90211,
+      90217
+    ],
+    "tolerance": 0.025
+  },
+  "rows": [
+    {
+      "stay": 0.5,
+      "exact_q": 0.7889646497985259,
+      "independent_iid_mean_p_prediction": 0.9693025540275201,
+      "observed": [
+        0.7897285714285714,
+        0.7877857142857143
+      ],
+      "max_abs_error": 0.001178935512811563,
+      "stationary_residual": 1.8041124150158794e-16
+    },
+    {
+      "stay": 0.9,
+      "exact_q": 0.6218776056243401,
+      "independent_iid_mean_p_prediction": 0.9693025540275201,
+      "observed": [
+        0.6166928571428572,
+        0.6219785714285714
+      ],
+      "max_abs_error": 0.005184748481482981,
+      "stationary_residual": 1.0547118733938987e-15
+    },
+    {
+      "stay": 0.98,
+      "exact_q": 0.5837363439008653,
+      "independent_iid_mean_p_prediction": 0.9693025540275201,
+      "observed": [
+        0.5923642857142857,
+        0.5824214285714285
+      ],
+      "max_abs_error": 0.008627941813420414,
+      "stationary_residual": 9.43689570931383e-16
+    }
+  ],
+  "all_pass": true,
+  "architectural_speedup_claim": false
+}
