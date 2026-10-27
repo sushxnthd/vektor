@@ -1,0 +1,31 @@
+{
+  "admitted_waves_across_cases": 158409,
+  "decision": "BANK_LOCAL_TWO_PORT_EQUIVALENCE_EXHAUSTIVE_ONLY",
+  "gpu_speedup_claim": false,
+  "local_word_data_cases": 458752,
+  "maximum_bank_reads": 2,
+  "out_of_domain_three_read_counterexample": {
+    "fixed": [
+      0,
+      0,
+      1
+    ],
+    "old": [
+      0,
+      0,
+      0
+    ],
+    "requests": [
+      0,
+      0,
+      1
+    ],
+    "words": [
+      0,
+      1
+    ]
+  },
+  "physically_feasible": false,
+  "scope": "2 words per bank, <=2 admitted operands per bank; no timing, power, or deep-SRAM transfer",
+  "three_bank_four_slot_validity_cases": 104976
+}
