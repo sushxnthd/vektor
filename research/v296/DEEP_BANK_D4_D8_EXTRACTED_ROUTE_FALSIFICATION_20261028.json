@@ -1,0 +1,56 @@
+{
+  "run_id": 40557136436,
+  "source_commit": "6c5e61f30a483ce1112e143e3d8a6048014e3939",
+  "evidence_tier": "post-CTS propagated-clock detailed-route OpenRCX, not signoff",
+  "source": "https://github.com/sushxnthd/vektor/actions/runs/40557136436",
+  "frozen_limits": {
+    "clock_period_ns": 3.5,
+    "min_setup_ns": 0.25,
+    "min_hold_ns": 0,
+    "max_area_um2": 30000
+  },
+  "observations": {
+    "D4_pairwise": {
+      "status": "timed_out",
+      "exit_code": 124,
+      "job_id": 122376934428,
+      "artifact_id": 12770962531,
+      "artifact_zip_sha256_from_github_log": "9a1ad570dacfc3895336e2ec279b5e057a0d54d0ec8e511dc884f04c20b2958d"
+    },
+    "D4_serial_onehot": {
+      "status": "complete",
+      "exit_code": 0,
+      "job_id": 122376934259,
+      "artifact_id": 12769708334,
+      "artifact_zip_sha256_from_github_log": "edeb136bc054eddf7434119115df198e7d4403c9bd01c0a726df7fb30519755b",
+      "final": {
+        "area_um2": 23265.68981914079,
+        "setup_ns": -1.31651,
+        "hold_ns": 0.002572,
+        "cap": 6,
+        "slew": 0
+      }
+    },
+    "D8_pairwise": {
+      "status": "complete",
+      "exit_code": 0,
+      "job_id": 122376934201,
+      "artifact_id": 12769775926,
+      "artifact_zip_sha256_from_github_log": "92a84c3923eb62cd506241bcb1d8da06cfcfbd6a13328c8e050b14f301086f4b",
+      "final": {
+        "area_um2": 28984.15729646331,
+        "setup_ns": -0.684592,
+        "hold_ns": 0.010986,
+        "cap": 1,
+        "slew": 0
+      }
+    },
+    "D8_serial_onehot": {
+      "status": "timed_out",
+      "exit_code": 124,
+      "job_id": 122376934263,
+      "artifact_id": 12769658115,
+      "artifact_zip_sha256_from_github_log": "63f8e5db3a0d8c460f384b6804462eb95fdd35d461f5d2edfed9d24476187dd4"
+    }
+  }
+}
