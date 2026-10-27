@@ -11,7 +11,7 @@
 | D8 | V296 pairwise | complete (0) | 28,984.157 | -0.684592 | +0.010986 | 1 | 0 | FAIL |
 | D8 | optimized serial | timeout (124) | — | — | — | — | — | not established |
 
-Evidence tier: OpenROAD post-CTS propagated-clock detailed-route OpenRCX at 2× RC, **not foundry signoff**. The frozen Tcl uses `repair_timing -setup -slack_margin 0.250` and `repair_timing -hold -slack_margin 0.025`. Audit limits: 250 ps final setup guard, nonnegative final hold, zero cap/slew violations, integrated area <=30,000 µm². All measured data were transcribed from the aggregate logs. Artifact ZIP SHA-256 values in the JSON are **reported by GitHub upload logs, not independently rehashed in this run**.
+Evidence tier: OpenROAD post-CTS propagated-clock detailed-route OpenRCX at 2× RC, **not foundry signoff**. The frozen Tcl uses `repair_timing -setup -slack_margin 0.250` and `repair_timing -hold -slack_margin 0.025`. Audit limits: 250 ps final setup guard, nonnegative final hold, zero cap/slew violations, integrated area <=30,000 µm². All measured data were transcribed from the aggregate logs. All four original artifact ZIPs were subsequently downloaded, independently SHA-256-rehashed and matched the GitHub upload-log digests. The original OpenROAD results were not rerun.
 
 ## Conditional physical boundary
 
@@ -38,3 +38,28 @@ python3 research/v296/deep_bank_route_gate_falsification.py \
 ```
 
 It tests missing physical metrics, false success status, independent setup/cap failures, NaN and area overflow. It does **not** replay the original OpenROAD run or open workload holdouts.
+
+## Original-artifact route-convergence forensics (same run)
+
+All four original artifact ZIP SHA-256 checks passed independently. The two timeouts are **real detailed-route convergence/runtime failures**, not merely missing uploads or dependency-install failures:
+
+| Depth / controller | Detailed-route iterations completed | Final completed-iteration DRC count | Last partial state |
+|---|---:|---:|---|
+| D4 pairwise | 6 | **19,252** | Iteration 6, 40% progress, **19,107** transient violations |
+| D4 optimized serial | 26 | **0** | Routed and extracted; fails setup and 6 capacitance limits |
+| D8 pairwise | 12 | **0** | Routed and extracted; fails setup and 1 capacitance limit |
+| D8 optimized serial | 0 | unavailable | Iteration 0, 80% progress, **33,054** transient violations |
+
+The partial counts are **not final signoff DRC totals**. D4 pairwise was still reducing violations slowly, from 30,587 after iteration 0 to 19,252 after iteration 5. D8 serial had not completed its first detailed-route iteration before the timeout. No extrapolation of eventual completion is defensible.
+
+In the completed D8 pairwise design, the lone capacitance violation at `_15191_/ZN` is **0.830492 fF over its 106.810997 fF limit**. The small capacitance excess does not resolve the much larger **934.592 ps** setup-guard deficit. The D4 serial control also has six capacitance violations. Both completed designs had zero reported final detailed-route DRC violations; this does **not** imply timing/electrical feasibility.
+
+**Updated kill-test priority:** physical convergence is a first-class experimental variable. Before another expensive matched run, examine routing-density/track congestion and setup critical paths in the original partial artifacts. Do not increase timeout alone and mistake extra compute for a mechanism improvement. If applying congestion relief, use symmetric floorplan/resource constraints and repeat both controllers at both depths. Do not compare a timed-out partial design to a completed design.
+
+Independent original-artifact replay:
+
+```bash
+python3 research/v296/deep_bank_detailed_route_forensics.py /path/to/downloaded-artifact-zips
+```
+
+The four original ZIPs are [D4 pairwise](https://github.com/sushxnthd/vektor/actions/runs/40557136436/artifacts/12770962531), [D4 serial](https://github.com/sushxnthd/vektor/actions/runs/40557136436/artifacts/12769708334), [D8 pairwise](https://github.com/sushxnthd/vektor/actions/runs/40557136436/artifacts/12769775926), and [D8 serial](https://github.com/sushxnthd/vektor/actions/runs/40557136436/artifacts/12769658115).
