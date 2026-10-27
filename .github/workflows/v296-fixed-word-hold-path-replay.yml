@@ -1,0 +1,100 @@
+name: V296 fixed-word SHA-pinned matched extracted hold-path replay
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - '.github/workflows/v296-fixed-word-hold-path-replay.yml'
+      - 'research/v296/fixed_word_matched_extracted_boundary.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: v296-fixed-word-hold-replay-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  read-only-matched-reconstruction:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Self-test independent checker and generate read-only STA
+        run: |
+          set -euo pipefail
+          python3 research/v296/v296_postroute_sta_replay.py --self-test
+          python3 research/v296/fixed_word_matched_extracted_boundary.py --self-test
+          python3 research/v296/fixed_word_matched_extracted_boundary.py --generate-replay build/v296/fixed_word_replay.tcl
+      - name: Install original OpenROAD version
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y curl unzip python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/tile_slice
+      - name: Download both immutable original routed artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for row in \
+            'pairwise 12721519936 7342c8e1b16b5193279c6d2ad5d15ddb6cb849c9fc0aa06a984297efeef6404b' \
+            'serial_onehot 12724948549 56781fca03ab151661e2c3c393639caa5e71862358fbbe50e0be1dfc278d6050'; do
+            read -r variant id digest <<< "$row"
+            curl -fL --retry 3 --max-time 180 \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'Accept: application/vnd.github+json' \
+              "https://api.github.com/repos/sushxnthd/vektor/actions/artifacts/$id/zip" \
+              -o "build/v296/$variant.original.zip"
+            echo "$digest  build/v296/$variant.original.zip" | sha256sum --check
+            mkdir -p "build/v296/$variant"
+            unzip -q "build/v296/$variant.original.zip" -d "build/v296/$variant"
+            test -s "build/v296/$variant/$variant.high.cts45.def"
+            test -s "build/v296/$variant/$variant.high.cts45.spef"
+          done
+          python3 research/v296/fixed_word_matched_extracted_boundary.py \
+            --pairwise-zip build/v296/pairwise.original.zip \
+            --serial-zip build/v296/serial_onehot.original.zip \
+            --output build/v296/matched.boundary.audit.json
+      - name: Download pinned Nangate45 platform
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          echo '8d540a4d4cf6d09d27c87ad067857a9c0c2eeb023ab7a56e058cd3113db4e9b1  build/v296/nangate.lib' | sha256sum --check
+          echo '834a79295054cd4209178d1bade67c353863c47bb4b3c22ee38b862b7cec37f2  build/v296/platform/NangateOpenCellLibrary.tech.lef' | sha256sum --check
+          echo 'a43aea339f12a57a63497783e508ba16f3da2dc056d3247dec7d99707c2dedef  build/v296/platform/NangateOpenCellLibrary.macro.mod.lef' | sha256sum --check
+      - name: Reconstruct extracted worst setup and hold paths without rerouting
+        env:
+          V296_LIB: build/v296/nangate.lib
+          V296_TECH_LEF: build/v296/platform/NangateOpenCellLibrary.tech.lef
+          V296_CELL_LEF: build/v296/platform/NangateOpenCellLibrary.macro.mod.lef
+        run: |
+          set -euo pipefail
+          for variant in pairwise serial_onehot; do
+            export V296_REPLAY_VARIANT="$variant"
+            export V296_REPLAY_ROOT="build/v296/$variant"
+            timeout 12m openroad -exit build/v296/fixed_word_replay.tcl \
+              > "build/v296/$variant.hold.replay.log" 2>&1
+            python3 research/v296/fixed_word_matched_extracted_boundary.py \
+              --audit-replay "build/v296/$variant.hold.replay.log" \
+              --variant "$variant" \
+              --output "build/v296/$variant.hold.replay.audit.json"
+          done
+      - name: Preserve successful or failed reconstruction evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-fixed-word-matched-extracted-hold-paths
+          path: |
+            build/v296/fixed_word_replay.tcl
+            build/v296/matched.boundary.audit.json
+            build/v296/*.hold.replay.log
+            build/v296/*.hold.replay.audit.json
+          if-no-files-found: warn
