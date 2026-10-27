@@ -24,3 +24,16 @@ The 15-buffer sequence on V296 runs from `wire299/Z` through `wire275/Z`, and th
 Independent reproducibility: [SHA-pinned path auditor](https://github.com/sushxnthd/vektor/blob/research/v296-pairwise-bank-conflict/research/v296/v296_postroute_topology_independent.py) accepts the two failed-parser ZIPs (artifact IDs `12713255529`, `12713435714`) and checks SHA-256, completed OpenROAD marker, named path, exact slack against original within 1 ps, buffer chain, and endpoint. The checker was executed locally against both ZIPs; deliberate ZIP corruption was rejected. Machine-readable measurements are in [JSON](https://github.com/sushxnthd/vektor/blob/research/v296-pairwise-bank-conflict/research/v296/V296_EXTRACTED_WORST_PATH_TOPOLOGY_20261027.json). Hosted execution of the independent auditor remains outstanding.
 
 **Next physical intervention gate:** first map `_13159_` and `_13098_` back to the synthesized netlist and verify the fanout/load and logic function of the 15-buffer chain. Freeze a single candidate topology intervention, compare against the strongest equal-resource serial baseline at identical clock/RC and area constraints, and reject any intervention that fails setup +50 ps, hold >=0, capacitance=0, slew=0 and zero DRC. No speedup, power, or RTX-5090-equivalence claim is supported.
+
+## Source-level attribution resolved from original synthesized netlists
+
+An independent [SHA-pinned synthesized-netlist mapper](https://github.com/sushxnthd/vektor/blob/research/v296-pairwise-bank-conflict/research/v296/v296_extracted_path_netlist_map.py) was run against **both original physical-design artifact ZIPs** (pairwise ID `12703514184`, serial ID `12703682763`). Both ZIPs matched their frozen SHA-256 hashes. Each extracted worst-path flop instance occurred exactly once in the original synthesized Verilog, with the following clocked Q-net mapping:
+
+| Extracted setup path | Source flop Q net | Destination flop Q net |
+|---|---|---|
+| V296 `_13159_ -> _13098_` | `candidate.issue.scheduler.rr1[2]` | `staged_operand_data[1][3]` |
+| Serial `_13099_ -> _13046_` | `strongest_serial.issue.scheduler.rr1[2]` | `staged_operand_data[2][3]` |
+
+Both source and destination are positive-edge DFFR cells clocked by `clk`. This **resolves the earlier uncertainty**: the extracted worst setup paths really are scheduler round-robin state to staged operand capture, not an unrelated netlist cone. It does not prove the 15-buffer sequence is removable, nor that its 358.260 ps can be recovered. The serial path has a different operand-data endpoint, so its lower chain count cannot be interpreted as an isolated treatment effect.
+
+**Falsifiable next intervention:** retain the single V296 bank-conflict mechanism, but test a scheduler-to-operand-select critical-cone refactor only after extracting the intervening combinational logic and confirming functional/cycle equivalence. Freeze equal-resource serial, routed 3.5 ns/2x RC, setup +50 ps, nonnegative hold, zero cap/slew/DRC, area, and workload constraints. No physical pass has been established.
