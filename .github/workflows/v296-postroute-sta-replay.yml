@@ -1,0 +1,101 @@
+name: V296 frozen postroute extracted-SPEF path replay
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - '.github/workflows/v296-postroute-sta-replay.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: v296-postroute-sta-replay-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  reconstruct-extracted-paths:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: pairwise
+            artifact: 12703514184
+            digest: c0d90c6652deba498c46e6b01e9d3e1ce0317505caf833eea51323b54e6f49a7
+          - variant: serial_onehot
+            artifact: 12703682763
+            digest: 928adb671004dea251dc9c1c558f87a34fc3d3ff233e66d41ddd311d3d305ea4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify independent read-only STA probe
+        run: |
+          set -euo pipefail
+          python3 research/v296/v296_postroute_sta_replay.py --self-test
+          python3 research/v296/v296_postroute_sta_replay.py --generate build/v296/replay.tcl
+      - name: Install original pinned OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y curl unzip python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/tile_slice
+      - name: Download original artifact by immutable ID and verify ZIP SHA256
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ matrix.artifact }}
+          EXPECTED_SHA: ${{ matrix.digest }}
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --max-time 180 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            "https://api.github.com/repos/sushxnthd/vektor/actions/artifacts/$ARTIFACT_ID/zip" \
+            -o build/v296/original.zip
+          echo "$EXPECTED_SHA  build/v296/original.zip" | sha256sum --check
+          unzip -q build/v296/original.zip -d build/v296/tile_slice
+          test -s "build/v296/tile_slice/${{ matrix.variant }}.high.cts45.def"
+          test -s "build/v296/tile_slice/${{ matrix.variant }}.high.cts45.spef"
+      - name: Download same revision-pinned Nangate45 platform
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+      - name: Replay exact clock and IO constraints on routed DEF and extracted SPEF
+        env:
+          V296_REPLAY_ROOT: build/v296/tile_slice
+          V296_REPLAY_VARIANT: ${{ matrix.variant }}
+          V296_LIB: build/v296/nangate.lib
+          V296_TECH_LEF: build/v296/platform/NangateOpenCellLibrary.tech.lef
+          V296_CELL_LEF: build/v296/platform/NangateOpenCellLibrary.macro.mod.lef
+        run: |
+          set -uo pipefail
+          set +e
+          timeout 12m openroad -exit build/v296/replay.tcl \
+            > "build/v296/$V296_REPLAY_VARIANT.postroute.replay.log" 2>&1
+          rc=$?
+          set -e
+          echo "REPLAY_OPENROAD_EXIT_CODE=$rc"
+          echo "$rc" > "build/v296/$V296_REPLAY_VARIANT.replay.exit"
+          python3 research/v296/v296_postroute_sta_replay.py \
+            --variant "$V296_REPLAY_VARIANT" \
+            --audit-log "build/v296/$V296_REPLAY_VARIANT.postroute.replay.log" \
+            --output "build/v296/$V296_REPLAY_VARIANT.replay.audit.json"
+          test "$rc" -eq 0
+      - name: Preserve successful or failed reconstruction evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-postroute-sta-${{ matrix.variant }}
+          path: |
+            build/v296/replay.tcl
+            build/v296/*.postroute.replay.log
+            build/v296/*.replay.audit.json
+            build/v296/*.replay.exit
+          if-no-files-found: warn
