@@ -1,0 +1,18 @@
+# V296 deferred-write RF retiming: preregistered two-port semantic and physical kill test (2026-10-28)
+
+## Hypothesis and evidence boundary
+The previous delayed-read design failed read-before-write on write collisions; an unrestricted undo log could require a third read port. **New implementation hypothesis:** delay the *single global RF write* by exactly one edge along with the two-port RF read. If a wave issues at edge t, capture its bank/word addresses at t, read the old RF at t+1 (before the delayed write W_t commits), and capture its operands at t+1. The RF seen by that read contains exactly W_{<t}, which is the original RF state at t. Execute at t+2. Both V296 pairwise and optimized V295 serial must receive precisely the same delay, port count, and registers. No collision snapshots, speculative reads, or bypass ports are permitted.
+
+This is an implementation repair of the *sole* V296 candidate, not a new architecture mechanism. It is a **functional hypothesis**, not physical evidence. No arbitrary mid-flight reset equivalence is claimed; require reset to be asserted only at a quiescent RF boundary with no pending writes, and require no RF writes while reset is active. The testbench must initialize after reset and drain the write buffer before issuing waves.
+
+## Frozen tests before outcomes
+1. Derive two structurally symmetric RTL variants (PAIRWISE=1 and 0) from the existing D4/D8/D16 flop RF. Keep 16 banks, 2 dynamically addressed read ports per bank, one global write, four issue slots, 8-bit data and unchanged scheduler cores.
+2. Use an independent *original immediate-write* direct-index oracle with two stages of output delay. Randomize same-address and distinct-address reads, repeated writes, and read/write collisions; check every cycle, wave issue identity, per-bank read-port budget, and all 4/8/16-word depths. A deliberate naive delayed-read control must fail on collisions. No X/unknown outputs allowed.
+3. Require RTL simulation PASS for all three depths before synthesis. Matched Yosys/Nangate45 synthesis and logic-depth evidence for both variants at each depth are mandatory; report area, register count, and no extra RF read port. No routed signoff from mapped data.
+4. Only if functional and mapped gates survive, perform matched same-depth pre-CTS path checks, followed by extracted-RC routing at the unchanged 3.5 ns, 2x RC, +50 ps setup, >=0 ps hold, zero cap/slew/DRC and <=30,000 um2. Both contestants must independently pass. No timeout-only rerun.
+5. Clock gain must exceed the **already frozen** occupancy break-even threshold for any extra-cycle latency. No gain may be claimed over serial at equal clock/area solely from bank compatibility; workload win/no-win regimes remain sealed.
+
+## Predictions and kill conditions
+**Predicted semantic win:** arbitrary read/write collisions are preserved for ordinary running operation because a read issued at t observes the same pre-W_t RF version at t+1. **Predicted physical risk:** added address/valid pipeline flops and delayed-write controls consume area, and the registered-bank-to-RF-return path may still miss setup. **Predicted workload no-win:** N=2, B=2, q=.9 requires >1.9x clock improvement if effective reuse latency rises from L=1 to 2. A bandwidth-saturated N=4, B=1, q=.9 case needs only >1.0009x but cannot imply a V296-vs-serial gain.
+
+Any oracle mismatch, third-port dependency, mapped area above budget, physical failure, or clock/occupancy break-even failure kills this repair, not necessarily the historical V296 mechanism. Do not reinterpret old evidence or open sealed holdouts. No GPU or RTX-5090 equivalence claim.
