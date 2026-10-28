@@ -24,3 +24,35 @@ jobs:
           name: v298-full-holdout
           path: v298_holdout_full.json
           if-no-files-found: warn
+
+  rtl-macro:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source RTL tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog yosys
+      - name: Exhaustive four-policy clocked RTL simulation
+        run: |
+          iverilog -g2012 -s tb_v298_mshr_admission -o /tmp/v298_tb \
+            research/v298/rtl/v298_mshr_admission.v \
+            research/v298/rtl/tb_v298_mshr_admission.v
+          vvp /tmp/v298_tb | tee v298_rtl_simulation.log
+      - name: Matched generic synthesis (NOT timing or mapped PPA)
+        run: |
+          mkdir -p v298_synth_logs
+          for policy in 0 1 2 3; do
+            yosys -Q -p "read_verilog research/v298/rtl/v298_mshr_admission.v; chparam -set POLICY $policy v298_mshr_admission; synth -top v298_mshr_admission; stat" \
+              > "v298_synth_logs/policy_${policy}.log"
+          done
+      - name: Preserve RTL and generic synthesis evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v298-rtl-and-generic-synthesis
+          path: |
+            v298_rtl_simulation.log
+            v298_synth_logs/
+          if-no-files-found: warn
