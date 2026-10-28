@@ -1,0 +1,330 @@
+{
+  "tier": "SYNTHETIC_PERSISTENT_FINITE_QUEUE",
+  "prereg": "V297_PERSISTENT_QUEUE_PREREG_20261029.md",
+  "seeds": [
+    9209,
+    9221,
+    9239,
+    9257
+  ],
+  "cyclesPerSeed": 20000,
+  "warmup": 1000,
+  "capacity": 64,
+  "rows": [
+    {
+      "regime": "uniform16",
+      "arrivalsPerCycle": 2,
+      "policies": {
+        "v297": {
+          "throughput": 1.9999000000000002,
+          "drops": 0,
+          "dropRate": 0,
+          "p99Latency": 3,
+          "meanLatency": 1.9997073261003784,
+          "maxOldestAge": 3,
+          "maxBacklog": 3,
+          "readsPerCycle": 3.9998000000000005,
+          "rescues": 22.5,
+          "portViolations": 0
+        },
+        "rotation": {
+          "throughput": 1.998875,
+          "drops": 0,
+          "dropRate": 0,
+          "p99Latency": 14.5,
+          "meanLatency": 8.374534724033754,
+          "maxOldestAge": 15,
+          "maxBacklog": 25.75,
+          "readsPerCycle": 3.99775,
+          "rescues": 0,
+          "portViolations": 0
+        },
+        "oracle": {
+          "throughput": 1.9999250000000002,
+          "drops": 0,
+          "dropRate": 0,
+          "p99Latency": 2.75,
+          "meanLatency": 1.936079144691308,
+          "maxOldestAge": 3,
+          "maxBacklog": 2.5,
+          "readsPerCycle": 3.9998500000000003,
+          "rescues": 0,
+          "portViolations": 0
+        }
+      },
+      "ratioV297Rotation": 1.0005127884434997,
+      "p99Penalty": -11.5,
+      "dropDelta": 0
+    },
+    {
+      "regime": "motif3",
+      "arrivalsPerCycle": 2,
+      "policies": {
+        "v297": {
+          "throughput": 1.5,
+          "drops": 10001,
+          "dropRate": 0.250025,
+          "p99Latency": 44,
+          "meanLatency": 42.6666,
+          "maxOldestAge": 43,
+          "maxBacklog": 63,
+          "readsPerCycle": 3,
+          "rescues": 3333,
+          "portViolations": 0
+        },
+        "rotation": {
+          "throughput": 1,
+          "drops": 20000,
+          "dropRate": 0.5,
+          "p99Latency": 67,
+          "meanLatency": 63.99985,
+          "maxOldestAge": 66,
+          "maxBacklog": 63,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        },
+        "oracle": {
+          "throughput": 1.5,
+          "drops": 10000,
+          "dropRate": 0.25,
+          "p99Latency": 45,
+          "meanLatency": 42.6666,
+          "maxOldestAge": 44,
+          "maxBacklog": 63,
+          "readsPerCycle": 3,
+          "rescues": 0,
+          "portViolations": 0
+        }
+      },
+      "ratioV297Rotation": 1.5,
+      "p99Penalty": -23,
+      "dropDelta": -9999
+    },
+    {
+      "regime": "motif3_burst37",
+      "arrivalsPerCycle": 2,
+      "policies": {
+        "v297": {
+          "throughput": 1.69815,
+          "drops": 6037.25,
+          "dropRate": 0.15093125000000002,
+          "p99Latency": 43,
+          "meanLatency": 37.68217632167732,
+          "maxOldestAge": 43.75,
+          "maxBacklog": 63,
+          "readsPerCycle": 3.3963,
+          "rescues": 2851.25,
+          "portViolations": 0
+        },
+        "rotation": {
+          "throughput": 1.3557625,
+          "drops": 12883.75,
+          "dropRate": 0.32209374999999996,
+          "p99Latency": 59,
+          "meanLatency": 47.19573537670632,
+          "maxOldestAge": 60.75,
+          "maxBacklog": 63,
+          "readsPerCycle": 2.711525,
+          "rescues": 0,
+          "portViolations": 0
+        },
+        "oracle": {
+          "throughput": 1.6982374999999998,
+          "drops": 6035.25,
+          "dropRate": 0.15088125,
+          "p99Latency": 43,
+          "meanLatency": 37.67998446192025,
+          "maxOldestAge": 44,
+          "maxBacklog": 63,
+          "readsPerCycle": 3.3964749999999997,
+          "rescues": 0,
+          "portViolations": 0
+        }
+      },
+      "ratioV297Rotation": 1.2525423885083118,
+      "p99Penalty": -16,
+      "dropDelta": -6846.5
+    },
+    {
+      "regime": "hot",
+      "arrivalsPerCycle": 2,
+      "policies": {
+        "v297": {
+          "throughput": 1,
+          "drops": 20000,
+          "dropRate": 0.5,
+          "p99Latency": 64,
+          "meanLatency": 64,
+          "maxOldestAge": 63,
+          "maxBacklog": 63,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        },
+        "rotation": {
+          "throughput": 1,
+          "drops": 20000,
+          "dropRate": 0.5,
+          "p99Latency": 67,
+          "meanLatency": 63.99985,
+          "maxOldestAge": 66,
+          "maxBacklog": 63,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        },
+        "oracle": {
+          "throughput": 1,
+          "drops": 20000,
+          "dropRate": 0.5,
+          "p99Latency": 64,
+          "meanLatency": 64,
+          "maxOldestAge": 63,
+          "maxBacklog": 63,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        }
+      },
+      "ratioV297Rotation": 1,
+      "p99Penalty": -3,
+      "dropDelta": 0
+    },
+    {
+      "regime": "motif3",
+      "arrivalsPerCycle": 1,
+      "policies": {
+        "v297": {
+          "throughput": 1,
+          "drops": 0,
+          "dropRate": 0,
+          "p99Latency": 1,
+          "meanLatency": 1,
+          "maxOldestAge": 0,
+          "maxBacklog": 0,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        },
+        "rotation": {
+          "throughput": 1,
+          "drops": 0,
+          "dropRate": 0,
+          "p99Latency": 1,
+          "meanLatency": 1,
+          "maxOldestAge": 0,
+          "maxBacklog": 0,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        },
+        "oracle": {
+          "throughput": 1,
+          "drops": 0,
+          "dropRate": 0,
+          "p99Latency": 1,
+          "meanLatency": 1,
+          "maxOldestAge": 0,
+          "maxBacklog": 0,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        }
+      },
+      "ratioV297Rotation": 1,
+      "p99Penalty": 0,
+      "dropDelta": 0
+    },
+    {
+      "regime": "uniform16",
+      "arrivalsPerCycle": 1,
+      "policies": {
+        "v297": {
+          "throughput": 1,
+          "drops": 0,
+          "dropRate": 0,
+          "p99Latency": 1,
+          "meanLatency": 1,
+          "maxOldestAge": 0,
+          "maxBacklog": 0,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        },
+        "rotation": {
+          "throughput": 1,
+          "drops": 0,
+          "dropRate": 0,
+          "p99Latency": 1,
+          "meanLatency": 1,
+          "maxOldestAge": 0,
+          "maxBacklog": 0,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        },
+        "oracle": {
+          "throughput": 1,
+          "drops": 0,
+          "dropRate": 0,
+          "p99Latency": 1,
+          "meanLatency": 1,
+          "maxOldestAge": 0,
+          "maxBacklog": 0,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        }
+      },
+      "ratioV297Rotation": 1,
+      "p99Penalty": 0,
+      "dropDelta": 0
+    },
+    {
+      "regime": "motif3",
+      "arrivalsPerCycle": 3,
+      "policies": {
+        "v297": {
+          "throughput": 1,
+          "drops": 40000,
+          "dropRate": 0.6666666666666666,
+          "p99Latency": 64,
+          "meanLatency": 64,
+          "maxOldestAge": 63,
+          "maxBacklog": 63,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        },
+        "rotation": {
+          "throughput": 1,
+          "drops": 40000,
+          "dropRate": 0.6666666666666666,
+          "p99Latency": 67,
+          "meanLatency": 63.99985,
+          "maxOldestAge": 66,
+          "maxBacklog": 63,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        },
+        "oracle": {
+          "throughput": 1,
+          "drops": 40000,
+          "dropRate": 0.6666666666666666,
+          "p99Latency": 64,
+          "meanLatency": 64,
+          "maxOldestAge": 63,
+          "maxBacklog": 63,
+          "readsPerCycle": 2,
+          "rescues": 0,
+          "portViolations": 0
+        }
+      },
+      "ratioV297Rotation": 1,
+      "p99Penalty": -3,
+      "dropDelta": 0
+    }
+  ]
+}
