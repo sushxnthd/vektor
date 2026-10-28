@@ -93,6 +93,8 @@ jobs:
           PY
       - name: Install free RTL and generic synthesis tools
         run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog yosys
+      - name: Independent optimized rotating-control symbolic and bank audit
+        run: python3 research/v297/rtl/v297_static_control_audit.py
       - name: Independently verify clocked RTL against Python reference
         run: |
           python3 research/v297/rtl/v297_independent_trace.py /tmp/v297_rtl_vectors.txt
