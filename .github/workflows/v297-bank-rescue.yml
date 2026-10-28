@@ -64,6 +64,20 @@ jobs:
                       assert row['candidate']['throughput']<=row['oracle']['throughput']+0.0001
           print('V297_QUEUE_AND_PHASE_REPRODUCTION_PASS')
           PY
+      - name: Reproduce frozen Markov-law holdouts and failures
+        run: |
+          node research/v297/v297_markov_boundary.js > /tmp/v297_markov_reproduced.json
+          python3 - <<'PY'
+          import json
+          a=json.load(open('/tmp/v297_markov_reproduced.json'))
+          b=json.load(open('research/v297/V297_MARKOV_BOUNDARY_RESULTS_20261029.json'))
+          assert a==b
+          rows={r['regime']:r for r in a['rows']}
+          assert rows['markov90']['markovWithinTolerance']
+          assert not rows['periodic2of3']['markovWithinTolerance']
+          assert not rows['burst11']['markovWithinTolerance']
+          print('V297_MARKOV_LAW_AND_NEGATIVE_CONTROLS_REPRODUCED')
+          PY
       - name: Install free RTL and generic synthesis tools
         run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog yosys
       - name: Independently verify clocked RTL against Python reference
@@ -78,6 +92,12 @@ jobs:
           yosys -Q -T -p 'read_verilog research/v297/rtl/v297_bank_rescue_core.v; chparam -set ROTATING 1 v297_bank_rescue_core; synth -top v297_bank_rescue_core; stat; ltp -noff' > /tmp/v297_rotating_synth.txt
           grep -E 'Longest topological path|number of cells|\$\_AND_|\$\_OR_|\$\_MUX_' /tmp/v297_candidate_synth.txt | tail -n 20
           grep -E 'Longest topological path|number of cells|\$\_AND_|\$\_OR_|\$\_MUX_' /tmp/v297_rotating_synth.txt | tail -n 20
+      - name: Display comparable generic gate counts (not physical timing or area)
+        run: |
+          echo 'CANDIDATE GENERIC SYNTHESIS STAT'
+          grep -A28 -F '=== v297_bank_rescue_core ===' /tmp/v297_candidate_synth.txt | tail -n 32
+          echo 'ROTATING GENERIC SYNTHESIS STAT'
+          grep -A28 -F '=== v297_bank_rescue_core ===' /tmp/v297_rotating_synth.txt | tail -n 32
       - uses: actions/upload-artifact@v4
         if: always()
         with:
