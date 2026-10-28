@@ -1,0 +1,7 @@
+# V297 post-observation adversarial phase audit (frozen before new outcomes; 2026-10-29)
+
+The persistent-queue result has been opened. The deterministic 3-job motif yielded 1.5 admissions/cycle for V297 and 1.0 for cycle-rotating serial, but that difference may be a phase-locking artifact. This is a **new exploratory falsification**, not a prospective validation of the original motif3 claim.
+
+Freeze four new independent seeds 9301/9311/9323/9341, 1000 warmup + 20000 measurement cycles, capacity 64, 2 arrivals/cycle. For motif3 and 37-cycle burst mixtures, evaluate all three rotation phases (t+0, t+1, t+2) mod 3, and all three cyclic motif offsets (job_id+0/1/2) mod 3. Compare V297 with the strongest rotation phase on throughput, drops and p99 latency. Also compare to exact maximum-cardinality subset oracle as a structural upper bound, not a matched physical control.
+
+If the original +50% motif3 advantage disappears under any legal phase/offset change, report it as a fragile phase artifact. Do not retune V297, and do not call any result GPU throughput. If it survives, the next gate remains matched RTL/synthesis/timing and a truly independent warp-queue model. Preserve negative outcomes.
