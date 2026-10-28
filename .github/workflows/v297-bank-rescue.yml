@@ -84,7 +84,7 @@ jobs:
         run: |
           python3 research/v297/rtl/v297_independent_trace.py /tmp/v297_rtl_vectors.txt
           iverilog -g2012 -Wall -s tb_v297 -o /tmp/v297_rtl_sim \
-            research/v297/rtl/v297_bank_rescue_core.v research/v297/rtl/v297_maxpair_core.v research/v297/rtl/tb_v297.v
+            research/v297/rtl/v297_bank_rescue_core.v research/v297/rtl/v297_maxpair_core.v research/v297/rtl/v297_maxpair_cooldown_core.v research/v297/rtl/tb_v297.v
           vvp /tmp/v297_rtl_sim
       - name: Generic synthesis of both matched-port contestants
         run: |
@@ -94,12 +94,16 @@ jobs:
           grep -E 'Longest topological path|number of cells|\$\_AND_|\$\_OR_|\$\_MUX_' /tmp/v297_rotating_synth.txt | tail -n 20
           yosys -Q -T -p 'read_verilog research/v297/rtl/v297_maxpair_core.v; synth -top v297_maxpair_core; stat; ltp -noff' > /tmp/v297_maxpair_synth.txt
           grep -E 'Longest topological path' /tmp/v297_maxpair_synth.txt | tail -n 3
+          yosys -Q -T -p 'read_verilog research/v297/rtl/v297_maxpair_cooldown_core.v; synth -top v297_maxpair_cooldown_core; stat; ltp -noff' > /tmp/v297_compact_synth.txt
+          grep -E 'Longest topological path' /tmp/v297_compact_synth.txt | tail -n 3
       - name: Display comparable generic gate counts (not physical timing or area)
         run: |
           echo 'CANDIDATE GENERIC SYNTHESIS STAT'
           grep -A28 -F '=== v297_bank_rescue_core ===' /tmp/v297_candidate_synth.txt | tail -n 32
           echo 'MAX-PAIR GENERIC SYNTHESIS STAT'
           grep -A28 -F '=== v297_maxpair_core ===' /tmp/v297_maxpair_synth.txt | tail -n 32
+          echo 'COMPACT EQUIVALENT GENERIC SYNTHESIS STAT'
+          grep -A28 -F '=== v297_maxpair_cooldown_core ===' /tmp/v297_compact_synth.txt | tail -n 32
           echo 'ROTATING GENERIC SYNTHESIS STAT'
           grep -A28 -F '=== v297_bank_rescue_core ===' /tmp/v297_rotating_synth.txt | tail -n 32
       - uses: actions/upload-artifact@v4
@@ -110,5 +114,6 @@ jobs:
             /tmp/v297_candidate_synth.txt
             /tmp/v297_rotating_synth.txt
             /tmp/v297_maxpair_synth.txt
+            /tmp/v297_compact_synth.txt
           if-no-files-found: ignore
           retention-days: 30
