@@ -1,10 +1,11 @@
 # V297 preregistered matched OpenROAD physical kill.
 # All three implementations share the same registered shell, physical
 # constraints, Nangate45 libraries, routing layers, RC and repair passes.
-foreach k {V297_LIB V297_TECH_LEF V297_CELL_LEF V297_TRACKS V297_RCX_RULES V297_NETLIST V297_OUT} {
+foreach k {V297_LIB V297_TECH_LEF V297_CELL_LEF V297_TRACKS V297_RCX_RULES V297_NETLIST} {
   if {![info exists env($k)]} {error "MISSING_INPUT $k"}
   if {![file isfile $env($k)]} {error "MISSING_FILE $k"}
 }
+if {![info exists env(V297_OUT)] || $env(V297_OUT) eq ""} {error "MISSING_OUTPUT_PREFIX"}
 read_lef $env(V297_TECH_LEF)
 read_lef $env(V297_CELL_LEF)
 read_liberty $env(V297_LIB)
