@@ -1,0 +1,74 @@
+{
+  "evidence_tier": "independent Python state invariant, NOT RTL or physical signoff",
+  "exhaustive": {
+    "cases": 1600,
+    "deferred_errors": 0,
+    "naive_same_edge_errors": 960
+  },
+  "gpu_advantage": false,
+  "mechanism": "V296 only; symmetric RF retiming, V287 retired",
+  "physically_validated": false,
+  "reset_assumption": "no writes during reset; drain pending write before reset",
+  "synthetic": [
+    {
+      "collisions": 2003,
+      "cycles": 20000,
+      "deferred_errors": 0,
+      "depth": 4,
+      "max_reads_per_bank": 2,
+      "naive_delayed_errors": 1994,
+      "operands": 80575,
+      "seed": 101
+    },
+    {
+      "collisions": 1986,
+      "cycles": 20000,
+      "deferred_errors": 0,
+      "depth": 4,
+      "max_reads_per_bank": 2,
+      "naive_delayed_errors": 1978,
+      "operands": 80120,
+      "seed": 911
+    },
+    {
+      "collisions": 1839,
+      "cycles": 20000,
+      "deferred_errors": 0,
+      "depth": 8,
+      "max_reads_per_bank": 2,
+      "naive_delayed_errors": 1834,
+      "operands": 80539,
+      "seed": 101
+    },
+    {
+      "collisions": 1826,
+      "cycles": 20000,
+      "deferred_errors": 0,
+      "depth": 8,
+      "max_reads_per_bank": 2,
+      "naive_delayed_errors": 1820,
+      "operands": 80065,
+      "seed": 911
+    },
+    {
+      "collisions": 1728,
+      "cycles": 20000,
+      "deferred_errors": 0,
+      "depth": 16,
+      "max_reads_per_bank": 2,
+      "naive_delayed_errors": 1721,
+      "operands": 80454,
+      "seed": 101
+    },
+    {
+      "collisions": 1718,
+      "cycles": 20000,
+      "deferred_errors": 0,
+      "depth": 16,
+      "max_reads_per_bank": 2,
+      "naive_delayed_errors": 1711,
+      "operands": 80183,
+      "seed": 911
+    }
+  ]
+}
