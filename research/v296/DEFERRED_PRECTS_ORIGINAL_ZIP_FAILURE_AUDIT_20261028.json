@@ -1,0 +1,82 @@
+{
+  "source_run": 40629351716,
+  "evidence_tier": "INCOMPLETE_PRECTS_ESTIMATED_RC_INTERMEDIATE_METRICS",
+  "failure": "STA-0563 unsupported report_checks -group_path_count option",
+  "completed_physical_pair": false,
+  "routed_signoff": false,
+  "gpu_advantage": false,
+  "rows": {
+    "D4_pairwise": {
+      "artifact_id": 12794977675,
+      "zip_sha256": "5ec6995b5ce9707fda4906d0bf6b064316894e05eb9856acf9d6d47a0e95e2f1",
+      "depth": 4,
+      "variant": "pairwise",
+      "area_um2": "18794.230172147763",
+      "setup_slack_ns": "0.381283",
+      "cap_violations": 0,
+      "slew_violations": 0,
+      "runner_exit_code": 4,
+      "status": "INTERMEDIATE_METRICS_PASS_BUT_RUN_FAILED_AT_PATH_REPORT"
+    },
+    "D4_serial_onehot": {
+      "artifact_id": 12794237947,
+      "zip_sha256": "666cf495e6db09363744b82869c8d7671c855ecf9026041fc93b8d920981b64c",
+      "depth": 4,
+      "variant": "serial_onehot",
+      "area_um2": "20763.694763559215",
+      "setup_slack_ns": "0.150760",
+      "cap_violations": 0,
+      "slew_violations": 0,
+      "runner_exit_code": 4,
+      "status": "INTERMEDIATE_METRICS_PASS_BUT_RUN_FAILED_AT_PATH_REPORT"
+    },
+    "D8_pairwise": {
+      "artifact_id": 12794218649,
+      "zip_sha256": "eceb43084f2e0d3a339bf6cf7d4aff316a84403d97eefae7edd27fc1984f5638",
+      "depth": 8,
+      "variant": "pairwise",
+      "area_um2": "25645.858769962615",
+      "setup_slack_ns": "0.214891",
+      "cap_violations": 0,
+      "slew_violations": 0,
+      "runner_exit_code": 4,
+      "status": "INTERMEDIATE_METRICS_PASS_BUT_RUN_FAILED_AT_PATH_REPORT"
+    },
+    "D8_serial_onehot": {
+      "artifact_id": 12794458273,
+      "zip_sha256": "bade1b570b498b823ba8c2e67c8cde8af34f862101a9ec0e46ba1f84f4024063",
+      "depth": 8,
+      "variant": "serial_onehot",
+      "area_um2": "26891.80256254531",
+      "setup_slack_ns": "0.110820",
+      "cap_violations": 0,
+      "slew_violations": 0,
+      "runner_exit_code": 4,
+      "status": "INTERMEDIATE_METRICS_PASS_BUT_RUN_FAILED_AT_PATH_REPORT"
+    }
+  },
+  "comparisons": {
+    "D4": {
+      "area_saving_um2": "1969.464591411452",
+      "area_saving_percent_of_serial": "9.485135539884307339403918065",
+      "setup_slack_difference_ps": "230.523000",
+      "slices_at_30000_um2": {
+        "pairwise": 1,
+        "serial": 1
+      },
+      "two_pairwise_slice_budget_um2": "37588.460344295526",
+      "two_serial_slice_budget_um2": "41527.389527118430"
+    },
+    "D8": {
+      "area_saving_um2": "1245.943792582695",
+      "area_saving_percent_of_serial": "4.633173212114964966166688178",
+      "setup_slack_difference_ps": "104.071000",
+      "slices_at_30000_um2": {
+        "pairwise": 1,
+        "serial": 1
+      },
+      "two_pairwise_slice_budget_um2": "51291.717539925230",
+      "two_serial_slice_budget_um2": "53783.60512509062"
+    }
+  }
+}

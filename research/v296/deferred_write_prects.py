@@ -34,7 +34,7 @@ puts "V296_DEFERRED_PRECTS_SETUP_BEGIN"
 report_worst_slack -max -digits 6
 puts "V296_DEFERRED_PRECTS_SETUP_END"
 puts "V296_DEFERRED_PRECTS_PATHS_BEGIN"
-report_checks -path_delay max -group_path_count 3 -fields {slew capacitance fanout} -digits 6
+report_checks -path_delay max -fields {slew capacitance fanout} -digits 6
 puts "V296_DEFERRED_PRECTS_PATHS_END"
 write_def "$env(V296_OUT).deferred_prects.def"
 puts "V296_DEFERRED_PRECTS_DONE"
@@ -216,6 +216,8 @@ def self_test():
             'puts "$env(V296_PLACE_DENSITY) $env(V296_RC_SCALE) $env(V296_DETAIL_RC_MULTIPLIER)"\n'
             + STOP + '\nclock_tree_synthesis\n')
     assert "clock_tree_synthesis" not in derive_tcl(base)
+    assert "-group_path_count" not in DIAG
+    assert "report_checks -path_delay max -fields" in DIAG
     fake = ('sha256sum research/v296/v296_tile_slice_deep_bank.sv\n'
             'src=research/v296/v296_tile_slice_deep_bank.sv\n'
             'hierarchy -top v296_tile_slice_deep_bank -chparam WORD_BITS $bits\n'
