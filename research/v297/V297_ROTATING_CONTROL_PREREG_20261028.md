@@ -1,0 +1,7 @@
+# V297 adversarial fair-rotation control, frozen before evaluation (2026-10-28)
+
+The first V297 positive admission result compared against a fixed priority greedy serial controller. This is not sufficient for a world-class claim. Freeze a stronger *equal-port/equal-slot* adversarial control before testing: a serial greedy controller that rotates the three request priority positions deterministically by cycle index modulo 3 (orders 0-1-2, 1-2-0, 2-0-1), with no additional read banks or issue slots. This control may be easier to implement physically than conditional rescue, but no matched synthesis exists.
+
+Use the existing V297 exogenous scenario definitions without changing the candidate or parameters. Fresh **development seeds 3101, 3119, 3137, 3167** and **prospective holdout seeds 4103, 4127, 4153, 4177**, 100,000 cycles each. Compare V297 cooldown rescue, fixed-priority greedy, and fair rotating-priority greedy on the original six regimes. Report the complete results, including any regime where rotating serial exceeds V297. No new claim of GPU throughput, matched area, timing, or novel scheduling. Do not alter the original frozen results or prior holdouts.
+
+**Kill criterion:** if rotation matches/exceeds V297's admissions across the predicted-win and stress regimes, reject the conditional rescue as a distinct performance mechanism. If it does not, only a bounded incremental advantage over rotation survives; matched physical cost is still mandatory. Prior art includes bank-aware warp scheduling and round-robin scheduling.
