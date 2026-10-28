@@ -1,0 +1,128 @@
+name: V296 deferred-write D4 D8 matched pre-CTS physical falsification
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/DEFERRED_WRITE_MATCHED_PRECTS_PREREG_20261028.md'
+      - 'research/v296/deferred_write_prects.py'
+      - '.github/workflows/v296-deferred-write-prects.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v296-deferred-prects-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  frozen-derivation-preflight:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check physical generator and independent negative controls
+        run: |
+          set -euo pipefail
+          python3 research/v296/tile_slice_flow.py --self-test
+          python3 research/v296/deep_bank_postcts.py --self-test
+          python3 research/v296/deferred_write_prects.py --self-test
+          python3 research/v296/deferred_write_prects.py --build --word-bits 2
+          grep -Fq 'serial_onehot) param=0; extra=1' build/v296/tile_slice/run_deferred_prects.sh
+          grep -Fq 'V296_CTS45_FIFTH_DONE' build/v296/tile_slice/cts45_deferred_prects.tcl
+          ! grep -q 'clock_tree_synthesis' build/v296/tile_slice/cts45_deferred_prects.tcl
+          ! grep -q 'detailed_route -output_drc' build/v296/tile_slice/cts45_deferred_prects.tcl
+  matched-prects:
+    needs: frozen-derivation-preflight
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        word_bits: [2, 3]
+        variant: [pairwise, serial_onehot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned OpenROAD and Yosys
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/tile_slice
+          sha256sum /tmp/openroad-v296.deb > build/v296/tile_slice/openroad.deb.sha256
+      - name: Fetch pinned Nangate45 technology and routing layers
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Derive exact same-depth pre-CTS physical contestants
+        run: |
+          set -euo pipefail
+          python3 research/v296/deferred_write_prects.py --self-test --build --word-bits "${{ matrix.word_bits }}"
+          test -s build/v296/tile_slice/cts45_deferred_prects.tcl
+          test -s build/v296/tile_slice/run_deferred_prects.sh
+      - name: Run bounded matched pre-CTS; preserve failure or timeout
+        env:
+          V296_TILE_VARIANT: ${{ matrix.variant }}
+          V296_DEEP_WORD_BITS: ${{ matrix.word_bits }}
+        run: |
+          set -uo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          set +e
+          timeout --signal=TERM --kill-after=60s 65m \
+            bash build/v296/tile_slice/run_deferred_prects.sh
+          rc=$?
+          set -e
+          echo "EXIT_CODE=$rc" | tee "build/v296/tile_slice/${V296_TILE_VARIANT}.deferred_prects.exit.txt"
+          exit 0
+      - name: Preserve original matched pre-CTS evidence including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-deferred-prects-bits${{ matrix.word_bits }}-${{ matrix.variant }}
+          path: |
+            build/v296/tile_slice/*.high.log
+            build/v296/tile_slice/*.synth.log
+            build/v296/tile_slice/*.inputs.sha256
+            build/v296/tile_slice/*.exit.txt
+            build/v296/tile_slice/*.json
+            build/v296/tile_slice/*.version
+          if-no-files-found: warn
+  independent-aggregate:
+    needs: [frozen-derivation-preflight, matched-prects]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        word_bits: [2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve both same-depth contestant logs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v296-deferred-prects-bits${{ matrix.word_bits }}-*
+          path: build/v296/tile_slice/
+          merge-multiple: true
+      - name: Independently audit source, timing and electrical evidence
+        run: |
+          set -euo pipefail
+          python3 research/v296/deferred_write_prects.py --self-test
+          python3 research/v296/deferred_write_prects.py --build --word-bits "${{ matrix.word_bits }}"
+          python3 research/v296/deferred_write_prects.py --audit --word-bits "${{ matrix.word_bits }}"
+      - name: Preserve both positive and negative aggregate results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-deferred-prects-audit-bits${{ matrix.word_bits }}
+          path: build/v296/tile_slice/deferred_prects_d*_audit.json
+          if-no-files-found: warn
