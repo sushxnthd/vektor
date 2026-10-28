@@ -56,3 +56,20 @@ For the best rotation phase in the motif workload, V297 requires a candidate-to-
 Use identical liberty, clock, placement, wire/load, and electrical constraints for V297 and the strongest rotating serial; include a *matched physical* maximal-pair selector or an explicitly justified equal-resource alternative. Validate timing, hold, capacitance, slew, routed area, and clock/power proxies. Then compare completion, tail starvation, and traffic on unseen non-contrived occupancy/memory-stall workloads. Retire V297 if no physically feasible gain remains or if the best simple control captures it. No additional speculative mechanism, no unsupported RTX-5090 equivalence.
 
 Kernellum PR #119 and its prospective holdouts remain untouched.
+
+## Stronger exact-maxpair falsification (subsequent result)
+
+A new equal-port, equal-issue **maximum-compatible-pair RTL controller** has been implemented (`rtl/v297_maxpair_core.v`) and tested against the independent 17,832-cycle Python oracle. The hosted three-way simulation and generic synthesis passed in [run 40753773443](https://github.com/sushxnthd/vektor/actions/runs/40753773443).
+
+| Generic Yosys result (unmapped gates) | V297 original | Rotating serial | Max-pair |
+|---|---:|---:|---:|
+| Logic cells | 159 | 449 | **137** |
+| Longest topological path (gate levels) | 24 | 30 | **11** |
+
+The rotating RTL's dynamic priority indexing is particularly expensive; this is **not a physically matched area/timing win for V297**. Max-pair has no cooldown state and thus is not fairness-equivalent. No cell area, wire timing, power or final clock result follows from these gate counts.
+
+An additional independent exhaustive semantic checker evaluated **11,664** three-bank/validity/cooldown configurations. It found **zero** grant mismatches between V297 and a direct compact *cooldown-constrained max-pair* implementation, **zero** cases where unrestricted max-pair admitted fewer, and **60** cases where max-pair admitted more, all when V297's cooldown was active. This is a **structural falsification of distinct algorithmic novelty**: V297 is exactly cooldown-constrained maximum-feasible-pair selection in the tested three-request model. The compact equivalent RTL is now under hosted verification; its physical implementation remains unknown.
+
+The prior-art audit additionally identifies Yamada et al., [*Bank-Aware Instruction Scheduler for a Multibanked Register File* (2018)](https://doi.org/10.2197/ipsjjip.26.696), as a close instruction-selection precedent. Its CPU target is distinct from GPU warp issue, but conflict-aware compatible-instruction selection is not new. See `V297_PRIOR_ART_KILL_AUDIT_20261029.md`.
+
+**Revised decision:** V297's synthetic motif wins survive against rotating serial but **not as a unique selection principle**. The only defensible remaining question is whether its fairness-bounded implementation has a measurable physical/tail-latency Pareto advantage over both exact max-pair and optimized same-semantics RTL. Do not claim a novel GPU architecture mechanism without that result. Retire V297 if matched mapping/physical controls erase the difference.
