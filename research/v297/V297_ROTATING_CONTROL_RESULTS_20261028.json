@@ -1,0 +1,128 @@
+{
+  "evidenceTier": "SYNTHETIC_ADVERSARIAL_ROTATION_ONLY",
+  "prereg": "V297_ROTATING_CONTROL_PREREG_20261028.md",
+  "cyclesPerSeed": 100000,
+  "results": [
+    {
+      "regime": "motif_iid",
+      "development": {
+        "fixed": 1.5991724999999999,
+        "rotating": 1.8662599999999998,
+        "candidate": 1.8853225
+      },
+      "holdout": {
+        "fixed": 1.5997750000000002,
+        "rotating": 1.8666475,
+        "candidate": 1.885475
+      },
+      "candidateMinusRotation": 0.018827499999999997,
+      "holdoutSeeds": [
+        4103,
+        4127,
+        4153,
+        4177
+      ]
+    },
+    {
+      "regime": "uniform16",
+      "development": {
+        "fixed": 1.9990050000000001,
+        "rotating": 1.9990225000000001,
+        "candidate": 1.9999149999999999
+      },
+      "holdout": {
+        "fixed": 1.9990149999999998,
+        "rotating": 1.9990225000000001,
+        "candidate": 1.99992
+      },
+      "candidateMinusRotation": 0.0008974999999997735,
+      "holdoutSeeds": [
+        4103,
+        4127,
+        4153,
+        4177
+      ]
+    },
+    {
+      "regime": "all_hot",
+      "development": {
+        "fixed": 1,
+        "rotating": 1,
+        "candidate": 1
+      },
+      "holdout": {
+        "fixed": 1,
+        "rotating": 1,
+        "candidate": 1
+      },
+      "candidateMinusRotation": 0,
+      "holdoutSeeds": [
+        4103,
+        4127,
+        4153,
+        4177
+      ]
+    },
+    {
+      "regime": "single_issue",
+      "development": {
+        "fixed": 1,
+        "rotating": 1,
+        "candidate": 1
+      },
+      "holdout": {
+        "fixed": 1,
+        "rotating": 1,
+        "candidate": 1
+      },
+      "candidateMinusRotation": 0,
+      "holdoutSeeds": [
+        4103,
+        4127,
+        4153,
+        4177
+      ]
+    },
+    {
+      "regime": "single_ready",
+      "development": {
+        "fixed": 1,
+        "rotating": 1,
+        "candidate": 1
+      },
+      "holdout": {
+        "fixed": 1,
+        "rotating": 1,
+        "candidate": 1
+      },
+      "candidateMinusRotation": 0,
+      "holdoutSeeds": [
+        4103,
+        4127,
+        4153,
+        4177
+      ]
+    },
+    {
+      "regime": "bursty",
+      "development": {
+        "fixed": 1.499355,
+        "rotating": 1.8327825,
+        "candidate": 1.7566350000000002
+      },
+      "holdout": {
+        "fixed": 1.4994,
+        "rotating": 1.8328125000000002,
+        "candidate": 1.7566324999999998
+      },
+      "candidateMinusRotation": -0.07618000000000036,
+      "holdoutSeeds": [
+        4103,
+        4127,
+        4153,
+        4177
+      ]
+    }
+  ],
+  "matchedPhysicalComparison": false
+}
