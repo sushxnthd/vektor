@@ -1,0 +1,41 @@
+{
+  "controls": {
+    "issue_sha256": "0dee24af136548cec25010f0b765a879f130a57c8cae337565f7a089620eb0ab",
+    "library_sha256": "8d540a4d4cf6d09d27c87ad067857a9c0c2eeb023ab7a56e058cd3113db4e9b1",
+    "serial_sha256": "5841f6977b7f44a6e927fd1096770a9726e1d9f79637fa5cd0827aee7529c2ff",
+    "yosys": "Yosys 0.9 (git sha1 1979e0b)"
+  },
+  "depth_results": {
+    "4": {
+      "deferred_artifact_sha256": "89d2bb353bc3bb1b292964a2fb26eb98f802ea48a3b936073d958d478307f335",
+      "deferred_margin_percent_of_serial": 3.445492311630013,
+      "deferred_margin_um2": "465.500000",
+      "deferred_pairwise_um2": "13044.906000",
+      "deferred_serial_um2": "13510.406000",
+      "margin_eroded_percent": 46.824673351564876,
+      "original_artifact_sha256": "fe59053e653148616c35b2e1304d34ff9e200fe0ddd02b443ba6b8c2bcf68b20",
+      "original_margin_um2": "875.406000",
+      "original_pairwise_um2": "12960.584000",
+      "original_serial_um2": "13835.990000",
+      "pairwise_area_delta_um2": "84.322000",
+      "serial_area_delta_um2": "-325.584000"
+    },
+    "8": {
+      "deferred_artifact_sha256": "96e2c4409afd52fdb27151d072c12c90d3627fdc67094f10b851ab0496192e46",
+      "deferred_margin_percent_of_serial": 2.4559961452339785,
+      "deferred_margin_um2": "460.978000",
+      "deferred_pairwise_um2": "18308.514000",
+      "deferred_serial_um2": "18769.492000",
+      "margin_eroded_percent": 62.51351935972313,
+      "original_artifact_sha256": "add9c2dcf6a85e6fd6bd5eaf63bee86c78bbc34e205c0b8d51378c612d9df8fb",
+      "original_margin_um2": "1229.718000",
+      "original_pairwise_um2": "17552.542000",
+      "original_serial_um2": "18782.260000",
+      "pairwise_area_delta_um2": "755.972000",
+      "serial_area_delta_um2": "-12.768000"
+    }
+  },
+  "evidence_tier": "SHA-verified Yosys/Nangate45 mapped area only; NOT STA/physical signoff",
+  "gpu_speedup": false,
+  "physically_feasible": false
+}
