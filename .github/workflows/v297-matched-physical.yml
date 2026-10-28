@@ -1,0 +1,109 @@
+name: V297 matched three-way routed physical kill
+on:
+  push:
+    branches: [research/v297-bounded-bank-rescue]
+    paths:
+      - 'research/v297/rtl/v297_matched_shell.v'
+      - 'research/v297/rtl/v297_maxpair_cooldown_core.v'
+      - 'research/v297/rtl/v297_maxpair_core.v'
+      - 'research/v297/rtl/v297_rotating_static_core.v'
+      - 'research/v297/v297_matched_physical.tcl'
+      - 'research/v297/run_v297_matched_physical.sh'
+      - 'research/v297/audit_v297_matched_physical.py'
+      - '.github/workflows/v297-matched-physical.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v297-matched-physical-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  physical:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 80
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        variant: [compact, maxpair, rotating]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Yosys and OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq yosys iverilog curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v297.deb
+          sudo apt-get install -y /tmp/openroad-v297.deb
+          mkdir -p build/v297/platform build/v297/physical
+          sha256sum /tmp/openroad-v297.deb > build/v297/physical/openroad.deb.sha256
+      - name: Download frozen Nangate45 and OpenRCX
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v297/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v297/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v297/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v297/platform/rcx_patterns.rules
+      - name: Verify all three registered shell elaborations
+        run: |
+          set -euo pipefail
+          for p in 0 1 2; do
+            iverilog -g2012 -Wall -s v297_matched_shell -P v297_matched_shell.POLICY=$p -o /tmp/v297_shell_$p \
+              research/v297/rtl/v297_matched_shell.v \
+              research/v297/rtl/v297_maxpair_cooldown_core.v \
+              research/v297/rtl/v297_maxpair_core.v \
+              research/v297/rtl/v297_rotating_static_core.v
+          done
+      - name: Execute bounded symmetric extracted-RC physical implementation
+        env:
+          V297_VARIANT: ${{ matrix.variant }}
+        run: |
+          set -uo pipefail
+          export V297_OPENROAD_BIN="$(command -v openroad)"
+          set +e
+          timeout --signal=TERM --kill-after=45s 55m bash research/v297/run_v297_matched_physical.sh
+          rc=$?
+          set -e
+          mkdir -p build/v297/physical
+          echo "$rc" > "build/v297/physical/$V297_VARIANT.exit.txt"
+          echo "V297_RUNNER_EXIT_CODE=$rc"
+          exit 0
+      - name: Preserve raw complete or failed evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v297-physical-${{ matrix.variant }}
+          path: build/v297/physical/
+          retention-days: 30
+          if-no-files-found: warn
+  independent-audit:
+    needs: physical
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve all three contestant evidence archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v297-physical-*
+          path: build/v297/physical
+          merge-multiple: true
+      - name: Fail-closed independent electrical and physical comparison
+        run: |
+          set -euo pipefail
+          python3 research/v297/audit_v297_matched_physical.py build/v297/physical
+      - name: Preserve independent scientific verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v297-physical-independent-audit
+          path: build/v297/physical/v297_physical_independent_audit.json
+          retention-days: 30
+          if-no-files-found: warn
