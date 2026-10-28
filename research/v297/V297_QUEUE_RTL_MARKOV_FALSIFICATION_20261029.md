@@ -87,3 +87,9 @@ A fourth RTL implementation, `v297_maxpair_cooldown_core.v`, computes the same V
 The compact same-behavior implementation uses **8.18% fewer generic cells** and half as many longest-path logic levels as the original RTL. Therefore the original implementation is **dominated at this generic logic proxy** and should not be used as the candidate in final physical comparisons. This does **not** establish routed area, timing, power, or GPU speedup. It also makes the novelty concern sharper: the supposedly special rescue logic is a direct compatible-pair selector plus one fairness bit.
 
 A pinned Nangate45 liberty-mapped comparison of all four RTL variants is underway. It must be evaluated before any physical PPA decision.
+
+## Pinned Nangate45 mapped-area result (hosted)
+
+[Run 40754097807](https://github.com/sushxnthd/vektor/actions/runs/40754097807) passed four-way clocked RTL equivalence, the independent maxpair dominance audit, temporal-law reproduction and identical-library synthesis. Mapped cell-area proxies were **138.320 µm² original V297, 126.882 µm² compact equivalent, 116.508 µm² unrestricted max-pair, 370.272 µm² dynamic-index rotating serial**. The compact implementation is **8.27% smaller** than original V297 at identical grants/cooldown. The original RTL is retired as an implementation candidate. The rotating control is poorly optimized and cannot be used as a strong area comparison. Technology-mapped `ltp` is not a timing result; no physical STA/RC/DRC exists.
+
+The original physical preregistration is preserved, with an explicit post-result amendment promoting the compact same-behavior RTL to the next matched physical gate. See `V297_NANGATE45_MAPPED_AREA_FALSIFICATION_20261029.md`.
