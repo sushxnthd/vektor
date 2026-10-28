@@ -1,0 +1,109 @@
+{
+  "evidence": "reduced-state exhaustive and synthetic Python reference models",
+  "exhaustive": {
+    "cases": 69632,
+    "collisions": 28672,
+    "naive_bad": 21504,
+    "global_bad": 0,
+    "selective_bad": 0
+  },
+  "synthetic": {
+    "seed": 2961028,
+    "cycles": 50000,
+    "operands": 199889,
+    "collisions": 1233,
+    "naive_bad": 1229,
+    "global_bad": 0,
+    "selective_bad": 0
+  },
+  "port_counterexample": {
+    "bank": 0,
+    "operand_words": [
+      0,
+      1
+    ],
+    "write_word": 2,
+    "needed_distinct_reads": 3,
+    "allowed_reads": 2
+  },
+  "upper_bound_sensitivity": [
+    {
+      "N": 1,
+      "B": 1,
+      "base": 1,
+      "retimed": 0.5
+    },
+    {
+      "N": 1,
+      "B": 2,
+      "base": 1,
+      "retimed": 0.5
+    },
+    {
+      "N": 1,
+      "B": 4,
+      "base": 1,
+      "retimed": 0.5
+    },
+    {
+      "N": 2,
+      "B": 1,
+      "base": 1,
+      "retimed": 1
+    },
+    {
+      "N": 2,
+      "B": 2,
+      "base": 2,
+      "retimed": 1
+    },
+    {
+      "N": 2,
+      "B": 4,
+      "base": 2,
+      "retimed": 1
+    },
+    {
+      "N": 4,
+      "B": 1,
+      "base": 1,
+      "retimed": 1
+    },
+    {
+      "N": 4,
+      "B": 2,
+      "base": 2,
+      "retimed": 2
+    },
+    {
+      "N": 4,
+      "B": 4,
+      "base": 4,
+      "retimed": 2
+    },
+    {
+      "N": 8,
+      "B": 1,
+      "base": 1,
+      "retimed": 1
+    },
+    {
+      "N": 8,
+      "B": 2,
+      "base": 2,
+      "retimed": 2
+    },
+    {
+      "N": 8,
+      "B": 4,
+      "base": 4,
+      "retimed": 4
+    }
+  ],
+  "verdict": "naive delay invalid; global old-value log requires non-free third port in some cases; selective snapshot retains same-cycle RF data path",
+  "rtl": false,
+  "physical": false,
+  "matched": false,
+  "gpu_speedup": false,
+  "holdouts": "SEALED"
+}
