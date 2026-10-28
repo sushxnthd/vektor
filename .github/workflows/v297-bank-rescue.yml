@@ -78,6 +78,19 @@ jobs:
           assert not rows['burst11']['markovWithinTolerance']
           print('V297_MARKOV_LAW_AND_NEGATIVE_CONTROLS_REPRODUCED')
           PY
+      - name: Reproduce exhaustive maxpair dominance and compact equivalence
+        run: |
+          node research/v297/v297_maxpair_dominance.js > /tmp/v297_dominance.json
+          python3 - <<'PY'
+          import json
+          a=json.load(open('/tmp/v297_dominance.json'))
+          b=json.load(open('research/v297/V297_MAXPAIR_DOMINANCE_RESULTS_20261029.json'))
+          assert a==b
+          assert a['canonicalCases']==11664
+          assert a['compactMismatches']==0 and a['maxpairWorseCases']==0
+          assert a['maxpairStrictlyBetterCases']>0
+          print('V297_EXHAUSTIVE_MAXPAIR_DOMINANCE_PASS')
+          PY
       - name: Install free RTL and generic synthesis tools
         run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog yosys
       - name: Independently verify clocked RTL against Python reference
