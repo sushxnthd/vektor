@@ -14,13 +14,16 @@ module tb_v297;
     .clk(clk),.rst_n(rst_n),.valid(valid),.bank_a(bank_a),.bank_b(bank_b),.grant(maximum));
   v297_maxpair_cooldown_core dut3(
     .clk(clk),.rst_n(rst_n),.valid(valid),.bank_a(bank_a),.bank_b(bank_b),.grant(compact));
-  v297_rotating_static_core dut4(\n    .clk(clk),.rst_n(rst_n),.valid(valid),.bank_a(bank_a),.bank_b(bank_b),.grant(rotating_static));\n  initial begin
+  v297_rotating_static_core dut4(
+    .clk(clk),.rst_n(rst_n),.valid(valid),.bank_a(bank_a),.bank_b(bank_b),.grant(rotating_static));
+  initial begin
     cycles=0;errors=0;
     fd=$fopen("/tmp/v297_rtl_vectors.txt","r");
     if(fd==0) $fatal(1,"missing independent trace");
     rst_n=1; #1; rst_n=0; #2; rst_n=1;
     while(!$feof(fd)) begin
-      n=$fscanf(fd,"%h %h %h %h %h %h\\n",valid,bank_a,bank_b,expected_candidate,expected_rotating,expected_maximum);
+      n=$fscanf(fd,"%h %h %h %h %h %h\
+",valid,bank_a,bank_b,expected_candidate,expected_rotating,expected_maximum);
       if(n==6) begin
         #1;
         if(candidate !== expected_candidate || rotating !== expected_rotating || rotating_static !== expected_rotating || maximum !== expected_maximum || compact !== candidate) begin
