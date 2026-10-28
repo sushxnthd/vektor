@@ -178,6 +178,9 @@ def audit(bits):
     rows = {}
     for variant in ("pairwise", "serial_onehot"):
         try:
+            exit_marker = (OUT / (variant + ".deferred_prects.exit.txt")).read_text().strip()
+            if exit_marker != "EXIT_CODE=0":
+                raise ValueError("Physical runner failed or timed out: " + exit_marker)
             log = (OUT / (variant + ".high.log")).read_text()
             rows[variant] = parse_log(log, variant)
             source_hashes = (OUT / (variant + ".inputs.sha256")).read_text()
