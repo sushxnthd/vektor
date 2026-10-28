@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Independent falsification checks; not RTL or physical validation."""
 import json
+from pathlib import Path
 from v298_holdout import evaluate
 
 
@@ -19,6 +20,16 @@ def main():
         for D in range(0, 65):
             assert single_credit_delay(Lb, D) == max(0, Lb - D)
     fresh = evaluate()
+    frozen_path = Path(__file__).with_name('V298_FROZEN_HOLDOUT_SUMMARY_20261029.json')
+    frozen = json.loads(frozen_path.read_text())
+    assert frozen['protocol_sha'] == 'cfcbbc6436492afe67e514d1874b083786080ee6'
+    for name, case in frozen['cases'].items():
+        assert fresh['results'][name]['gate_pass'] == case['pass']
+        for policy, values in zip(frozen['columns'], case['values']):
+            for metric, expected in zip(frozen['metrics'], values):
+                observed = fresh['results'][name]['means'][policy][metric]
+                assert abs(observed - expected) < 0.00001, (
+                    name, policy, metric, expected, observed)
     assert fresh['results']['H1_predicted_win']['gate_pass']
     assert fresh['results']['H2_predicted_win']['gate_pass']
     for name in ('H3_predicted_no_win', 'H4_predicted_no_win',
@@ -35,6 +46,7 @@ def main():
     assert h6['deadline_aware']['mean_burst_latency'] < h6['guard']['mean_burst_latency']
     print(json.dumps({'isolated_credit_exhaustive_cases': 64 * 65,
                       'holdout_cases': len(fresh['results']),
+                      'frozen_summary_verified': True,
                       'negative_control_detected': True,
                       'oracle_overreservation_counterexample': True,
                       'status': 'PASS'}))
