@@ -1,0 +1,9 @@
+{
+  "evidenceTier": "EXHAUSTIVE_SMALL_BANK_SEMANTIC_FALSIFICATION",
+  "canonicalCases": 11664,
+  "compactMismatches": 0,
+  "maxpairWorseCases": 0,
+  "maxpairStrictlyBetterCases": 60,
+  "strictWithoutCooldown": 0,
+  "claim": "V297 grants are exactly a cooldown-constrained maximum-feasible-pair selector on all 3-bank canonical patterns; unrestricted max-pair never admits fewer on the same request vector."
+}
