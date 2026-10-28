@@ -32,5 +32,17 @@ jobs:
           a=json.load(open('/tmp/v297_reproduced.json'))
           b=json.load(open('research/v297/V297_BOUNDED_BANK_RESCUE_RESULTS_20261028.json'))
           assert a==b, 'Stored V297 prospective result differs from fresh reproduction'
-          print('V297_REPRODUCTION_BYTE_SEMANTICS_PASS')
+          print('V297_ORIGINAL_REPRODUCTION_PASS')
+          PY
+      - name: Reproduce adversarial rotating-serial control
+        run: |
+          node research/v297/v297_rotating_control.js > /tmp/v297_rotation_reproduced.json
+          python3 - <<'PY'
+          import json
+          a=json.load(open('/tmp/v297_rotation_reproduced.json'))
+          b=json.load(open('research/v297/V297_ROTATING_CONTROL_RESULTS_20261028.json'))
+          assert a==b, 'Rotating-control heldout results differ from frozen record'
+          assert a['results'][0]['candidateMinusRotation']>0
+          assert a['results'][-1]['candidateMinusRotation']<0
+          print('V297_STRONG_CONTROL_FALSIFICATION_REPRODUCED')
           PY
