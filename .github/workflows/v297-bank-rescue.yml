@@ -97,7 +97,7 @@ jobs:
         run: |
           python3 research/v297/rtl/v297_independent_trace.py /tmp/v297_rtl_vectors.txt
           iverilog -g2012 -Wall -s tb_v297 -o /tmp/v297_rtl_sim \
-            research/v297/rtl/v297_bank_rescue_core.v research/v297/rtl/v297_maxpair_core.v research/v297/rtl/v297_maxpair_cooldown_core.v research/v297/rtl/tb_v297.v
+            research/v297/rtl/v297_bank_rescue_core.v research/v297/rtl/v297_maxpair_core.v research/v297/rtl/v297_maxpair_cooldown_core.v research/v297/rtl/v297_rotating_static_core.v research/v297/rtl/tb_v297.v
           vvp /tmp/v297_rtl_sim
       - name: Generic synthesis of both matched-port contestants
         run: |
@@ -108,6 +108,8 @@ jobs:
           yosys -Q -T -p 'read_verilog research/v297/rtl/v297_maxpair_core.v; synth -top v297_maxpair_core; stat; ltp -noff' > /tmp/v297_maxpair_synth.txt
           grep -E 'Longest topological path' /tmp/v297_maxpair_synth.txt | tail -n 3
           yosys -Q -T -p 'read_verilog research/v297/rtl/v297_maxpair_cooldown_core.v; synth -top v297_maxpair_cooldown_core; stat; ltp -noff' > /tmp/v297_compact_synth.txt
+          yosys -Q -T -p 'read_verilog research/v297/rtl/v297_rotating_static_core.v; synth -top v297_rotating_static_core; stat; ltp -noff' > /tmp/v297_rotating_static_synth.txt
+          grep -E 'Longest topological path' /tmp/v297_rotating_static_synth.txt | tail -n 3
           grep -E 'Longest topological path' /tmp/v297_compact_synth.txt | tail -n 3
       - name: Display comparable generic gate counts (not physical timing or area)
         run: |
@@ -117,6 +119,8 @@ jobs:
           grep -A28 -F '=== v297_maxpair_core ===' /tmp/v297_maxpair_synth.txt | tail -n 32
           echo 'COMPACT EQUIVALENT GENERIC SYNTHESIS STAT'
           grep -A28 -F '=== v297_maxpair_cooldown_core ===' /tmp/v297_compact_synth.txt | tail -n 32
+          echo 'OPTIMIZED ROTATING GENERIC SYNTHESIS STAT'
+          grep -A28 -F '=== v297_rotating_static_core ===' /tmp/v297_rotating_static_synth.txt | tail -n 32
           echo 'ROTATING GENERIC SYNTHESIS STAT'
           grep -A28 -F '=== v297_bank_rescue_core ===' /tmp/v297_rotating_synth.txt | tail -n 32
       - name: Matched Nangate45 liberty synthesis (no placement or RC)
@@ -129,7 +133,8 @@ jobs:
           yosys -Q -T -p 'read_verilog research/v297/rtl/v297_bank_rescue_core.v; chparam -set ROTATING 1 v297_bank_rescue_core; synth -top v297_bank_rescue_core -noabc; dfflibmap -liberty /tmp/v297_nangate.lib; abc -liberty /tmp/v297_nangate.lib; clean; stat -liberty /tmp/v297_nangate.lib; ltp -noff' > /tmp/v297_rotating_mapped.txt
           yosys -Q -T -p 'read_verilog research/v297/rtl/v297_maxpair_core.v; synth -top v297_maxpair_core -noabc; dfflibmap -liberty /tmp/v297_nangate.lib; abc -liberty /tmp/v297_nangate.lib; clean; stat -liberty /tmp/v297_nangate.lib; ltp -noff' > /tmp/v297_maxpair_mapped.txt
           yosys -Q -T -p 'read_verilog research/v297/rtl/v297_maxpair_cooldown_core.v; synth -top v297_maxpair_cooldown_core -noabc; dfflibmap -liberty /tmp/v297_nangate.lib; abc -liberty /tmp/v297_nangate.lib; clean; stat -liberty /tmp/v297_nangate.lib; ltp -noff' > /tmp/v297_compact_mapped.txt
-          for name in candidate rotating maxpair compact; do
+          yosys -Q -T -p 'read_verilog research/v297/rtl/v297_rotating_static_core.v; synth -top v297_rotating_static_core -noabc; dfflibmap -liberty /tmp/v297_nangate.lib; abc -liberty /tmp/v297_nangate.lib; clean; stat -liberty /tmp/v297_nangate.lib; ltp -noff' > /tmp/v297_rotating_static_mapped.txt
+          for name in candidate rotating rotating_static maxpair compact; do
             echo "MATCHED_NANGATE45_$name"
             grep -E 'Chip area for module|Longest topological path|Number of cells' "/tmp/v297_${name}_mapped.txt" | tail -n 5
           done
