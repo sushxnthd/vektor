@@ -1,0 +1,44 @@
+name: V296 D8 original-route timeout forensics
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/v296_d8_serial_timeout_stage.py'
+      - '.github/workflows/v296-d8-timeout-forensics.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  sha-pinned-stage-forensics:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Self-test original-artifact parser
+        run: python3 research/v296/v296_d8_serial_timeout_stage.py --self-test
+      - name: Download frozen original D4 and D8 serial artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for row in 'd4 12800782354' 'd8 12804941948'; do
+            read -r label id <<< "$row"
+            curl --fail --location --retry 3 --max-time 180 \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/sushxnthd/vektor/actions/artifacts/$id/zip" \
+              --output "$label.zip"
+          done
+      - name: Diagnose SHA-pinned timeout stage without changing physical data
+        run: |
+          set -euo pipefail
+          python3 research/v296/v296_d8_serial_timeout_stage.py \
+            --d4 d4.zip --d8 d8.zip --out d8_timeout_forensics.json
+      - name: Preserve positive or negative diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-original-d8-serial-timeout-stage
+          path: d8_timeout_forensics.json
+          if-no-files-found: warn
