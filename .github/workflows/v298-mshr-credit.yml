@@ -1,0 +1,26 @@
+name: V298 dependent-MSHR credit falsification
+on:
+  push:
+    branches:
+      - research/v298-dependent-mshr-credit
+  pull_request:
+    paths:
+      - 'research/v298/**'
+      - '.github/workflows/v298-mshr-credit.yml'
+jobs:
+  holdout:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reproduce frozen six-regime holdouts
+        run: |
+          python3 research/v298/v298_holdout.py > v298_holdout_full.json
+          python3 research/v298/v298_independent_checker.py
+      - name: Preserve raw per-seed results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v298-full-holdout
+          path: v298_holdout_full.json
+          if-no-files-found: warn
