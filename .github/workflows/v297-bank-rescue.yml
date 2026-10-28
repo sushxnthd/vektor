@@ -8,7 +8,7 @@ on:
 jobs:
   reproduce:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 22
     permissions:
       contents: read
     steps:
@@ -46,3 +46,44 @@ jobs:
           assert a['results'][-1]['candidateMinusRotation']<0
           print('V297_STRONG_CONTROL_FALSIFICATION_REPRODUCED')
           PY
+      - name: Reproduce frozen persistent queue and phase adversary
+        run: |
+          node research/v297/v297_persistent_queue.js > /tmp/v297_queue_reproduced.json
+          node research/v297/v297_phase_adversary.js > /tmp/v297_phase_reproduced.json
+          python3 - <<'PY'
+          import json
+          for script,stored in [
+              ('/tmp/v297_queue_reproduced.json','research/v297/V297_PERSISTENT_QUEUE_RESULTS_20261029.json'),
+              ('/tmp/v297_phase_reproduced.json','research/v297/V297_PHASE_ADVERSARY_RESULTS_20261029.json')]:
+              a=json.load(open(script)); b=json.load(open(stored))
+              assert a==b, f'mismatch {stored}'
+              for row in a['rows']:
+                  if 'policies' in row:
+                      assert all(p['portViolations']==0 for p in row['policies'].values())
+                  else:
+                      assert row['candidate']['throughput']<=row['oracle']['throughput']+0.0001
+          print('V297_QUEUE_AND_PHASE_REPRODUCTION_PASS')
+          PY
+      - name: Install free RTL and generic synthesis tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog yosys
+      - name: Independently verify clocked RTL against Python reference
+        run: |
+          python3 research/v297/rtl/v297_independent_trace.py /tmp/v297_rtl_vectors.txt
+          iverilog -g2012 -Wall -s tb_v297 -o /tmp/v297_rtl_sim \
+            research/v297/rtl/v297_bank_rescue_core.v research/v297/rtl/tb_v297.v
+          vvp /tmp/v297_rtl_sim
+      - name: Generic synthesis of both matched-port contestants
+        run: |
+          yosys -Q -T -p 'read_verilog research/v297/rtl/v297_bank_rescue_core.v; chparam -set ROTATING 0 v297_bank_rescue_core; synth -top v297_bank_rescue_core; stat; ltp -noff' > /tmp/v297_candidate_synth.txt
+          yosys -Q -T -p 'read_verilog research/v297/rtl/v297_bank_rescue_core.v; chparam -set ROTATING 1 v297_bank_rescue_core; synth -top v297_bank_rescue_core; stat; ltp -noff' > /tmp/v297_rotating_synth.txt
+          grep -E 'Longest topological path|number of cells|\$\_AND_|\$\_OR_|\$\_MUX_' /tmp/v297_candidate_synth.txt | tail -n 20
+          grep -E 'Longest topological path|number of cells|\$\_AND_|\$\_OR_|\$\_MUX_' /tmp/v297_rotating_synth.txt | tail -n 20
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v297-generic-synthesis-evidence
+          path: |
+            /tmp/v297_candidate_synth.txt
+            /tmp/v297_rotating_synth.txt
+          if-no-files-found: ignore
+          retention-days: 30
