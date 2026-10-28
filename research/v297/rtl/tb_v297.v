@@ -1,4 +1,5 @@
 // Independent Python oracle emits one expected grant for each clock cycle.
+// Fixed-length test: malformed trace must fail, not hang at EOF.
 module tb_v297;
   reg clk=0, rst_n=0;
   reg [2:0] valid=0;
@@ -17,24 +18,28 @@ module tb_v297;
   v297_rotating_static_core dut4(
     .clk(clk),.rst_n(rst_n),.valid(valid),.bank_a(bank_a),.bank_b(bank_b),.grant(rotating_static));
   initial begin
-    cycles=0;errors=0;
+    #200000;
+    $fatal(1,"RTL testbench watchdog timeout");
+  end
+  initial begin
+    errors=0;
     fd=$fopen("/tmp/v297_rtl_vectors.txt","r");
     if(fd==0) $fatal(1,"missing independent trace");
     rst_n=1; #1; rst_n=0; #2; rst_n=1;
-    while(!$feof(fd)) begin
-      n=$fscanf(fd,"%h %h %h %h %h %h\n",valid,bank_a,bank_b,expected_candidate,expected_rotating,expected_maximum);
-      if(n==6) begin
-        #1;
-        if(candidate !== expected_candidate || rotating !== expected_rotating || rotating_static !== expected_rotating || maximum !== expected_maximum || compact !== candidate) begin
-          $display("MISMATCH cycle=%0d candidate=%b expected=%b rotating=%b expected=%b maximum=%b expected=%b",cycles,candidate,expected_candidate,rotating,expected_rotating,maximum,expected_maximum);
-          errors=errors+1;
-          if(errors>10) $fatal(1,"too many RTL mismatches");
-        end
-        clk=1; #1; clk=0; cycles=cycles+1;
+    for(cycles=0;cycles<17832;cycles=cycles+1) begin
+      n=$fscanf(fd,"%h %h %h %h %h %h",valid,bank_a,bank_b,expected_candidate,expected_rotating,expected_maximum);
+      if(n!=6) $fatal(1,"short or malformed RTL trace at cycle=%0d n=%0d",cycles,n);
+      #1;
+      if(candidate !== expected_candidate || rotating !== expected_rotating || rotating_static !== expected_rotating || maximum !== expected_maximum || compact !== candidate) begin
+        $display("MISMATCH cycle=%0d candidate=%b expected=%b rotating=%b expected=%b static=%b maximum=%b expected=%b",
+          cycles,candidate,expected_candidate,rotating,expected_rotating,rotating_static,maximum,expected_maximum);
+        errors=errors+1;
+        if(errors>10) $fatal(1,"too many RTL mismatches");
       end
+      clk=1; #1; clk=0;
     end
     $fclose(fd);
-    if(errors!=0 || cycles!=17832) $fatal(1,"RTL equivalence failed errors=%0d cycles=%0d",errors,cycles);
+    if(errors!=0) $fatal(1,"RTL equivalence failed errors=%0d",errors);
     $display("V297_RTL_EQUIVALENCE_PASS cycles=%0d",cycles);
     $finish;
   end
