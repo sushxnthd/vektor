@@ -1,0 +1,230 @@
+{
+  "tier": "EXPLORATORY_POST_OBSERVATION_PHASE_ADVERSARY",
+  "prereg": "V297_PHASE_ADVERSARY_PREREG_20261029.md",
+  "seeds": [
+    9301,
+    9311,
+    9323,
+    9341
+  ],
+  "cyclesPerSeed": 20000,
+  "warmup": 1000,
+  "rows": [
+    {
+      "regime": "motif3",
+      "offset": 0,
+      "candidate": {
+        "throughput": 1.5,
+        "drops": 10001,
+        "p99": 44
+      },
+      "oracle": {
+        "throughput": 1.5,
+        "drops": 10000,
+        "p99": 45
+      },
+      "rotations": [
+        {
+          "phase": 0,
+          "throughput": 1,
+          "drops": 20000,
+          "p99": 67
+        },
+        {
+          "phase": 1,
+          "throughput": 1.28285,
+          "drops": 14343,
+          "p99": 57
+        },
+        {
+          "phase": 2,
+          "throughput": 1.1057,
+          "drops": 17886,
+          "p99": 62
+        }
+      ],
+      "bestRotationPhase": 1,
+      "candidateOverBestRotation": 0.1692715438281951
+    },
+    {
+      "regime": "motif3",
+      "offset": 1,
+      "candidate": {
+        "throughput": 1.49995,
+        "drops": 10000,
+        "p99": 44
+      },
+      "oracle": {
+        "throughput": 1.5,
+        "drops": 10000,
+        "p99": 45
+      },
+      "rotations": [
+        {
+          "phase": 0,
+          "throughput": 1.28285,
+          "drops": 14343,
+          "p99": 57
+        },
+        {
+          "phase": 1,
+          "throughput": 1.1057,
+          "drops": 17886,
+          "p99": 62
+        },
+        {
+          "phase": 2,
+          "throughput": 1,
+          "drops": 20000,
+          "p99": 67
+        }
+      ],
+      "bestRotationPhase": 0,
+      "candidateOverBestRotation": 0.16923256811006726
+    },
+    {
+      "regime": "motif3",
+      "offset": 2,
+      "candidate": {
+        "throughput": 1.5,
+        "drops": 10000,
+        "p99": 44
+      },
+      "oracle": {
+        "throughput": 1.49995,
+        "drops": 10000,
+        "p99": 45
+      },
+      "rotations": [
+        {
+          "phase": 0,
+          "throughput": 1.10575,
+          "drops": 17886,
+          "p99": 62
+        },
+        {
+          "phase": 1,
+          "throughput": 1,
+          "drops": 20000,
+          "p99": 67
+        },
+        {
+          "phase": 2,
+          "throughput": 1.2829,
+          "drops": 14343,
+          "p99": 57
+        }
+      ],
+      "bestRotationPhase": 2,
+      "candidateOverBestRotation": 0.16922597240626702
+    },
+    {
+      "regime": "motif3_burst37",
+      "offset": 0,
+      "candidate": {
+        "throughput": 1.6980125,
+        "drops": 6040.5,
+        "p99": 43
+      },
+      "oracle": {
+        "throughput": 1.698075,
+        "drops": 6038.75,
+        "p99": 43
+      },
+      "rotations": [
+        {
+          "phase": 0,
+          "throughput": 1.3554249999999999,
+          "drops": 12890.5,
+          "p99": 59
+        },
+        {
+          "phase": 1,
+          "throughput": 1.3714,
+          "drops": 12571,
+          "p99": 58
+        },
+        {
+          "phase": 2,
+          "throughput": 1.3625375,
+          "drops": 12748.25,
+          "p99": 58
+        }
+      ],
+      "bestRotationPhase": 1,
+      "candidateOverBestRotation": 0.2381599095814495
+    },
+    {
+      "regime": "motif3_burst37",
+      "offset": 1,
+      "candidate": {
+        "throughput": 1.6982125,
+        "drops": 6035.25,
+        "p99": 43
+      },
+      "oracle": {
+        "throughput": 1.6982374999999998,
+        "drops": 6035,
+        "p99": 43
+      },
+      "rotations": [
+        {
+          "phase": 0,
+          "throughput": 1.3707875,
+          "drops": 12584.25,
+          "p99": 58
+        },
+        {
+          "phase": 1,
+          "throughput": 1.3630125000000002,
+          "drops": 12738.75,
+          "p99": 58
+        },
+        {
+          "phase": 2,
+          "throughput": 1.3556625000000002,
+          "drops": 12886,
+          "p99": 59
+        }
+      ],
+      "bestRotationPhase": 0,
+      "candidateOverBestRotation": 0.23885904999863206
+    },
+    {
+      "regime": "motif3_burst37",
+      "offset": 2,
+      "candidate": {
+        "throughput": 1.6981125000000001,
+        "drops": 6037.25,
+        "p99": 43
+      },
+      "oracle": {
+        "throughput": 1.6982,
+        "drops": 6035.75,
+        "p99": 43
+      },
+      "rotations": [
+        {
+          "phase": 0,
+          "throughput": 1.3628,
+          "drops": 12743.25,
+          "p99": 58
+        },
+        {
+          "phase": 1,
+          "throughput": 1.3571875,
+          "drops": 12855.25,
+          "p99": 59
+        },
+        {
+          "phase": 2,
+          "throughput": 1.3710375,
+          "drops": 12578.25,
+          "p99": 58
+        }
+      ],
+      "bestRotationPhase": 2,
+      "candidateOverBestRotation": 0.23856021443614805
+    }
+  ]
+}
