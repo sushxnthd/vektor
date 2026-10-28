@@ -1,0 +1,67 @@
+{
+  "evidenceTier": "INDEPENDENT_SYNTHETIC_FIXED_REQUEST_TEMPORAL_FALSIFICATION",
+  "protocol": "V297_MAXPAIR_TEMPORAL_BOUNDARY_PREREG_20261029.md",
+  "script": "v297_maxpair_temporal_boundary.py",
+  "seeds": [
+    101,
+    103,
+    107,
+    109
+  ],
+  "warmup": 10000,
+  "measuredCyclesPerSeed": 200000,
+  "rows": [
+    {
+      "p": 0.4,
+      "a": 0.9,
+      "predictedRatio": 0.8646616541353384,
+      "observedRatio": 0.8650662597345542,
+      "absoluteError": 0.00040460559921584593
+    },
+    {
+      "p": 0.4,
+      "a": 0.2,
+      "predictedRatio": 0.9523809523809526,
+      "observedRatio": 0.9525831335451889,
+      "absoluteError": 0.00020218116423631471
+    },
+    {
+      "p": 0.25,
+      "a": 0.85,
+      "predictedRatio": 0.908108108108108,
+      "observedRatio": 0.9082751873812595,
+      "absoluteError": 0.0001670792731514048
+    },
+    {
+      "p": 0.7,
+      "a": 0.8,
+      "predictedRatio": 0.8169934640522876,
+      "observedRatio": 0.8171913376888168,
+      "absoluteError": 0.0001978736365292333
+    },
+    {
+      "p": 0,
+      "a": 0,
+      "predictedRatio": 1,
+      "observedRatio": 1,
+      "absoluteError": 0
+    },
+    {
+      "p": 1,
+      "a": 1,
+      "predictedRatio": 0.75,
+      "observedRatio": 0.75,
+      "absoluteError": 0
+    }
+  ],
+  "negativeControl": {
+    "pattern": "110_repeating",
+    "p": 0.6666666666666666,
+    "a": 0.5,
+    "predictedRescuesPerCycle": 0.4444444444444444,
+    "observedRescuesPerCycle": 0.3333333333333333,
+    "absoluteError": 0.1111111111111111
+  },
+  "physicalPPA": "NOT MEASURED",
+  "gpuThroughput": "NOT MEASURED"
+}
