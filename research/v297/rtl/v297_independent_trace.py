@@ -60,7 +60,7 @@ def make_trace(path):
                     assert fits(*selected)
             bank_a = sum(pair[0] << (4*i) for i,pair in enumerate(pairs))
             bank_b = sum(pair[1] << (4*i) for i,pair in enumerate(pairs))
-            f.write(f"{validity:x} {bank_a:03x} {bank_b:03x} {candidate:x} {rotating:x} {maximum:x}\\n")
+            f.write(f"{validity:x} {bank_a:03x} {bank_b:03x} {candidate:x} {rotating:x} {maximum:x}\n")
             cool = rescued
             phase = (phase + 1) % 3
     print(f"V297_RTL_ORACLE_GENERATED {len(cases)}")
