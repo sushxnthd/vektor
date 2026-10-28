@@ -14,7 +14,7 @@ module tb_v297;
     cycles=0;errors=0;
     fd=$fopen("/tmp/v297_rtl_vectors.txt","r");
     if(fd==0) $fatal(1,"missing independent trace");
-    #2; rst_n=1;
+    rst_n=1; #1; rst_n=0; #2; rst_n=1;
     while(!$feof(fd)) begin
       n=$fscanf(fd,"%h %h %h %h %h\n",valid,bank_a,bank_b,expected_candidate,expected_rotating);
       if(n==5) begin
