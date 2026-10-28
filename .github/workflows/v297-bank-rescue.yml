@@ -119,6 +119,20 @@ jobs:
           grep -A28 -F '=== v297_maxpair_cooldown_core ===' /tmp/v297_compact_synth.txt | tail -n 32
           echo 'ROTATING GENERIC SYNTHESIS STAT'
           grep -A28 -F '=== v297_bank_rescue_core ===' /tmp/v297_rotating_synth.txt | tail -n 32
+      - name: Matched Nangate45 liberty synthesis (no placement or RC)
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          curl -fL --retry 3 --max-time 180 "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib" -o /tmp/v297_nangate.lib
+          sha256sum /tmp/v297_nangate.lib | tee /tmp/v297_liberty.sha256
+          yosys -Q -T -p 'read_verilog research/v297/rtl/v297_bank_rescue_core.v; chparam -set ROTATING 0 v297_bank_rescue_core; synth -top v297_bank_rescue_core -noabc; dfflibmap -liberty /tmp/v297_nangate.lib; abc -liberty /tmp/v297_nangate.lib; clean; stat -liberty /tmp/v297_nangate.lib; ltp -noff' > /tmp/v297_candidate_mapped.txt
+          yosys -Q -T -p 'read_verilog research/v297/rtl/v297_bank_rescue_core.v; chparam -set ROTATING 1 v297_bank_rescue_core; synth -top v297_bank_rescue_core -noabc; dfflibmap -liberty /tmp/v297_nangate.lib; abc -liberty /tmp/v297_nangate.lib; clean; stat -liberty /tmp/v297_nangate.lib; ltp -noff' > /tmp/v297_rotating_mapped.txt
+          yosys -Q -T -p 'read_verilog research/v297/rtl/v297_maxpair_core.v; synth -top v297_maxpair_core -noabc; dfflibmap -liberty /tmp/v297_nangate.lib; abc -liberty /tmp/v297_nangate.lib; clean; stat -liberty /tmp/v297_nangate.lib; ltp -noff' > /tmp/v297_maxpair_mapped.txt
+          yosys -Q -T -p 'read_verilog research/v297/rtl/v297_maxpair_cooldown_core.v; synth -top v297_maxpair_cooldown_core -noabc; dfflibmap -liberty /tmp/v297_nangate.lib; abc -liberty /tmp/v297_nangate.lib; clean; stat -liberty /tmp/v297_nangate.lib; ltp -noff' > /tmp/v297_compact_mapped.txt
+          for name in candidate rotating maxpair compact; do
+            echo "MATCHED_NANGATE45_$name"
+            grep -E 'Chip area for module|Longest topological path|Number of cells' "/tmp/v297_${name}_mapped.txt" | tail -n 5
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -128,5 +142,7 @@ jobs:
             /tmp/v297_rotating_synth.txt
             /tmp/v297_maxpair_synth.txt
             /tmp/v297_compact_synth.txt
+            /tmp/v297_*_mapped.txt
+            /tmp/v297_liberty.sha256
           if-no-files-found: ignore
           retention-days: 30
