@@ -1,0 +1,9 @@
+# V297 temporal positive-law preregistration (2026-10-29)
+
+This is a **new analytical test after the original iid-law burst failure was observed**. It is not a retroactive prediction of the opened burst result.
+
+For an exogenous two-state *first-order Markov* blocker motif M_t, let p=P(M_t=1), a=P(M_t=1|M_(t-1)=1), and S_t=M_t(1-S_(t-1)) be one-cycle-cooldown rescues. Since S_(t-1)=1 implies M_(t-1)=1, stationarity and the Markov property give E[S]=p-a E[S], hence the exact stationary law r=p/(1+a). The iid special case is a=p, recovering r=p/(1+p). This is an offered-request admission law only. It need not hold for non-Markov motifs, persistent queues, changed priorities or physical latency.
+
+Freeze development seeds 1201/1213/1229/1249 and sealed holdout seeds 2203/2213/2237/2243; 100000 cycles per seed. Exogenous regimes: iid 40% constructed blocker motifs; explicit two-state Markov with a=.9,b=.1; deterministic 11-, 23-, 53-, 101-cycle motif-rich/zero-rich alternation; uniform 16-bank iid; adversarial periodic two-motif/one-nonmotif. Non-motif cycles use independent 16-bank uniform requests. Measure p and a on development seeds only, predict heldout r before reading heldout rescues. Fixed tolerance 0.005 rescues/cycle for iid and first-order Markov regimes; report every failure for other regimes without retuning. Independently verify bank-port safety and the exact recurrence for every cycle. Compare the original iid law as a strong simple control.
+
+The boundary is a model of *temporal compatibility*, not a physical GPU performance claim. If a proposed benefit cannot beat a rotating serial control at matched physical frequency, the mechanism remains rejected regardless of this analytical law.
