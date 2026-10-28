@@ -1,0 +1,86 @@
+{
+  "protocol": "DEFERRED_MAPPED_INTEGER_PACKING_PREREG_20261028.md",
+  "evidence_tier": "MAPPED_ONLY_INTEGER_BOUNDARY_PLUS_SYNTHETIC_PAIRED_REPLAY",
+  "source": "SHA-verified matched deferred-write synthesis results, not routed physical measurements",
+  "areas_milli_um2": {
+    "D4": {
+      "pairwise": 13044906,
+      "serial": 13510406
+    },
+    "D8": {
+      "pairwise": 18308514,
+      "serial": 18769492
+    }
+  },
+  "analytical": {
+    "D4": {
+      "mapped_capacity_at_30000": [
+        2,
+        2
+      ],
+      "next_extra_candidate_threshold_um2": 39134.718,
+      "next_serial_threshold_um2": 40531.218,
+      "narrow_budget_window_um2": 1396.5,
+      "serial_multiple_crossover_k": 29,
+      "serial_multiple_budget_um2": 391801.774,
+      "candidate_slices_at_serial_multiple": 30,
+      "asymptotic_density_ratio": 1.0356844273159194
+    },
+    "D8": {
+      "mapped_capacity_at_30000": [
+        1,
+        1
+      ],
+      "next_extra_candidate_threshold_um2": 36617.028,
+      "next_serial_threshold_um2": 37538.984,
+      "narrow_budget_window_um2": 921.956,
+      "serial_multiple_crossover_k": 40,
+      "serial_multiple_budget_um2": 750779.68,
+      "candidate_slices_at_serial_multiple": 41,
+      "asymptotic_density_ratio": 1.0251783405250694
+    }
+  },
+  "frozen": {
+    "seeds": [
+      20261028,
+      20261029
+    ],
+    "warmup_cycles": 1000,
+    "measured_cycles": 7000,
+    "warps": 410,
+    "readiness_probability": 0.98,
+    "operand_copy_probability": 0.2,
+    "banks": 16,
+    "read_ports_per_bank": 2,
+    "issue_slots": 4,
+    "latency_cycles_both": 2,
+    "shared_cap_waves_per_cycle": 100
+  },
+  "synthetic": [
+    {
+      "seed": 20261028,
+      "serial_40_slices_raw_per_cycle": 159.11885714285714,
+      "candidate_41_slices_raw_per_cycle": 162.8437142857143,
+      "unconstrained_gain_fraction": 0.02340927536648274,
+      "shared_cap_gain_fraction": 0,
+      "win_gate": true,
+      "no_win_gate": true
+    },
+    {
+      "seed": 20261029,
+      "serial_40_slices_raw_per_cycle": 159.09,
+      "candidate_41_slices_raw_per_cycle": 162.85914285714287,
+      "unconstrained_gain_fraction": 0.023691890484272227,
+      "shared_cap_gain_fraction": 0,
+      "win_gate": true,
+      "no_win_gate": true
+    }
+  ],
+  "independent_scheduler_oracle": "pass, 32 cycles per seed at 40/41 tiles; 96 cycles at actual 30k budget",
+  "preregistration_falsification": "Preregistered D4 1+1 capacity was false; actual D4 2+2. The equal-capacity/no-benefit conclusion survives. Serial-multiple crossover is not the earliest absolute budget crossover.",
+  "all_preregistered_predictions_pass": false,
+  "frozen_synthetic_gates_pass": true,
+  "real_workload_holdouts": "SEALED",
+  "physical_signoff": false,
+  "gpu_performance_claim": false
+}
