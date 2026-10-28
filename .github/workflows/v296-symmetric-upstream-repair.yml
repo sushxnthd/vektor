@@ -1,0 +1,142 @@
+name: V296 one-shot symmetric upstream physical repair kill test
+on:
+  push:
+    branches: [research/v296-pairwise-bank-conflict]
+    paths:
+      - 'research/v296/V296_SYMMETRIC_UPSTREAM_REPAIR_PREREG_20261028.md'
+      - 'research/v296/v296_symmetric_upstream_repair.py'
+      - '.github/workflows/v296-symmetric-upstream-repair.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v296-symmetric-upstream-repair-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  provenance-and-rtl:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check SHA-locked derivation and fail-closed mutation controls
+        run: |
+          set -euo pipefail
+          python3 research/v296/tile_slice_flow.py --self-test
+          python3 research/v296/v296_symmetric_upstream_repair.py --self-test --build
+          grep -Fq 'repair_timing -setup -slack_margin 2.200' build/v296/tile_slice/cts45_upstream_repair.tcl
+          grep -Fq 'repair_timing -hold -slack_margin 0.050' build/v296/tile_slice/cts45_upstream_repair.tcl
+          grep -Fq 'V296_CTS45_FIFTH_DONE' build/v296/tile_slice/cts45_upstream_repair.tcl
+          grep -Fq 'detailed_route -output_drc' build/v296/tile_slice/cts45_upstream_repair.tcl
+      - name: Run original unchanged integrated RF-slice RTL equivalence
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+          iverilog -g2012 -s tb_v296_tile_slice -o /tmp/v296-upstream-original.vvp \
+            rtl/vtile/steal_warp_scheduler.sv \
+            research/v295/v295_issue_core.sv \
+            research/v296/v296_issue_core.sv \
+            research/v296/v296_tile_slice.sv \
+            research/v296/tb_v296_tile_slice.sv
+          vvp /tmp/v296-upstream-original.vvp | tee /tmp/v296-upstream-rtl.log
+          grep -Fq 'V296_TILE_SLICE_RTL_PASS checks=4096' /tmp/v296-upstream-rtl.log
+      - name: Preserve original RTL oracle result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-upstream-rtl
+          path: /tmp/v296-upstream-rtl.log
+          if-no-files-found: warn
+  physical:
+    needs: provenance-and-rtl
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        variant: [pairwise, serial_onehot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Yosys and OpenROAD
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys curl python3
+          curl -fL --retry 3 --max-time 180 \
+            https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb \
+            -o /tmp/openroad-v296.deb
+          sudo apt-get install -y /tmp/openroad-v296.deb
+          mkdir -p build/v296/platform build/v296/tile_slice
+          sha256sum /tmp/openroad-v296.deb > build/v296/tile_slice/openroad.deb.sha256
+      - name: Download pinned Nangate45 technology and OpenRCX
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          base="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45"
+          curl -fL --retry 3 --max-time 180 "$base/lib/NangateOpenCellLibrary_typical.lib" -o build/v296/nangate.lib
+          for f in NangateOpenCellLibrary.tech.lef NangateOpenCellLibrary.macro.mod.lef; do
+            curl -fL --retry 3 --max-time 180 "$base/lef/$f" -o "build/v296/platform/$f"
+          done
+          curl -fL --retry 3 --max-time 180 "$base/make_tracks.tcl" -o build/v296/platform/make_tracks.tcl
+          curl -fL --retry 3 --max-time 180 "$base/rcx_patterns.rules" -o build/v296/platform/rcx_patterns.rules
+      - name: Generate and verify identical physical repair for both contestants
+        run: |
+          set -euo pipefail
+          python3 research/v296/v296_symmetric_upstream_repair.py --self-test --build
+          test -s build/v296/tile_slice/run_upstream_repair.sh
+          test -s build/v296/tile_slice/cts45_upstream_repair.tcl
+      - name: Run bounded extracted-RC implementation without concealing failure
+        env:
+          V296_TILE_VARIANT: ${{ matrix.variant }}
+        run: |
+          set -uo pipefail
+          export V296_OPENROAD_BIN="$(command -v openroad)"
+          set +e
+          timeout --signal=TERM --kill-after=60s 75m \
+            bash build/v296/tile_slice/run_upstream_repair.sh
+          rc=$?
+          set -e
+          echo "EXIT_CODE=$rc" | tee "build/v296/tile_slice/${V296_TILE_VARIANT}.upstream_repair.exit.txt"
+          exit 0
+      - name: Preserve original success, failure or timeout evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-upstream-${{ matrix.variant }}
+          path: |
+            build/v296/tile_slice/*.high.log
+            build/v296/tile_slice/*.synth.log
+            build/v296/tile_slice/*.inputs.sha256
+            build/v296/tile_slice/*.exit.txt
+            build/v296/tile_slice/*.json
+            build/v296/tile_slice/*.tcl
+            build/v296/tile_slice/*.version
+            build/v296/tile_slice/*.spef
+            build/v296/tile_slice/*.def
+            build/v296/tile_slice/*.drc*
+          if-no-files-found: warn
+  independent-aggregate:
+    needs: [provenance-and-rtl, physical]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download both immutable contestant evidence sets
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v296-upstream-*
+          path: build/v296/tile_slice/
+          merge-multiple: true
+      - name: Fail-closed original SPEF/DEF and symmetric intervention audit
+        run: |
+          set -euo pipefail
+          python3 research/v296/v296_symmetric_upstream_repair.py --self-test --audit
+      - name: Preserve verdict including scientific falsification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v296-upstream-independent-audit
+          path: build/v296/tile_slice/aggregate.upstream_repair.json
+          if-no-files-found: warn
