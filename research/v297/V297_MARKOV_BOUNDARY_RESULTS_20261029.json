@@ -1,0 +1,211 @@
+{
+  "tier": "SYNTHETIC_EXOGENOUS_TEMPORAL_COMPATIBILITY_ONLY",
+  "prereg": "V297_MARKOV_BOUNDARY_PREREG_20261029.md",
+  "devSeeds": [
+    1201,
+    1213,
+    1229,
+    1249
+  ],
+  "holdoutSeeds": [
+    2203,
+    2213,
+    2237,
+    2243
+  ],
+  "cyclesPerSeed": 100000,
+  "rows": [
+    {
+      "regime": "iid40",
+      "development": {
+        "p": 0.4012175,
+        "a": 0.40080792778587576,
+        "observedR": 0.286445
+      },
+      "holdout": {
+        "p": 0.400725,
+        "a": 0.40011113958607114,
+        "observedR": 0.2864
+      },
+      "markovPrediction": 0.28641863887375796,
+      "iidPrediction": 0.2863349194539748,
+      "markovAbsError": 0.00001863887375797013,
+      "iidAbsError": 0.00006508054602516467,
+      "markovWithinTolerance": true,
+      "holdoutSeeds": [
+        2203,
+        2213,
+        2237,
+        2243
+      ]
+    },
+    {
+      "regime": "markov90",
+      "development": {
+        "p": 0.49677499999999997,
+        "a": 0.8984751451540107,
+        "observedR": 0.2616925
+      },
+      "holdout": {
+        "p": 0.500355,
+        "a": 0.8992452154651146,
+        "observedR": 0.26365500000000003
+      },
+      "markovPrediction": 0.26167053135673257,
+      "iidPrediction": 0.3318969116934743,
+      "markovAbsError": 0.0019844686432674563,
+      "iidAbsError": 0.06824191169347427,
+      "markovWithinTolerance": true,
+      "holdoutSeeds": [
+        2203,
+        2213,
+        2237,
+        2243
+      ]
+    },
+    {
+      "regime": "burst11",
+      "development": {
+        "p": 0.500535,
+        "a": 0.9083562421541309,
+        "observedR": 0.27317
+      },
+      "holdout": {
+        "p": 0.500495,
+        "a": 0.9085137463058873,
+        "observedR": 0.27308750000000004
+      },
+      "markovPrediction": 0.2622859343258687,
+      "iidPrediction": 0.33357102633394087,
+      "markovAbsError": 0.01080156567413132,
+      "iidAbsError": 0.06048352633394083,
+      "markovWithinTolerance": false,
+      "holdoutSeeds": [
+        2203,
+        2213,
+        2237,
+        2243
+      ]
+    },
+    {
+      "regime": "burst23",
+      "development": {
+        "p": 0.50047,
+        "a": 0.955736611477846,
+        "observedR": 0.26129250000000004
+      },
+      "holdout": {
+        "p": 0.5004975,
+        "a": 0.9556891121113755,
+        "observedR": 0.2613175
+      },
+      "markovPrediction": 0.2558984666252279,
+      "iidPrediction": 0.3335421567908722,
+      "markovAbsError": 0.005419033374772064,
+      "iidAbsError": 0.0722246567908722,
+      "markovWithinTolerance": false,
+      "holdoutSeeds": [
+        2203,
+        2213,
+        2237,
+        2243
+      ]
+    },
+    {
+      "regime": "burst53",
+      "development": {
+        "p": 0.5006375000000001,
+        "a": 0.9803396807536254,
+        "observedR": 0.25523250000000003
+      },
+      "holdout": {
+        "p": 0.50065,
+        "a": 0.9803251986239847,
+        "observedR": 0.25524
+      },
+      "markovPrediction": 0.252803852220686,
+      "iidPrediction": 0.3336165463011554,
+      "markovAbsError": 0.002436147779314002,
+      "iidAbsError": 0.07837654630115537,
+      "markovWithinTolerance": true,
+      "holdoutSeeds": [
+        2203,
+        2213,
+        2237,
+        2243
+      ]
+    },
+    {
+      "regime": "burst101",
+      "development": {
+        "p": 0.5005075,
+        "a": 0.9892107536780046,
+        "observedR": 0.25295
+      },
+      "holdout": {
+        "p": 0.5004824999999999,
+        "a": 0.9892551604290387,
+        "observedR": 0.2529275
+      },
+      "markovPrediction": 0.25161109705171925,
+      "iidPrediction": 0.3335588126017364,
+      "markovAbsError": 0.0013164029482807815,
+      "iidAbsError": 0.0806313126017364,
+      "markovWithinTolerance": true,
+      "holdoutSeeds": [
+        2203,
+        2213,
+        2237,
+        2243
+      ]
+    },
+    {
+      "regime": "uniform16",
+      "development": {
+        "p": 0.00093,
+        "a": 0.003048780487804878,
+        "observedR": 0.0009274999999999999
+      },
+      "holdout": {
+        "p": 0.0008824999999999999,
+        "a": 0,
+        "observedR": 0.0008824999999999999
+      },
+      "markovPrediction": 0.0009271732522796354,
+      "iidPrediction": 0.000929135903609643,
+      "markovAbsError": 0.00004467325227963551,
+      "iidAbsError": 0.000046635903609643114,
+      "markovWithinTolerance": true,
+      "holdoutSeeds": [
+        2203,
+        2213,
+        2237,
+        2243
+      ]
+    },
+    {
+      "regime": "periodic2of3",
+      "development": {
+        "p": 0.66694,
+        "a": 0.5006072345150578,
+        "observedR": 0.33361
+      },
+      "holdout": {
+        "p": 0.666965,
+        "a": 0.5006634545413056,
+        "observedR": 0.333635
+      },
+      "markovPrediction": 0.4444467443977977,
+      "iidPrediction": 0.40009838386504615,
+      "markovAbsError": 0.11081174439779767,
+      "iidAbsError": 0.06646338386504613,
+      "markovWithinTolerance": false,
+      "holdoutSeeds": [
+        2203,
+        2213,
+        2237,
+        2243
+      ]
+    }
+  ]
+}
