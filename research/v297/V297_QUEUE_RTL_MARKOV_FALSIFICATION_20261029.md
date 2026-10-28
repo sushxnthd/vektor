@@ -73,3 +73,17 @@ An additional independent exhaustive semantic checker evaluated **11,664** three
 The prior-art audit additionally identifies Yamada et al., [*Bank-Aware Instruction Scheduler for a Multibanked Register File* (2018)](https://doi.org/10.2197/ipsjjip.26.696), as a close instruction-selection precedent. Its CPU target is distinct from GPU warp issue, but conflict-aware compatible-instruction selection is not new. See `V297_PRIOR_ART_KILL_AUDIT_20261029.md`.
 
 **Revised decision:** V297's synthetic motif wins survive against rotating serial but **not as a unique selection principle**. The only defensible remaining question is whether its fairness-bounded implementation has a measurable physical/tail-latency Pareto advantage over both exact max-pair and optimized same-semantics RTL. Do not claim a novel GPU architecture mechanism without that result. Retire V297 if matched mapping/physical controls erase the difference.
+
+## Same-behavior implementation discriminator (hosted generic synthesis)
+
+A fourth RTL implementation, `v297_maxpair_cooldown_core.v`, computes the same V297 grants and one-cycle cooldown by directly testing the three feasible pairs. It passed the same **17,832-cycle** independent RTL test in [run 40753952367](https://github.com/sushxnthd/vektor/actions/runs/40753952367), in addition to the independent **11,664-case** exhaustive equivalence check.
+
+| Generic result | Original V297 | Compact same-behavior V297 | Max-pair without cooldown |
+|---|---:|---:|---:|
+| Generic cells | 159 | **146** | 137 |
+| Longest logic levels | 24 | **12** | 11 |
+| Cooldown flop | 1 | 1 | 0 |
+
+The compact same-behavior implementation uses **8.18% fewer generic cells** and half as many longest-path logic levels as the original RTL. Therefore the original implementation is **dominated at this generic logic proxy** and should not be used as the candidate in final physical comparisons. This does **not** establish routed area, timing, power, or GPU speedup. It also makes the novelty concern sharper: the supposedly special rescue logic is a direct compatible-pair selector plus one fairness bit.
+
+A pinned Nangate45 liberty-mapped comparison of all four RTL variants is underway. It must be evaluated before any physical PPA decision.
