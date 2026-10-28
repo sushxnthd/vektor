@@ -1,0 +1,182 @@
+{
+  "evidence_tier": "CONDITIONAL_SYNTHETIC_CAPACITY_MODEL_NOT_PHYSICAL_THROUGHPUT",
+  "source_routed_run": 40646515864,
+  "source_code": "research/v296/v296_routed_tile_capacity_boundary.py",
+  "candidate_area_um2": "19543.01964701699",
+  "serial_area_um2": "21914.943",
+  "serial_D4_physical_status": "SETUP_AND_HOLD_FAIL",
+  "candidate_D4_physical_status": "ROUTED_METRIC_PASS",
+  "candidate_delta_before_two_slice_loss_um2": "456.98035298301",
+  "candidate_delta_before_two_slice_loss_pct": 2.338330315564937,
+  "conditional_two_slice_budget_window_um2": [
+    "39086.03929403398",
+    "43829.886"
+  ],
+  "cycle_count": 12000,
+  "seeds": [
+    3201,
+    3209,
+    3217
+  ],
+  "resident_warps_per_slice": 8,
+  "operand_latency_cycles": 2,
+  "results": [
+    {
+      "name": "capacity_win",
+      "budget_um2": "40000",
+      "global_B": 8,
+      "readiness_q": 1,
+      "bank0_hot_probability": 0,
+      "candidate_slices": 2,
+      "serial_slices": 1,
+      "mean_ratio": 1.9971995384755614,
+      "prediction_pass": true,
+      "seeds": [
+        {
+          "seed": 3201,
+          "candidate": 7.651583333333333,
+          "serial": 3.8308333333333335,
+          "ratio": 1.9973678485969109
+        },
+        {
+          "seed": 3209,
+          "candidate": 7.64075,
+          "serial": 3.8255,
+          "ratio": 1.997320611684747
+        },
+        {
+          "seed": 3217,
+          "candidate": 7.647666666666667,
+          "serial": 3.82975,
+          "ratio": 1.9969101551450268
+        }
+      ]
+    },
+    {
+      "name": "shared_port_no_win",
+      "budget_um2": "40000",
+      "global_B": 1,
+      "readiness_q": 1,
+      "bank0_hot_probability": 0,
+      "candidate_slices": 2,
+      "serial_slices": 1,
+      "mean_ratio": 1,
+      "prediction_pass": true,
+      "seeds": [
+        {
+          "seed": 3201,
+          "candidate": 1,
+          "serial": 1,
+          "ratio": 1
+        },
+        {
+          "seed": 3209,
+          "candidate": 1,
+          "serial": 1,
+          "ratio": 1
+        },
+        {
+          "seed": 3217,
+          "candidate": 1,
+          "serial": 1,
+          "ratio": 1
+        }
+      ]
+    },
+    {
+      "name": "equal_slice_no_win",
+      "budget_um2": "30000",
+      "global_B": 8,
+      "readiness_q": 1,
+      "bank0_hot_probability": 0,
+      "candidate_slices": 1,
+      "serial_slices": 1,
+      "mean_ratio": 1,
+      "prediction_pass": true,
+      "seeds": [
+        {
+          "seed": 3201,
+          "candidate": 3.8308333333333335,
+          "serial": 3.8308333333333335,
+          "ratio": 1
+        },
+        {
+          "seed": 3209,
+          "candidate": 3.8255,
+          "serial": 3.8255,
+          "ratio": 1
+        },
+        {
+          "seed": 3217,
+          "candidate": 3.82975,
+          "serial": 3.82975,
+          "ratio": 1
+        }
+      ]
+    },
+    {
+      "name": "capacity_fragility",
+      "budget_um2": "40000",
+      "global_B": 8,
+      "readiness_q": 1,
+      "bank0_hot_probability": 0,
+      "candidate_slices": 2,
+      "serial_slices": 1,
+      "mean_ratio": 1.9971995384755614,
+      "prediction_pass": true,
+      "seeds": [
+        {
+          "seed": 3201,
+          "candidate": 7.651583333333333,
+          "serial": 3.8308333333333335,
+          "ratio": 1.9973678485969109
+        },
+        {
+          "seed": 3209,
+          "candidate": 7.64075,
+          "serial": 3.8255,
+          "ratio": 1.997320611684747
+        },
+        {
+          "seed": 3217,
+          "candidate": 7.647666666666667,
+          "serial": 3.82975,
+          "ratio": 1.9969101551450268
+        }
+      ]
+    },
+    {
+      "name": "unseen_mixed",
+      "budget_um2": "40000",
+      "global_B": 5,
+      "readiness_q": 0.6,
+      "bank0_hot_probability": 0.4,
+      "candidate_slices": 2,
+      "serial_slices": 1,
+      "mean_ratio": 1.8719664999843497,
+      "prediction_pass": null,
+      "seeds": [
+        {
+          "seed": 3201,
+          "candidate": 4.404416666666667,
+          "serial": 2.3478333333333334,
+          "ratio": 1.8759494569461206
+        },
+        {
+          "seed": 3209,
+          "candidate": 4.397916666666666,
+          "serial": 2.351916666666667,
+          "ratio": 1.8699287814902736
+        },
+        {
+          "seed": 3217,
+          "candidate": 4.397666666666667,
+          "serial": 2.3516666666666666,
+          "ratio": 1.870021261516655
+        }
+      ]
+    }
+  ],
+  "matched_feasible_GPU_gain_proven": false,
+  "physical_power_proven": false
+}
