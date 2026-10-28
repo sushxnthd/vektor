@@ -1,0 +1,199 @@
+{
+  "protocol_sha": "cfcbbc6436492afe67e514d1874b083786080ee6",
+  "cycles_per_run": 30000,
+  "seeds": [
+    211,
+    223,
+    227,
+    229
+  ],
+  "note": "Frozen holdouts. Values are four-seed means; full per-seed records reproducible with python research/v298/v298_holdout.py. Synthetic MSHR queue, NOT GPU IPC.",
+  "columns": [
+    "work_conserving",
+    "fixed_reserve",
+    "guard",
+    "deadline_aware"
+  ],
+  "metrics": [
+    "background_completed",
+    "mean_burst_latency",
+    "p95_burst_latency",
+    "bursts_completed"
+  ],
+  "cases": {
+    "H1_predicted_win": {
+      "pass": true,
+      "values": [
+        [
+          3624.25,
+          253.716803,
+          256,
+          60.75
+        ],
+        [
+          2708,
+          92,
+          92,
+          91
+        ],
+        [
+          3488.5,
+          93.955556,
+          95,
+          90
+        ],
+        [
+          3488.5,
+          93.955556,
+          95,
+          90
+        ]
+      ]
+    },
+    "H2_predicted_win": {
+      "pass": true,
+      "values": [
+        [
+          4737.75,
+          134.93968,
+          136.25,
+          96.25
+        ],
+        [
+          3618.5,
+          85,
+          85,
+          113
+        ],
+        [
+          4594.5,
+          87.515625,
+          90,
+          112
+        ],
+        [
+          4594.5,
+          87.515625,
+          90,
+          112
+        ]
+      ]
+    },
+    "H3_predicted_no_win": {
+      "pass": false,
+      "values": [
+        [
+          14276.5,
+          99.000916,
+          99,
+          89.25
+        ],
+        [
+          10518.75,
+          92,
+          92,
+          91
+        ],
+        [
+          13945.75,
+          92.008242,
+          92,
+          91
+        ],
+        [
+          13945.75,
+          92.008242,
+          92,
+          91
+        ]
+      ]
+    },
+    "H4_predicted_no_win": {
+      "pass": false,
+      "values": [
+        [
+          736.5,
+          92.379304,
+          92.25,
+          90.5
+        ],
+        [
+          736.5,
+          92,
+          92,
+          91
+        ],
+        [
+          736.5,
+          92.065934,
+          92,
+          91
+        ],
+        [
+          736.5,
+          92.065934,
+          92,
+          91
+        ]
+      ]
+    },
+    "H5_short_chain": {
+      "pass": false,
+      "values": [
+        [
+          3694,
+          44.799012,
+          46.25,
+          105.75
+        ],
+        [
+          2766.75,
+          20,
+          20,
+          116
+        ],
+        [
+          3675,
+          22.658696,
+          23.5,
+          115
+        ],
+        [
+          3675,
+          22.658696,
+          23.5,
+          115
+        ]
+      ]
+    },
+    "H6_oracle_advantage": {
+      "pass": false,
+      "values": [
+        [
+          3660.5,
+          453.793367,
+          454,
+          43.75
+        ],
+        [
+          2772,
+          344,
+          344,
+          51
+        ],
+        [
+          3198.5,
+          347.352941,
+          350.75,
+          51
+        ],
+        [
+          3334.75,
+          344,
+          344,
+          51
+        ]
+      ]
+    }
+  }
+}
