@@ -17,6 +17,15 @@ def greedy(valid, pairs, phase):
             chosen.append(i)
     return sum(1 << i for i in chosen)
 
+def maxpair(valid, pairs):
+    for i,j in ((0,1),(0,2),(1,2)):
+        if ((valid >> i) & 1) and ((valid >> j) & 1) and fits(pairs[i],pairs[j]):
+            return (1 << i) | (1 << j)
+    for i in range(3):
+        if (valid >> i) & 1:
+            return 1 << i
+    return 0
+
 def make_trace(path):
     rng = random.Random(2971029)
     cool = False
@@ -42,7 +51,8 @@ def make_trace(path):
             rescued = bool(motif and not cool)
             candidate = 0b110 if rescued else base
             rotating = greedy(validity, pairs, phase)
-            for grant in (candidate, rotating):
+            maximum = maxpair(validity, pairs)
+            for grant in (candidate, rotating, maximum):
                 assert (grant & ~validity) == 0
                 assert grant.bit_count() <= 2
                 selected = [pairs[i] for i in range(3) if (grant >> i) & 1]
