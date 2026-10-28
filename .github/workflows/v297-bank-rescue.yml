@@ -91,6 +91,21 @@ jobs:
           assert a['maxpairStrictlyBetterCases']>0
           print('V297_EXHAUSTIVE_MAXPAIR_DOMINANCE_PASS')
           PY
+      - name: Prospectively reproduce independent max-pair temporal domination and negative control
+        run: |
+          python3 research/v297/v297_maxpair_temporal_boundary.py > /tmp/v297_temporal_reproduced.json
+          python3 - <<'PY'
+          import json
+          a=json.load(open('/tmp/v297_temporal_reproduced.json'))
+          b=json.load(open('research/v297/V297_MAXPAIR_TEMPORAL_BOUNDARY_SUMMARY_20261029.json'))
+          assert len(a['rows']) == len(b['rows']) == 6
+          for observed, stored in zip(a['rows'], b['rows']):
+              assert observed['p']==stored['p'] and observed['a']==stored['a']
+              assert abs(observed['mean_observed_ratio']-stored['observedRatio'])<1e-12
+              assert abs(observed['prediction']['v297_over_maxpair']-stored['predictedRatio'])<1e-12
+          assert abs(a['non_markov_negative_control']['absolute_error']-b['negativeControl']['absoluteError'])<1e-12
+          print('V297_MAXPAIR_TEMPORAL_STRONG_CONTROL_PASS')
+          PY
       - name: Install free RTL and generic synthesis tools
         run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog yosys
       - name: Independent optimized rotating-control symbolic and bank audit
