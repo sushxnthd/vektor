@@ -22,8 +22,7 @@ module tb_v297;
     if(fd==0) $fatal(1,"missing independent trace");
     rst_n=1; #1; rst_n=0; #2; rst_n=1;
     while(!$feof(fd)) begin
-      n=$fscanf(fd,"%h %h %h %h %h %h\
-",valid,bank_a,bank_b,expected_candidate,expected_rotating,expected_maximum);
+      n=$fscanf(fd,"%h %h %h %h %h %h\n",valid,bank_a,bank_b,expected_candidate,expected_rotating,expected_maximum);
       if(n==6) begin
         #1;
         if(candidate !== expected_candidate || rotating !== expected_rotating || rotating_static !== expected_rotating || maximum !== expected_maximum || compact !== candidate) begin
