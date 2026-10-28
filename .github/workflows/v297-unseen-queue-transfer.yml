@@ -1,0 +1,48 @@
+name: V297 frozen unseen queue transfer kill
+on:
+  push:
+    branches: [research/v297-bounded-bank-rescue]
+    paths:
+      - 'research/v297/v297_unseen_queue_transfer.js'
+      - '.github/workflows/v297-unseen-queue-transfer.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prospective-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify original queue generator is unchanged
+        run: |
+          set -euo pipefail
+          actual="$(git hash-object research/v297/v297_persistent_queue.js)"
+          test "$actual" = 7e85e328c6d6d1b79ab7082a8ab0171cdb442657
+      - name: Run frozen unseen finite-queue transfer
+        run: |
+          set -euo pipefail
+          node research/v297/v297_unseen_queue_transfer.js | tee /tmp/v297_unseen_queue.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/v297_unseen_queue.json'))
+          assert x['seeds']==[17401,17417,17431,17443]
+          assert len(x['rows'])==5
+          assert [(r['regime'],r['arrivalsPerCycle']) for r in x['rows']]==[
+            ('motif3_burst37',3),('uniform16',3),('hot',1),
+            ('motif3_burst37',1),('hot',3)]
+          for r in x['rows']:
+            assert r['observations']['oracle']['portViolations']==0
+            assert r['observations']['v297']['portViolations']==0
+          print('V297_UNSEEN_QUEUE_TRANSFER_EVALUATED',x['allMaxpairNoWorse'])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v297-unseen-queue-transfer
+          path: /tmp/v297_unseen_queue.json
+          retention-days: 30
+          if-no-files-found: warn
