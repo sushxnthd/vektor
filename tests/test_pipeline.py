@@ -27,14 +27,21 @@ def test_operand_cache_reduces_rf_reads_on_reuse_kernel():
     assert cached.issue_utilization > 0.95
 
 
-def test_dependency_latency_can_be_hidden_by_wave_occupancy():
-    result = DependencyTileSimulator(
-        TileConfig(operand_cache_entries=64)
+def test_dependency_latency_and_operand_cache_write_policy_are_distinct():
+    # The former >95% result implicitly assumed coherent free cache updates
+    # after every destination overwrite. Preserve that as an ideal upper bound.
+    ideal = DependencyTileSimulator(
+        TileConfig(operand_cache_entries=64, operand_cache_write_policy="ideal_update")
+    ).run(dependency_fma_kernel())
+    conservative = DependencyTileSimulator(
+        TileConfig(operand_cache_entries=64, operand_cache_write_policy="invalidate")
     ).run(dependency_fma_kernel())
 
-    assert result.instructions == 32 * 64
-    assert result.dependency_stalls > 0
-    assert result.issue_utilization > 0.95
+    assert ideal.instructions == conservative.instructions == 32 * 64
+    assert ideal.dependency_stalls > 0
+    assert ideal.issue_utilization > 0.95
+    assert conservative.rf_reads >= ideal.rf_reads
+    assert conservative.cycles >= ideal.cycles
 
 
 def test_load_use_kernel_exposes_memory_latency():
