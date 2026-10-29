@@ -19,7 +19,7 @@ def exhaustive():
         events = [(i//2, *v) for i,v in enumerate(seq)]
         oracle = reference(events)
         assert len(oracle) <= 3
-        for policy in ('fifo','ingress','queue_merge','set2','banked'):
+        for policy in ('fifo','ingress','queue_merge','set2','set4','banked'):
             out = run(events,policy,capacity=4,ingress=2,return_digest=True)
             assert out['digest'] == oracle
             assert out['arrivals'] == len(events)
