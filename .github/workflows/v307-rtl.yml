@@ -1,0 +1,46 @@
+name: V307 clocked RTL and generic synthesis
+on:
+  push:
+    branches: [research/v307-bank-pressure-tiebreak]
+  pull_request:
+    paths:
+      - 'research/v307/**'
+      - '.github/workflows/v307-rtl.yml'
+  workflow_dispatch:
+jobs:
+  rtl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source RTL tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog yosys
+      - name: Python independent oracle vectors
+        run: |
+          cd research/v307
+          python3 gen_rtl_vectors.py > rtl_vectors.txt
+          test "$(wc -l < rtl_vectors.txt)" -eq 256
+      - name: Clocked RTL equivalence to independent oracle
+        run: |
+          iverilog -g2012 -s tb_v307_issue_select -o /tmp/v307.vvp research/v307/v307_issue_select.sv research/v307/tb_v307_issue_select.sv
+          vvp /tmp/v307.vvp | tee research/v307/rtl_simulation.log
+      - name: Matched generic synthesis (not placed/timed)
+        run: |
+          mkdir -p research/v307/synthesis
+          for mode in 0 1 2; do
+            echo "Synthesis MODE=$mode"
+            timeout 240s yosys -Q -p "read_verilog -sv research/v307/v307_issue_select.sv; hierarchy -top v307_issue_select -chparam MODE $mode; synth -top v307_issue_select; stat" > "research/v307/synthesis/mode_${mode}.log" 2>&1 || echo "MODE=${mode} SYNTHESIS FAILED OR TIMED OUT" | tee "research/v307/synthesis/mode_${mode}.failed"
+          done
+          for mode in 0 1; do
+            test ! -e "research/v307/synthesis/mode_${mode}.failed"
+            grep -q 'Number of cells:' "research/v307/synthesis/mode_${mode}.log"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v307-rtl-generic-synthesis
+          path: |
+            research/v307/rtl_simulation.log
+            research/v307/synthesis/
