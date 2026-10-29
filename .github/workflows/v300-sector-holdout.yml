@@ -1,0 +1,25 @@
+name: v300-frozen-sector-holdout
+
+on:
+  push:
+    branches:
+      - research/v300-release-aware-sector-fill
+  workflow_dispatch:
+
+jobs:
+  holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Independent small-state oracle and fault injection
+        run: python research/v300/sector_fill.py
+      - name: Frozen five-regime prospective holdout
+        run: python research/v300/sector_fill.py --holdout | tee v300_holdout.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v300-prospective-holdout
+          path: v300_holdout.json
