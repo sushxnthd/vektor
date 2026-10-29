@@ -1,0 +1,46 @@
+name: V301 matched RTL functional and generic synthesis gate
+on:
+  push:
+    branches: [research/v301-epoch-safe-scoreboard-coalescer]
+    paths: [research/v301/**, .github/workflows/v301-rtl-gate.yml]
+  workflow_dispatch:
+jobs:
+  rtl-and-synthesis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source RTL tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog yosys
+      - name: Generate independent oracle and conservation vectors
+        run: python3 research/v301/v301_rtl_oracle.py
+      - name: Clocked RTL versus independent cycle oracle
+        run: |
+          set -eu
+          for variant in 0 1; do
+            iverilog -g2012 -s tb_v301_rtl -Ptb_v301_rtl.FULL_CAM=$variant -o /tmp/v301_${variant}.vvp research/v301/v301_scoreboard_rtl.v research/v301/tb_v301_rtl.v
+            vvp /tmp/v301_${variant}.vvp
+          done
+      - name: Generic technology-independent synthesis, same interface
+        run: |
+          set -eu
+          mkdir -p research/v301/rtl_gate_logs
+          for variant in 0 1; do
+            yosys -Q -T -l research/v301/rtl_gate_logs/yosys_${variant}.log -p "read_verilog research/v301/v301_scoreboard_rtl.v; hierarchy -top v301_scoreboard_rtl -chparam FULL_CAM $variant; proc; opt; memory_map; opt; synth -top v301_scoreboard_rtl; check; stat"
+          done
+      - name: Matched pinned Nangate45 mapped synthesis (not routed timing)
+        run: |
+          set -eu
+          REV=eda8e552974d47a12616294dddf4012d892548d3
+          curl -fL --retry 3 --max-time 180 "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$REV/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib" -o /tmp/v301_nangate.lib
+          sha256sum /tmp/v301_nangate.lib | tee research/v301/rtl_gate_logs/liberty.sha256
+          for variant in 0 1; do
+            yosys -Q -T -l research/v301/rtl_gate_logs/nangate_${variant}.log -p "read_liberty -lib -ignore_miss_func -ignore_miss_dir /tmp/v301_nangate.lib; read_verilog research/v301/v301_scoreboard_rtl.v; hierarchy -top v301_scoreboard_rtl -chparam FULL_CAM $variant; synth -top v301_scoreboard_rtl -flatten; dfflibmap -liberty /tmp/v301_nangate.lib; abc -liberty /tmp/v301_nangate.lib; clean; check -assert; stat -liberty /tmp/v301_nangate.lib"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v301-rtl-functional-generic-synthesis
+          path: research/v301/rtl_gate_logs/
