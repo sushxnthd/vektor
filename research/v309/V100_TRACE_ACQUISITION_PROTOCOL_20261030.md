@@ -18,3 +18,7 @@
 
 ## Non-interference and kill conditions
 Keep the sole V309 qualification branch and draft PR #26. V287/V296/V297-V308 stay retired; no speculative scheduler is reactivated. No Kernellum writes. Do not call static PTX register-demand arithmetic a physical GPU bottleneck. If archive is inaccessible, malformed or contains no interpretable trace rows, preserve the failure and do not claim dynamic SASS evidence.
+
+
+## First hosted acquisition and controlled repair (after freeze)
+The initial hosted run #40947646950 downloaded the 2020 archive successfully and recorded SHA-256 \`aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1\`. It then stopped at the inventory parser because the historical archive contains tar link entries. This is an observed format issue, not an unavailable archive. The parser now records and skips links without following or extracting them; device entries remain forbidden. The exact observed digest is pinned for subsequent runs. No workload outcome or trace-row statistics were inspected in that failed run.
