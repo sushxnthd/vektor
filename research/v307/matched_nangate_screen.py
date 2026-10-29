@@ -84,13 +84,19 @@ def main():
     gate = None
     if complete:
         nominal = area(1, 10) <= .90 * area(2, 10) and area(1, 10) <= 1.20 * area(0, 10)
-        corners = all(area(1, load) < area(2, load) for load in (2, 30))
-        gate = bool(nominal and corners)
+        # Fail closed. Nominal gate can already falsify the candidate. This
+        # initial sweep intentionally does not map MODE=2 at the load corners;
+        # therefore a hypothetical nominal pass cannot claim a full pass.
+        corner_keys = [f"mode2_load{load}ff" for load in (2, 30)]
+        corners_available = all(k in results for k in corner_keys)
+        corners = (all(area(1, load) < area(2, load) for load in (2, 30))
+                   if corners_available else None)
+        gate = bool(nominal and corners is True)
     report = {"evidence_tier": "mapped Nangate45 cell area and ABC load sensitivity; no STA/route/power",
               "library_revision": REV, "library_sha256": libhash,
               "rtl_sha256": rtlhash, "abc_delay_target_ps_not_measured": 10000,
               "screen_frozen_before_mapping": ">=10% nominal area saving vs FUTURE-TIE, <=20% nominal area overhead vs MAX-NOW, smaller than FUTURE-TIE at 2/30fF",
-              "all_cases_complete": complete, "physical_area_screen_survives": gate,
+              "all_cases_complete": complete, "physical_area_screen_survives": gate,\n              "corner_vs_future_tie_available": (corners_available if complete else False),
               "cases": results}
     (OUT / "summary.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"complete": complete, "area_gate_survives": gate,
