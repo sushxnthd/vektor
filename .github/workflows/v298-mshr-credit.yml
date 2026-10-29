@@ -17,6 +17,7 @@ jobs:
         run: |
           python3 research/v298/v298_holdout.py > v298_holdout_full.json
           python3 research/v298/v298_independent_checker.py
+          python3 research/v298/v298_return_refill_checker.py
       - name: Preserve raw per-seed results
         if: always()
         uses: actions/upload-artifact@v4
