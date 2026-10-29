@@ -1,0 +1,36 @@
+name: V307 bank-pressure prospective pilot
+on:
+  push:
+    branches: [research/v307-bank-pressure-tiebreak]
+  pull_request:
+    paths:
+      - 'research/v307/**'
+      - '.github/workflows/v307.yml'
+  workflow_dispatch:
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check frozen source hashes
+        run: |
+          echo '868db459b4db9ac23ae4004b8eaa78359891cec5e4e8f7437a0098dd264e0d7a  research/v307/simulator.py' | sha256sum -c -
+          echo '70ce13a22a0fd567a7849bb7d210e1c48b66024bd176de4ae50c95fd4270cfdf  research/v307/test_simulator.py' | sha256sum -c -
+      - name: Independent oracle and frozen pilot
+        run: |
+          cd research/v307
+          python3 -m unittest -v test_simulator.py
+          python3 audit_pressure_boundary.py
+          python3 simulator.py --pilot > pilot.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('pilot.json'))
+          assert d['survival'] is True
+          assert abs(d['W1']['mean_vs_max_pct']-13.606143508771684)<1e-8
+          assert abs(d['W1']['mean_vs_future_pct']-(-0.38818340327710354))<1e-8
+          print('Frozen pilot reproduced; no holdout opened')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v307-frozen-pilot
+          path: research/v307/pilot.json
