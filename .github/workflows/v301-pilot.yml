@@ -22,7 +22,7 @@ jobs:
       - name: Execute frozen N1-N4 four-way control experiment
         run: python research/v301/set4_holdout.py > v301-set4-holdout.json
       - name: Print prospective decision
-        run: python -c "import json; print(json.dumps(json.load(open('v301-set4-holdout.json'))['decision'], indent=2))"
+        run: cat v301-set4-holdout.json
       - uses: actions/upload-artifact@v4
         with:
           name: v301-opened-pilot-and-frozen-set4
