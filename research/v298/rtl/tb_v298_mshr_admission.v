@@ -23,7 +23,7 @@ module tb_v298_mshr_admission;
     endgenerate
 
     integer initial_guard, free_slots, flags, policy, checked;
-    reg exp_crit, exp_bg, exp_block, exp_next;
+    reg exp_crit, exp_bg, exp_block, exp_next, exp_effective_guard;
 
     initial begin
         clk = 0; rst = 0; free_count = 0;
@@ -56,10 +56,16 @@ module tb_v298_mshr_admission;
             exp_next = exp_crit || dependent_cancel ? 1'b0 :
                        critical_return && dependent_known ? 1'b1 :
                        (initial_guard == 1);
+            // Independent cycle-level oracle: returns update free_count
+            // before arbitration. A newly returned credit must not be
+            // immediately refilled by background on a dependent chain.
+            exp_effective_guard = !dependent_cancel &&
+                                  ((initial_guard == 1) ||
+                                   (critical_return && dependent_known));
             for (policy = 0; policy < 4; policy = policy + 1) begin
                 exp_block = (policy == 1 && free_slots == 1) ||
-                            (policy == 2 && initial_guard == 1 && free_slots == 1) ||
-                            (policy == 3 && initial_guard == 1 && free_slots == 1 &&
+                            (policy == 2 && exp_effective_guard && free_slots == 1) ||
+                            (policy == 3 && exp_effective_guard && free_slots == 1 &&
                              !bg_finishes_before_dep);
                 exp_bg = (free_slots > 0) && !crit_ready && bg_pending && !exp_block;
                 if (crit_issue[policy] !== exp_crit ||
