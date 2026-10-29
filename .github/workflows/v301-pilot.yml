@@ -1,0 +1,25 @@
+name: V301 prospective pilot (holdouts remain unopened)
+on:
+  push:
+    branches: [research/v301-epoch-safe-scoreboard-coalescer]
+  pull_request:
+    paths: [research/v301/**, .github/workflows/v301-pilot.yml]
+jobs:
+  v301-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Unit and independent conservation checks
+        run: |
+          python research/v301/scoreboard.py --selftest
+          python research/v301/independent_audit.py
+      - name: Reproduce opened pilot only
+        run: python research/v301/scoreboard.py > v301-pilot.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v301-opened-pilot
+          path: v301-pilot.json
