@@ -1,0 +1,58 @@
+name: V298 matched Nangate45 cell mapping
+on:
+  push:
+    branches: [research/v298-dependent-mshr-credit]
+    paths:
+      - 'research/v298/rtl/v298_mshr_admission.v'
+      - 'research/v298/rtl/tb_v298_mshr_admission.v'
+      - '.github/workflows/v298-nangate-mapped.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mapped:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source synthesis and simulation
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq yosys iverilog curl
+          mkdir -p build/v298/nangate
+          yosys -V | tee build/v298/nangate/yosys-version.txt
+          iverilog -V 2>&1 | head -n 3 > build/v298/nangate/iverilog-version.txt
+      - name: Retrieve fixed Nangate45 Liberty revision
+        run: |
+          set -euo pipefail
+          rev=eda8e552974d47a12616294dddf4012d892548d3
+          curl -fL --retry 3 --max-time 180 \
+            "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/$rev/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib" \
+            -o build/v298/nangate/NangateOpenCellLibrary_typical.lib
+          sha256sum build/v298/nangate/NangateOpenCellLibrary_typical.lib > build/v298/nangate/liberty.sha256
+      - name: Exhaustive corrected clocked interface test
+        run: |
+          set -euo pipefail
+          iverilog -g2012 -s tb_v298_mshr_admission -o /tmp/v298_nangate_tb \
+            research/v298/rtl/v298_mshr_admission.v \
+            research/v298/rtl/tb_v298_mshr_admission.v
+          vvp /tmp/v298_nangate_tb | tee build/v298/nangate/rtl.log
+          python3 research/v298/v298_return_refill_checker.py | tee build/v298/nangate/return_refill.log
+      - name: Map four identical-interface policies to Nangate45
+        run: |
+          set -euo pipefail
+          lib=build/v298/nangate/NangateOpenCellLibrary_typical.lib
+          for policy in 0 1 2 3; do
+            yosys -Q -l "build/v298/nangate/policy_${policy}.log" -p \
+              "read_verilog research/v298/rtl/v298_mshr_admission.v; chparam -set POLICY ${policy} v298_mshr_admission; synth -top v298_mshr_admission; dfflibmap -liberty $lib; abc -liberty $lib; clean; check -assert; stat -liberty $lib; write_verilog -noattr build/v298/nangate/policy_${policy}_mapped.v"
+          done
+          echo "Mapped library area is not placed/routed area or extracted-RC timing." > build/v298/nangate/EVIDENCE_TIER.txt
+      - name: Preserve full mapping evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v298-matched-nangate45
+          path: build/v298/nangate/
+          retention-days: 30
+          if-no-files-found: warn
