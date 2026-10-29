@@ -1,0 +1,69 @@
+name: V309 authentic V100 dynamic SASS profile and independent audit
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/v100_sass_profile.py
+      - research/v309/audit_v100_sass_profile.py
+      - research/v309/V100_DYNAMIC_PROFILE_PROTOCOL_20261030.md
+      - .github/workflows/v309-v100-dynamic-profile.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Decoder and independent checker mutation tests
+        run: |
+          python3 research/v309/v100_sass_profile.py --selftest
+          python3 research/v309/audit_v100_sass_profile.py --selftest
+      - name: Download pinned 2020 V100 Rodinia SASS traces (not RTX 5090)
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Full dynamic SASS descriptor extraction and independent audit
+        run: |
+          python3 research/v309/v100_sass_profile.py /tmp/v309-v100-rodinia.tgz > v309-v100-dynamic-profile.json
+          python3 research/v309/audit_v100_sass_profile.py v309-v100-dynamic-profile.json > v309-v100-dynamic-audit.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('v309-v100-dynamic-profile.json'))
+          g=d['global']
+          print(json.dumps({'trace_files':d['trace_files'],'applications':d['application_count'],
+             'active_rows':g['active'],'zero_mask_rows':g['zero_mask'],
+             'unsupported_rows':g['unsupported'],'memory_rows':g['memory'],
+             'source_occurrences':g['source_occurrences'],
+             'unique_sources':g['unique_sources'],
+             'duplicate_sources':g['duplicate_sources'],
+             'r255_occurrences':g['r255_occurrences'],
+             'conditional_collision_mod2_without_r255':g['collide_mod2_without_r255'],
+             'conditional_collision_mod4_without_r255':g['collide_mod4_without_r255'],
+             'conditional_collision_mod8_without_r255':g['collide_mod8_without_r255']},indent=2))
+          for app,x in d['applications'].items():
+             print(app, 'active',x['active'],'unsupported',x['unsupported'],
+                   'mod2',x['collide_mod2_without_r255'])
+          # Fail closed if more than 1% of instruction-like rows are unparsed.
+          assert g['unsupported']*100 <= max(1,g['rows']+g['unsupported']), 'too many unsupported rows'
+          PY
+      - name: Preserve full external demand descriptors and negative evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-authentic-v100-dynamic-sass-profile
+          path: |
+            v309-v100-dynamic-profile.json
+            v309-v100-dynamic-audit.json
+          if-no-files-found: warn
