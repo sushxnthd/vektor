@@ -6,6 +6,7 @@ Does NOT import the primary parser or its accounting functions.
 from __future__ import annotations
 import argparse,copy,hashlib,io,json,re,tarfile
 from collections import defaultdict
+from pathlib import PurePosixPath
 
 SHA='aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1'
 CAP=67108864
@@ -73,7 +74,7 @@ def recompute(path):
             if m.name.startswith('/') or '..' in m.name.split('/') or m.isdev():raise ValueError('unsafe member')
             if not m.isfile() or not m.name.endswith('.traceg'):continue
             if m.size>2*1024**3:raise ValueError('oversized member')
-            parts=m.name.split('/')
+            parts=PurePosixPath(m.name).parts
             if len(parts)<5:raise ValueError('bad trace path')
             app=parts[2];apps[app]['trace_files']+=1
             f=tar.extractfile(m)
