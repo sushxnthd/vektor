@@ -1,4 +1,4 @@
-name: V301 controls and frozen set4 falsification
+name: V301 controls, frozen set4 falsification, and bounded saturation
 on:
   push:
     branches: [research/v301-epoch-safe-scoreboard-coalescer]
@@ -17,15 +17,19 @@ jobs:
         run: |
           python research/v301/scoreboard.py --selftest
           python research/v301/independent_audit.py
+          python research/v301/bounded_backpressure.py --selftest
       - name: Reproduce opened pilot only
         run: python research/v301/scoreboard.py > v301-pilot.json
       - name: Execute frozen N1-N4 four-way control experiment
         run: python research/v301/set4_holdout.py > v301-set4-holdout.json
+      - name: Reproduce bounded-source saturation sensitivity
+        run: python research/v301/bounded_backpressure.py > v301-bounded-saturation.json
       - name: Print prospective decision
         run: cat v301-set4-holdout.json
       - uses: actions/upload-artifact@v4
         with:
-          name: v301-opened-pilot-and-frozen-set4
+          name: v301-pilot-set4-and-bounded-saturation
           path: |
             v301-pilot.json
             v301-set4-holdout.json
+            v301-bounded-saturation.json
