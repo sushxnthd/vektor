@@ -185,13 +185,14 @@ ret;
     # Mutant control: removing operand delimiters must not silently pass.
     for bad in [body.replace("add.u32 %r1, %r2, %r2;", "add.u32 %r1, %r2, %r2"),
                 body.replace("fma.rn.f32", "unknown_op.f32"),
-                body.replace("[ %rd1 ]", "[ %rd1 }")]:
+                body.replace("[ %rd1 ]", "[ %rd1 }"),
+                body.replace("%tid.x", "%mystery")]:
         try:
             parse_ptx(bad)
         except ValueError:
             continue
         raise AssertionError("malformed/mutated PTX escaped fail-closed parser")
-    return {"selftest": "pass", "mutants_detected": 3}
+    return {"selftest": "pass", "mutants_detected": 4}
 
 
 def main() -> None:
