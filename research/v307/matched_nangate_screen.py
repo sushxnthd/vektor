@@ -96,7 +96,8 @@ def main():
               "library_revision": REV, "library_sha256": libhash,
               "rtl_sha256": rtlhash, "abc_delay_target_ps_not_measured": 10000,
               "screen_frozen_before_mapping": ">=10% nominal area saving vs FUTURE-TIE, <=20% nominal area overhead vs MAX-NOW, smaller than FUTURE-TIE at 2/30fF",
-              "all_cases_complete": complete, "physical_area_screen_survives": gate,\n              "corner_vs_future_tie_available": (corners_available if complete else False),
+              "all_cases_complete": complete, "physical_area_screen_survives": gate,
+              "corner_vs_future_tie_available": (corners_available if complete else False),
               "cases": results}
     (OUT / "summary.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"complete": complete, "area_gate_survives": gate,
