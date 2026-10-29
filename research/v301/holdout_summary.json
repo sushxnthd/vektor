@@ -1,0 +1,130 @@
+{
+  "schema": "v301-frozen-holdout-mean-v1",
+  "date": "2026-10-29",
+  "seeds": "101..120 inclusive",
+  "offered_cycles_per_seed": 5000,
+  "lanes": 4,
+  "queue_entries": 8,
+  "metric": "arrivals / total cycles until lossless drain; not GPU IPC",
+  "regimes": {
+    "H1_predicted_win": {
+      "offered": 0.6,
+      "warps": 48,
+      "hot": 0.55,
+      "epoch_period": 1024,
+      "rate": {
+        "fifo": 0.999917,
+        "ingress": 1.407043,
+        "queue_merge": 2.344153,
+        "set2": 2.005844,
+        "banked": 1.290044
+      },
+      "cycles": {
+        "fifo": 11984.9,
+        "ingress": 8517.5,
+        "queue_merge": 5112.6,
+        "set2": 5975.2,
+        "banked": 9289.7
+      },
+      "unique_full_batch_prediction": 2.700175,
+      "unique_full_batch_observed": 2.708713,
+      "gate": "pass"
+    },
+    "H2_predicted_no_win": {
+      "offered": 0.9,
+      "warps": 256,
+      "hot": 0,
+      "epoch_period": 1024,
+      "rate": {
+        "fifo": 0.999944,
+        "ingress": 1.003904,
+        "queue_merge": 1.031981,
+        "set2": 1.018958,
+        "banked": 1.875179
+      },
+      "cycles": {
+        "fifo": 18002.5,
+        "ingress": 17931.5,
+        "queue_merge": 17443.65,
+        "set2": 17666.6,
+        "banked": 9600.05
+      },
+      "unique_full_batch_prediction": 3.976623,
+      "unique_full_batch_observed": 3.976107,
+      "gate": "pass"
+    },
+    "H3_low_load": {
+      "offered": 0.2,
+      "warps": 32,
+      "hot": 0.5,
+      "epoch_period": 1024,
+      "rate": {
+        "fifo": 0.796286,
+        "ingress": 0.796461,
+        "queue_merge": 0.796485,
+        "set2": 0.796485,
+        "banked": 0.796509
+      },
+      "cycles": {
+        "fifo": 5002.35,
+        "ingress": 5001.25,
+        "queue_merge": 5001.1,
+        "set2": 5001.1,
+        "banked": 5000.95
+      },
+      "gate": "pass"
+    },
+    "H4_hot_set2_tie": {
+      "offered": 0.95,
+      "warps": 16,
+      "hot": 0.9,
+      "epoch_period": 1024,
+      "rate": {
+        "fifo": 0.999947,
+        "ingress": 2.81806,
+        "queue_merge": 3.798889,
+        "set2": 3.798774,
+        "banked": 1.052716
+      },
+      "cycles": {
+        "fifo": 19001.9,
+        "ingress": 6742.85,
+        "queue_merge": 5001.7,
+        "set2": 5001.85,
+        "banked": 18049.45
+      },
+      "unique_full_batch_prediction": 1.371422,
+      "unique_full_batch_observed": 1.374422,
+      "gate": "pass"
+    },
+    "H5_fast_epoch": {
+      "offered": 0.6,
+      "warps": 48,
+      "hot": 0.55,
+      "epoch_period": 16,
+      "rate": {
+        "fifo": 0.999917,
+        "ingress": 1.395064,
+        "queue_merge": 2.21106,
+        "set2": 1.940849,
+        "banked": 1.290044
+      },
+      "cycles": {
+        "fifo": 11984.9,
+        "ingress": 8590.6,
+        "queue_merge": 5420.5,
+        "set2": 6175.15,
+        "banked": 9289.7
+      },
+      "unique_full_batch_prediction": 2.700175,
+      "unique_full_batch_observed": 2.708713,
+      "gate": "diagnostic"
+    }
+  },
+  "limitations": [
+    "synthetic unbounded producer backlog",
+    "no physical area or timing",
+    "single-port scoreboard hypothesis unverified",
+    "merged-entry age is not per-event latency"
+  ]
+}
