@@ -18,7 +18,7 @@ The local selftest passed 12 conservation/backpressure configurations. The full 
 | S3 hot-warp demand | 3.200525 | 3.200525 | **100.0000%** | 1.110966 | 0.00% |
 | S4 low offered load | 0.599025 | 0.599025 | **100.0000%** | 0.599028 | 0.00% |
 
-Source-stall fraction for set4 is 33.05% in S1 and 67.89% in S2. Full CAM's S1 advantage is only 4.855% relative to set4; its S2 advantage is 1.120%. S3/S4 tie. The two-bank alternative dominates the uniform workload. The earlier overdriven drain-rate finding therefore was not simply an artifact of unbounded upstream storage, **but neither does bounded backpressure rescue V301 from the stronger set4 control**.
+Across the eight individual seeds, set4/full ratios range from **94.8146% to 95.6626%** in S1 and **98.7784% to 99.1505%** in S2; all S3/S4 seeds tie. The S1 mean is near the 95% threshold, so it is not evidence of a robust greater-than-5% CAM gain. Source-stall fraction for set4 is 33.05% in S1 and 67.89% in S2. Full CAM's S1 advantage is only 4.855% relative to set4; its S2 advantage is 1.120%. S3/S4 tie. The two-bank alternative dominates the uniform workload. The earlier overdriven drain-rate finding therefore was not simply an artifact of unbounded upstream storage, **but neither does bounded backpressure rescue V301 from the stronger set4 control**.
 
 ## Interpretation and limitations
 
