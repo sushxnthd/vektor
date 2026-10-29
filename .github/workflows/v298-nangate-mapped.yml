@@ -45,7 +45,7 @@ jobs:
           lib=build/v298/nangate/NangateOpenCellLibrary_typical.lib
           for policy in 0 1 2 3; do
             yosys -Q -l "build/v298/nangate/policy_${policy}.log" -p \
-              "read_verilog research/v298/rtl/v298_mshr_admission.v; chparam -set POLICY ${policy} v298_mshr_admission; synth -top v298_mshr_admission; dfflibmap -liberty $lib; abc -liberty $lib; clean; check -assert; stat -liberty $lib; write_verilog -noattr build/v298/nangate/policy_${policy}_mapped.v"
+              "read_verilog research/v298/rtl/v298_mshr_admission.v; chparam -set POLICY ${policy} v298_mshr_admission; synth -top v298_mshr_admission; dfflibmap -liberty $lib; abc -liberty $lib; read_liberty -lib $lib; clean; check -assert; stat -liberty $lib; write_verilog -noattr build/v298/nangate/policy_${policy}_mapped.v"
           done
           echo "Mapped library area is not placed/routed area or extracted-RC timing." > build/v298/nangate/EVIDENCE_TIER.txt
       - name: Preserve full mapping evidence, including failures
