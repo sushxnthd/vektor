@@ -1,12 +1,13 @@
 name: V307 clocked RTL and generic synthesis
 on:
-  push:
-    branches: [research/v307-bank-pressure-tiebreak]
   pull_request:
     paths:
       - 'research/v307/**'
       - '.github/workflows/v307-rtl.yml'
   workflow_dispatch:
+concurrency:
+  group: v307-rtl-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   rtl:
     runs-on: ubuntu-latest
