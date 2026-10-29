@@ -40,7 +40,7 @@ def inspect(path: str) -> dict:
               'member_count': 0, 'trace_member_count': 0, 'trace_bytes_declared': 0,
               'sampled_trace_members': 0, 'sampled_row_prefixes': 0,
               'sampled_rows_matching_old_nvbit_format': 0,
-              'samples': [], 'extensions': {}, 'non_trace_examples': []}
+              'samples': [], 'extensions': {}, 'non_trace_examples': [], 'skipped_link_members': 0}
     try:
         with tarfile.open(fileobj=io.BytesIO(blob), mode='r:gz') as tar:
             for member in tar:
@@ -48,8 +48,12 @@ def inspect(path: str) -> dict:
                 if result['member_count'] > MAX_MEMBERS:
                     raise ValueError('too many members')
                 validate_name(member.name)
-                if member.issym() or member.islnk() or member.isdev():
-                    raise ValueError('link/device member rejected')
+                if member.isdev():
+                    raise ValueError('device member rejected')
+                if member.issym() or member.islnk():
+                    # Metadata-only scan: never follow or extract archive links.
+                    result['skipped_link_members'] += 1
+                    continue
                 if member.size < 0 or member.size > MAX_MEMBER_BYTES:
                     raise ValueError('member size exceeds cap')
                 if not member.isfile():
@@ -136,10 +140,14 @@ if __name__ == '__main__':
     a = argparse.ArgumentParser()
     a.add_argument('archive', nargs='?')
     a.add_argument('--selftest', action='store_true')
+    a.add_argument('--expected-sha256', default=None)
     x = a.parse_args()
     if x.selftest:
         print(json.dumps(selftest(), sort_keys=True))
     if x.archive:
-        print(json.dumps(inspect(x.archive), indent=2, sort_keys=True))
+        result = inspect(x.archive)
+        if x.expected_sha256 and result['archive_sha256'] != x.expected_sha256:
+            raise ValueError('external archive SHA-256 changed from frozen exploratory acquisition')
+        print(json.dumps(result, indent=2, sort_keys=True))
     elif not x.selftest:
         a.error('archive required')
