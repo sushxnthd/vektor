@@ -82,6 +82,10 @@ class _OperandCache:
         if len(self._lru) > self.capacity:
             self._lru.popitem(last=False)
 
+    def invalidate(self, key: tuple[int, int]) -> None:
+        """Discard a stale source copy when the wave writes this register."""
+        self._lru.pop(key, None)
+
 
 class DependencyTileSimulator:
     """Deterministic issue/dependency model for one V-Tile.
@@ -229,6 +233,11 @@ class DependencyTileSimulator:
                     memory_bytes += ins.memory_bytes
 
                 if ins.dst is not None:
+                    # A new architectural version is pending. The in-order
+                    # dependency check prevents consumers from reading it
+                    # before writeback; do not reuse the prior cached value.
+                    # This is conservative: no write-through/bypass is modeled.
+                    cache.invalidate((wave.wave_id, ins.dst))
                     if hierarchy_result is not None:
                         wave.ready_at[ins.dst] = hierarchy_result.completion_cycle
                     else:
