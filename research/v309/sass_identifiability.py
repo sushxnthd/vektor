@@ -134,7 +134,7 @@ def analytic_extremes(demands, ports):
 
 
 def fixture(pairs):
-    return '\n'.join(f'0 0 0 0 {i*16:04x} ffffffff 1 R9 IADD3 2 R{a} R{b} 0' for i,(a,b) in enumerate(pairs))
+    return '\n'.join(f'0 0 0 0 {i*16:04x} ffffffff 1 R9 IMAD.MOV.U32 2 R{a} R{b} 0' for i,(a,b) in enumerate(pairs))
 
 
 def experiment():
@@ -162,7 +162,7 @@ def selftest():
     assert len(parse_trace('31 0 0 3 0000 ffffffff 1 R1 IMAD.MOV.U32 2 R255 R255 0')) == 1
     assert parse_trace(fixture([(0,0)])) == [(0,)]
     x = fixture([(0,1)])
-    mutants = [x.replace('ffffffff','00000000'), x.replace('IADD3','?BAD'),
+    mutants = [x.replace('ffffffff','00000000'), x.replace('IMAD.MOV.U32','?BAD'),
                x.replace(' 2 R0 R1 0',' 3 R0 R1 0'), x.replace(' 2 R0 R1 0',' 2 R0 R1 4'),
                x.replace(' 2 R0 R1 0',' 2 R0 RX 0'), x.replace('0 0 0 0','-1 0 0 0'),
                x.replace(' 2 R0 R1 0',' 2 R0 R1 0 GARBAGE')]
