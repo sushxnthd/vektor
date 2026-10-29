@@ -32,3 +32,9 @@ Kill V302 before RTL. The decisive equal-entry LRU control eliminates its condit
 Reproduce with Python 3: `python3 research/v302/sim.py > v302_holdout.json`. The script is standard-library-only; it emits full per-policy metrics and all frozen gates. Pilot: `python3 research/v302/sim.py --pilot`.
 
 **Evidence tier:** executable synthetic falsification only. No RTL simulation, Nangate45 synthesis, placement, CTS, extracted-RC, electrical signoff, GPU IPC, power, tile-level speedup or RTX-5090 equivalence.
+
+## Independent predictive boundary check (classical control only)
+
+For four lanes independently selecting keys with probabilities p_k, the expected number of distinct keys after warp-local aggregation is U = sum_k [1 - (1 - p_k)^4]. With one downstream transaction per cycle, four warps, and per-warp activity rate r, the FIFO control has the first-order saturated-service prediction T = min(16r, 4/U) logical updates per cycle. This is a **classical occupancy identity**, not a novel V302 mechanism law or a guarantee for a general GPU.
+
+The separate standard-library checker in `research/v302/law.py` predicted FIFO rates on the five previously frozen regimes: H1 1.622850 vs observed 1.622739; H2 1.005878 vs 1.005799; H3 1.622850 vs 1.622082; H4 0.800000 vs 0.799413; H5 2.517623 vs 2.517409. Largest relative error: **0.0734%** (H4). This corroborates the synthetic control's traffic accounting, **not** LFU's incremental value or any physical speedup. The checker runs in hosted CI and outputs raw predictions.
