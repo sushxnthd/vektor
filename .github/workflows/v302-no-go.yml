@@ -28,7 +28,11 @@ jobs:
           assert not r['survives']
           print('Reproduced V302 prospective NO-GO:', r['regimes']['H1']['lfu_vs_lru'])
           PY
+      - name: Independent classical occupancy-law check
+        run: python3 research/v302/law.py v302_holdout.json > v302_law.json
       - uses: actions/upload-artifact@v4
         with:
           name: v302-frozen-holdout
-          path: v302_holdout.json
+          path: |
+            v302_holdout.json
+            v302_law.json
