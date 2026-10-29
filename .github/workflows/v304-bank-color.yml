@@ -1,0 +1,33 @@
+name: V304 static bank-coloring falsification
+on:
+  push:
+    branches:
+      - research/v304-warp-colored-rf-banks
+  workflow_dispatch:
+jobs:
+  frozen-holdout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Focused independent checks
+        run: |
+          python -m pip install pytest
+          python -m pytest -q research/v304/test_bank_color.py
+      - name: Reproduce all frozen seeds and assert no-go
+        run: |
+          python -m research.v304.bank_color > v304-results.json
+          python - <<'PY'
+          import json
+          r=json.load(open('v304-results.json'))
+          assert r['checks']=={'mapping_checks':96,'pair_oracle_checks':3072}
+          assert not r['survives']
+          assert r['summary']['H1_aligned']['add_vs_xor_pct']==0.0
+          print('V304 NO-GO reproduced; H1 candidate ties strong XOR control')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v304-frozen-all-seeds
+          path: v304-results.json
