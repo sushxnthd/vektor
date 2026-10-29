@@ -20,6 +20,8 @@ jobs:
         run: python3 research/v309/ptx_operand_audit.py --selftest
       - name: Pinned external compiler-generated PTX
         run: python3 research/v309/ptx_operand_audit.py --selftest --external --output research/v309/ptx_external_results.json
+      - name: Independent provenance and arithmetic mutation audit
+        run: python3 research/v309/audit_results.py research/v309/ptx_external_results.json
       - name: Preserve raw static evidence
         if: always()
         uses: actions/upload-artifact@v4
