@@ -125,7 +125,7 @@ def parse_ptx(source: str) -> dict:
         all_tokens = TOKEN.findall(src_text)
         # Only data/predicate registers are counted. PTX special registers
         # such as %tid.x and %ctaid.x do not imply register-file reads.
-        special = re.compile(r"%(?:tid|ctaid|ntid|nctaid)\\.[xyz]|%(?:laneid|warpid|smid|clock|clock64|gridid|nwarpid)")
+        special = re.compile(r"%(?:tid|ctaid|ntid|nctaid)\.[xyz]|%(?:laneid|warpid|smid|clock|clock64|gridid|nwarpid)")
         unknown = [x for x in all_tokens if not (
             DATA.fullmatch(x) or PRED.fullmatch(x) or special.fullmatch(x)
         )]
