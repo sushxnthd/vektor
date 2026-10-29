@@ -37,7 +37,7 @@ def merge_batch(batch):
 
 
 def run(events, policy, capacity=8, ingress=4, banks=2, return_digest=False):
-    assert policy in ('fifo', 'ingress', 'queue_merge', 'banked', 'set2')
+    assert policy in ('fifo', 'ingress', 'queue_merge', 'banked', 'set2', 'set4')
     q = deque()
     pending = deque()
     received = defaultdict(int)
@@ -82,7 +82,7 @@ def run(events, policy, capacity=8, ingress=4, banks=2, return_digest=False):
         while pending and count < ingress:
             ev = pending[0]
             key = (ev[1], ev[2])
-            if policy in ('queue_merge', 'set2'):
+            if policy in ('queue_merge', 'set2', 'set4'):
                 found = next((j for j, old in enumerate(q) if (old[1], old[2]) == key), None)
                 if found is not None:
                     old = q[found]
@@ -97,9 +97,12 @@ def run(events, policy, capacity=8, ingress=4, banks=2, return_digest=False):
                 pending.popleft()
                 count += 1
                 continue
-            if policy == 'set2':
-                set_idx = ev[1] % (capacity // 2)
-                if sum(1 for old in q if old[1] % (capacity // 2) == set_idx) >= 2:
+            if policy in ('set2', 'set4'):
+                ways = 2 if policy == 'set2' else 4
+                assert capacity % ways == 0 and capacity >= ways
+                num_sets = capacity // ways
+                set_idx = ev[1] % num_sets
+                if sum(1 for old in q if old[1] % num_sets == set_idx) >= ways:
                     break
             if len(q) >= capacity:
                 break
@@ -125,7 +128,7 @@ def run(events, policy, capacity=8, ingress=4, banks=2, return_digest=False):
 
 def experiment(seed, cycles=5000, lanes=4, offered=.8, warps=32, hot=0., epoch_period=1024):
     events = stream(seed, cycles, lanes, offered, warps, hot, epoch_period=epoch_period)
-    return {p: run(events, p) for p in ('fifo', 'ingress', 'queue_merge', 'banked', 'set2')}
+    return {p: run(events, p) for p in ('fifo', 'ingress', 'queue_merge', 'banked', 'set2', 'set4')}
 
 
 def expected_unique(warps, hot, lanes):
@@ -141,7 +144,7 @@ def selftest():
     for s in range(8):
         for w in (1,2,4,16):
             events=stream(s, 70, 4, .8, w, .4)
-            for p in ('fifo','ingress','queue_merge','banked'):
+            for p in ('fifo','ingress','queue_merge','banked','set4'):
                 run(events,p,capacity=3)
     print('selftest: 128 lossless policy/configuration runs passed')
 
