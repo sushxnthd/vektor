@@ -1,0 +1,40 @@
+name: V299 TLB fanout prospective falsification
+on:
+  push:
+    branches: [research/v299-tlb-fanout-retention]
+  pull_request:
+    paths:
+      - 'research/v299/**'
+      - '.github/workflows/v299-tlb-fanout.yml'
+  workflow_dispatch:
+
+jobs:
+  synthetic-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent exhaustive checker and negative control
+        run: python3 research/v299/v299_independent_checker.py
+      - name: Controller invariants
+        run: python3 research/v299/v299_tlb_fanout.py --selftest
+      - name: Reproduce frozen synthetic holdout
+        run: python3 research/v299/v299_tlb_fanout.py --evaluate > v299_holdout.json
+      - name: Check frozen no-go evidence
+        run: |
+          python3 - <<'PY'
+          import json
+          x=json.load(open('v299_holdout.json'))['regimes']
+          assert x['phase']['v299_stall_advantage_fraction'] >= 0.03
+          assert abs(x['uniform']['v299_stall_advantage_fraction']) <= 0.01
+          assert x['burst']['v299_stall_advantage_fraction'] < -0.05
+          assert x['scan']['v299_stall_advantage_fraction'] < -0.05
+          print('frozen prospective predictions and robustness kill reproduced')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v299-frozen-holdout
+          path: v299_holdout.json
