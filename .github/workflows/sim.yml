@@ -44,3 +44,11 @@ jobs:
         with:
           name: scheduler-topology-results
           path: scheduler_topology_results.json
+
+      - name: V303 independent coherence audit and frozen sensitivity
+        run: python -m research.v303.bench > v303_cache_coherence.json
+      - name: Upload V303 audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: v303-cache-coherence
+          path: v303_cache_coherence.json
