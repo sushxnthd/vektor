@@ -52,3 +52,11 @@ jobs:
         with:
           name: v303-cache-coherence
           path: v303_cache_coherence.json
+
+      - name: Run V303 finite-port prospective no-go experiment
+        run: python -m research.v303.port_budget > v303_port_budget.json
+      - name: Upload V303 finite-port falsification
+        uses: actions/upload-artifact@v4
+        with:
+          name: v303-port-budget-no-go
+          path: v303_port_budget.json
