@@ -24,14 +24,20 @@ module v298_mshr_admission #(
 );
     wire has_credit = |free_count;
     wire last_credit = (free_count == 3'd1);
+    // Returns have already freed credits in free_count. The dependent
+    // scoreboard event must therefore reserve that credit combinationally
+    // on THIS cycle, not one cycle later via guard_q.
+    // Cancellation takes precedence over an arriving dependency event.
+    wire effective_guard = !dependent_cancel &&
+                           (guard_q || (critical_return && dependent_known));
     wire block_bg;
 
     assign crit_issue = has_credit && crit_ready;
     assign block_bg =
         (POLICY == 0) ? 1'b0 :
         (POLICY == 1) ? last_credit :
-        (POLICY == 2) ? (guard_q && last_credit) :
-        (POLICY == 3) ? (guard_q && last_credit && !bg_finishes_before_dep) :
+        (POLICY == 2) ? (effective_guard && last_credit) :
+        (POLICY == 3) ? (effective_guard && last_credit && !bg_finishes_before_dep) :
         1'b1;
 
     assign bg_issue = has_credit && !crit_ready && bg_pending && !block_bg;
