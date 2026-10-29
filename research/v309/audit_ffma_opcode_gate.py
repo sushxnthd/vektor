@@ -92,7 +92,18 @@ def recompute(path):
 
 def audit(report,expected):
     for k in ('global','applications','opcode_bases'):
-        if report.get(k)!=expected[k]:raise ValueError('independent '+k+' mismatch')
+        if report.get(k)!=expected[k]:
+            if isinstance(report.get(k),dict) and isinstance(expected[k],dict):
+                keys=sorted(set(report[k])|set(expected[k]))
+                for item in keys:
+                    left=report[k].get(item);right=expected[k].get(item)
+                    if left!=right:
+                        if isinstance(left,dict) and isinstance(right,dict):
+                            for metric in sorted(set(left)|set(right)):
+                                if left.get(metric)!=right.get(metric):
+                                    raise ValueError('independent '+k+' mismatch '+str(item)+'/'+str(metric)+': primary='+str(left.get(metric))+' audit='+str(right.get(metric)))
+                        raise ValueError('independent '+k+' mismatch '+str(item)+': primary='+str(left)+' audit='+str(right))
+            raise ValueError('independent '+k+' mismatch')
     g=expected['global']
     if not g['active'] or g['unsupported']:raise ValueError('unsupported rows')
     if g['all_p2_extra']!=g['ffma_p2_extra']+g['nonffma_p2_extra']:raise ValueError('P2 conservation')
