@@ -1,0 +1,30 @@
+name: V308 prospective two-bank collector falsification
+on:
+  pull_request:
+    paths:
+      - 'research/v308/**'
+      - '.github/workflows/v308.yml'
+  workflow_dispatch:
+concurrency:
+  group: v308-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit and exhaustive legality checks
+        run: |
+          cd research/v308
+          python3 -m unittest -v test_collector.py
+      - name: Frozen prospective replay and independent bank-demand audit
+        run: |
+          cd research/v308
+          python3 collector.py > holdout.json
+          python3 audit.py
+      - name: Preserve raw prospective evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v308-prospective-no-go
+          path: research/v308/holdout.json
