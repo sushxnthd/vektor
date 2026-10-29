@@ -43,6 +43,9 @@ class TileConfig:
     rf_banks: int = 16
     rf_read_ports_per_bank: int = 2
     operand_cache_entries: int = 64
+    # invalidate is coherent without an extra operand-cache write path.
+    # ideal_update assumes a free coherent cache update and is an upper bound.
+    operand_cache_write_policy: str = "invalidate"
     memory_latency: int = 120
     max_outstanding_loads: int = 64
 
@@ -71,6 +74,9 @@ class _OperandCache:
 
     def contains(self, key: tuple[int, int]) -> bool:
         return key in self._lru
+
+    def invalidate(self, key: tuple[int, int]) -> None:
+        self._lru.pop(key, None)
 
     def touch(self, key: tuple[int, int]) -> None:
         if self.capacity <= 0:
@@ -110,6 +116,8 @@ class DependencyTileSimulator:
             return SimulationResult(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0)
 
         c = self.config
+        if c.operand_cache_write_policy not in ("invalidate", "ideal_update"):
+            raise ValueError("operand_cache_write_policy must be invalidate or ideal_update")
         cache = _OperandCache(c.operand_cache_entries)
         round_robin = 0
         cycle = 0
@@ -229,6 +237,11 @@ class DependencyTileSimulator:
                     memory_bytes += ins.memory_bytes
 
                 if ins.dst is not None:
+                    # Source reads happen before the destination write. A cache
+                    # line containing the old register value cannot remain
+                    # readable unless hardware explicitly updates it.
+                    if c.operand_cache_write_policy == "invalidate":
+                        cache.invalidate((wave.wave_id, ins.dst))
                     if hierarchy_result is not None:
                         wave.ready_at[ins.dst] = hierarchy_result.completion_cycle
                     else:
