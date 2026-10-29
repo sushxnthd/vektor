@@ -1,0 +1,44 @@
+name: V307 matched Nangate45 load-screen
+on:
+  pull_request:
+    paths:
+      - 'research/v307/**'
+      - '.github/workflows/v307-nangate.yml'
+  workflow_dispatch:
+concurrency:
+  group: v307-nangate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  mapped-screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned open-source synthesis tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq yosys iverilog
+          yosys -V
+      - name: Check RTL against independent 256-vector oracle
+        run: |
+          cd research/v307
+          python3 gen_rtl_vectors.py > rtl_vectors.txt
+          test "$(wc -l < rtl_vectors.txt)" -eq 256
+          cd ../..
+          iverilog -g2012 -s tb_v307_issue_select -o /tmp/v307.vvp research/v307/v307_issue_select.sv research/v307/tb_v307_issue_select.sv
+          vvp /tmp/v307.vvp
+      - name: Run matched Nangate45 mapping and ABC load sweep
+        run: |
+          python3 research/v307/matched_nangate_screen.py
+      - name: Print frozen physical screening result
+        if: always()
+        run: |
+          test ! -f research/v307/nangate_screen/summary.json || cat research/v307/nangate_screen/summary.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v307-nangate-area-load-screen
+          path: |
+            research/v307/nangate_screen/*.log
+            research/v307/nangate_screen/*.json
+            research/v307/nangate_screen/*.constr
