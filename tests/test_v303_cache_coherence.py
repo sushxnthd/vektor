@@ -41,3 +41,27 @@ def test_v303_independent_value_oracle():
     assert summary["violations_by_policy"]["invalidate"] == 0
     assert summary["violations_by_policy"]["ideal_update"] == 0
     assert summary["violations_by_policy"]["implicit_preserve"] > 0
+
+
+def test_v303_independent_scheduler_replay_matches_main_model():
+    from research.v303.independent_replay import run as independent_run
+    from sim.vektor.pipeline import (
+        dependency_fma_kernel, load_use_kernel, reuse_fma_kernel
+    )
+    factories = {
+        "H1": reuse_fma_kernel,
+        "H2": dependency_fma_kernel,
+        "H3": load_use_kernel,
+    }
+    for name, factory in factories.items():
+        for capacity in (0, 8, 64):
+            for policy in ("invalidate", "ideal_update"):
+                expected = independent_run(name, capacity, policy)
+                actual = DependencyTileSimulator(
+                    TileConfig(operand_cache_entries=capacity,
+                               operand_cache_write_policy=policy)
+                ).run(factory())
+                for key in ("cycles", "rf_reads", "operand_cache_hits",
+                            "bank_stalls"):
+                    assert getattr(actual, key) == expected[key], (name, capacity, policy, key)
+                assert abs(actual.issue_utilization - expected["issue_utilization"]) < 1e-12
