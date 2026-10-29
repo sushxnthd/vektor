@@ -34,7 +34,7 @@ jobs:
           sha256sum /tmp/v309-v100-rodinia.tgz
       - name: Bounded authentic archive inventory, no extraction
         run: |
-          python3 research/v309/v100_trace_inventory.py /tmp/v309-v100-rodinia.tgz > v309-v100-inventory.json
+          python3 research/v309/v100_trace_inventory.py /tmp/v309-v100-rodinia.tgz --expected-sha256 aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1 > v309-v100-inventory.json
           python3 - <<'PY'
           import json
           d=json.load(open('v309-v100-inventory.json'))
