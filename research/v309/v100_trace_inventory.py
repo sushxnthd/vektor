@@ -89,6 +89,7 @@ def inspect(path: str) -> dict:
                                           'prefix_bytes': len(prefix), 'complete_prefix_lines': len(lines),
                                           'nvbit_row_matches': matches,
                                           'first_lines': [s[:180] for s in lines[:6]],
+                                          'first_matched_rows': [s[:220] for s in lines if ROW.match(s.strip())][:3],
                                           'sample_sha256': hashlib.sha256(prefix).hexdigest()})
                 result['sampled_trace_members'] += 1
     except (tarfile.TarError, OSError, UnicodeError) as exc:
