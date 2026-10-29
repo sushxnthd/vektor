@@ -144,9 +144,9 @@ def selftest():
     for s in range(8):
         for w in (1,2,4,16):
             events=stream(s, 70, 4, .8, w, .4)
-            for p in ('fifo','ingress','queue_merge','banked','set4'):
-                run(events,p,capacity=3)
-    print('selftest: 128 lossless policy/configuration runs passed')
+            for p in ('fifo','ingress','queue_merge','banked','set2','set4'):
+                run(events,p,capacity=4)
+    print('selftest: 192 lossless policy/configuration runs passed')
 
 
 def main():
