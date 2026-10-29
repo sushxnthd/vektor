@@ -1,0 +1,34 @@
+name: V302 prospective falsification
+on:
+  pull_request:
+    paths:
+      - 'research/v302/**'
+      - '.github/workflows/v302-no-go.yml'
+  workflow_dispatch:
+jobs:
+  no-go-repro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Execute frozen holdout and independent modular-add checks
+        run: python3 research/v302/sim.py > v302_holdout.json
+      - name: Verify frozen negative result and conservation
+        run: |
+          python3 - <<'PY'
+          import json
+          r=json.load(open('v302_holdout.json'))
+          assert r['seeds']==list(range(20261030,20261038))
+          assert r['steps']==10000
+          assert not r['gates']['H1_vs_lru'], r['gates']
+          assert r['gates']['H1_vs_fifo'], r['gates']
+          assert not r['survives']
+          print('Reproduced V302 prospective NO-GO:', r['regimes']['H1']['lfu_vs_lru'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v302-frozen-holdout
+          path: v302_holdout.json
