@@ -12,7 +12,7 @@ from pathlib import PurePosixPath
 
 SHA = "aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1"
 CAP = 67108864
-NAMES = ("active_memory", "global_proxy", "other_memory", "active_lanes",
+NAMES = ("active_memory", "global_proxy", "decoded_global", "ambiguous_format0", "other_memory", "active_lanes",
          "requested_unique_bytes", "sectors32", "sectors64", "lines128",
          "perfect_pack_floor32", "packing_slack_rows", "format0",
          "format1", "format2", "trace_files")
@@ -49,12 +49,10 @@ def independent_row(line):
     lanes = [j for j in range(32) if mask & (1 << j)]
     payload = data[1:]
     if fmt == 0:
-        if len(payload) in (16, 32) and max(lanes) < len(payload):
-            addrs = [int(payload[j], 0) for j in lanes]
-        elif len(payload) == len(lanes):
-            addrs = [int(x, 0) for x in payload]
-        else:
-            raise ValueError("list length")
+        # Independent fail-closed refusal of legacy unverified lane mapping.
+        if not payload or any(int(x, 0) < 0 or int(x, 0) >= 2**64 for x in payload):
+            raise ValueError("bad ambiguous address payload")
+        return mask, op, width, (0, None)
     elif fmt == 1:
         if len(payload) != 2 or lanes[-1] - lanes[0] + 1 != len(lanes):
             raise ValueError("stride length")
@@ -83,8 +81,12 @@ def independent_add(acc, row):
         return
     fmt, addrs = record
     acc["global_proxy"] += 1
-    acc["active_lanes"] += mask.bit_count()
     acc["format"+str(fmt)] += 1
+    if fmt == 0:
+        acc["ambiguous_format0"] += 1
+        return
+    acc["decoded_global"] += 1
+    acc["active_lanes"] += mask.bit_count()
     spans = sorted((a, a+width) for a in addrs)
     merged = []
     for a, b in spans:
@@ -108,6 +110,8 @@ def independent_add(acc, row):
 def check(report, independent):
     if report.get("archive_sha256") != SHA:
         raise ValueError("SHA mismatch")
+    if report.get("format0_policy") != "ALL_EXCLUDED_AS_AMBIGUOUS":
+        raise ValueError("unsafe format0 claim")
     if report.get("fixed_address_ideal_coalescer_improvement_sectors") != 0:
         raise ValueError("invalid ideal coalescer control")
     if report.get("prospective_holdout") != "NONE; all Rodinia families previously inspected":
@@ -123,13 +127,15 @@ def check(report, independent):
             for k in NAMES:
                 if observed.get(k) != expected[k]:
                     raise ValueError(f"independent mismatch {field}/{app}/{k}")
-            if expected["global_proxy"]:
+            if expected["decoded_global"]:
                 util = expected["requested_unique_bytes"]/(32*expected["sectors32"])
-                slack = expected["packing_slack_rows"]/expected["global_proxy"]
+                slack = expected["packing_slack_rows"]/expected["decoded_global"]
                 if observed.get("sector_utilization") != util or observed.get("packing_slack_share") != slack:
                     raise ValueError("fraction mismatch")
                 if observed.get("layout_only_sector_slack") != expected["sectors32"]-expected["perfect_pack_floor32"]:
                     raise ValueError("slack mismatch")
+                if observed.get("decoded_global_share") != expected["decoded_global"]/expected["global_proxy"]:
+                    raise ValueError("coverage mismatch")
     return {"audit": "PASS", "global_proxy": independent["global"]["global_proxy"],
             "sectors32": independent["global"]["sectors32"],
             "layout_slack": independent["global"]["sectors32"]-independent["global"]["perfect_pack_floor32"]}
@@ -181,19 +187,23 @@ def selftest():
         "0 0 0 0 0010 00000003 0 ATOM.E 1 R1 4 0 0x1000 0x1000",
     ):
         independent_add(a, independent_row(s))
-    assert a["global_proxy"] == 3 and a["sectors32"] == 7
+    assert a["global_proxy"] == 3 and a["decoded_global"] == 2
+    assert a["ambiguous_format0"] == 1 and a["sectors32"] == 6
     slots = ["0x1000"] + ["0xdead"]*15
     slot_row = independent_row("0 0 0 0 0010 00000001 0 LDG 1 R1 4 0 " + " ".join(slots))
-    assert slot_row[3][1] == [0x1000]
+    assert slot_row[3] == (0, None)
     independent_add(a, slot_row)
-    assert a["global_proxy"] == 4 and a["sectors32"] == 8
+    assert a["global_proxy"] == 4 and a["decoded_global"] == 2
+    assert a["ambiguous_format0"] == 2 and a["sectors32"] == 6
     expected = {"global": a, "applications": {"fixture": a}}
     summary = {"sector_utilization": a["requested_unique_bytes"]/(32*a["sectors32"]),
-               "packing_slack_share": a["packing_slack_rows"]/a["global_proxy"],
+               "packing_slack_share": a["packing_slack_rows"]/a["decoded_global"],
+               "decoded_global_share": a["decoded_global"]/a["global_proxy"],
                "layout_only_sector_slack": a["sectors32"]-a["perfect_pack_floor32"]}
     report = {"archive_sha256": SHA, "global": {**a, **summary},
               "applications": {"fixture": {**a, **summary}},
               "fixed_address_ideal_coalescer_improvement_sectors": 0,
+              "format0_policy": "ALL_EXCLUDED_AS_AMBIGUOUS",
               "prospective_holdout": "NONE; all Rodinia families previously inspected"}
     check(report, expected)
     mutants = []
@@ -201,7 +211,8 @@ def selftest():
         x = copy.deepcopy(report)
         x["global"][key] += 1
         mutants.append(x)
-    for key, val in (("archive_sha256", "bad"),
+    for key, val in (("format0_policy", "unsafe"),
+                     ("archive_sha256", "bad"),
                      ("fixed_address_ideal_coalescer_improvement_sectors", 1),
                      ("prospective_holdout", "unseen")):
         x = copy.deepcopy(report)
