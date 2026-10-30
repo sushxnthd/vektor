@@ -158,6 +158,14 @@ jobs:
                 --folder /work/v309-legacy/buswidth-configs \
                 --evidence /work/v309-legacy/evidence
             ' 2>&1 | tee v309-legacy/evidence/build-and-runtime.log
+      - name: Restore runner ownership of simulator-generated evidence
+        run: |
+          set -euo pipefail
+          # Docker writes the rank-two logs as root; the host-side independent auditor
+          # must be able to write its own result beside those immutable raw logs.
+          sudo chown -R "$(id -u):$(id -g)" \
+            v309-second/evidence v309-legacy/evidence \
+            v309-legacy/latency-configs v309-legacy/buswidth-configs
       - name: Independent per-kernel replay audit and adversarial controls
         run: |
           set -euo pipefail
