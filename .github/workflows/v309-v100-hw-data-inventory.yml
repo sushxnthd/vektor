@@ -1,0 +1,43 @@
+name: V309 bounded Tesla V100 hardware-profiler provenance inventory
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - .github/workflows/v309-v100-hw-data-inventory.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download bounded upstream Tesla V100 profiler archive (NOT matched yet)
+        run: |
+          set -euo pipefail
+          url='https://engineering.purdue.edu/tgrogers/gpgpu-sim/hw_data/volta-tesla-v100.tgz'
+          echo "Upstream acquisition script: https://github.com/accel-sim/accel-sim-framework/blob/7ba54ded60c4ba0083410c37d22d719166acd6dc/util/hw_stats/get_hw_data.sh"
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 300 --max-filesize 134217728 \
+            "$url" -o /tmp/v309-volta-tesla-v100-hw.tgz
+          sha256sum /tmp/v309-volta-tesla-v100-hw.tgz | tee v309-v100-hw-sha256.txt
+          wc -c /tmp/v309-volta-tesla-v100-hw.tgz | tee v309-v100-hw-bytes.txt
+          tar -tzf /tmp/v309-volta-tesla-v100-hw.tgz > v309-v100-hw-manifest.txt
+          wc -l v309-v100-hw-manifest.txt
+          echo 'RODINIA MATCHING CANDIDATE NAMES (first 100):'
+          grep -i 'rodinia' v309-v100-hw-manifest.txt | head -n 100 || true
+          echo 'PROFILER/COUNTER METADATA FILES (first 100):'
+          grep -Ei '(nvprof|ncu|stats|\.csv$|\.log$|\.txt$)' v309-v100-hw-manifest.txt | head -n 100 || true
+          echo 'No same-run trace/counter pairing or measured speedup is claimed.'
+      - name: Preserve provenance metadata even if acquisition fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-tesla-v100-hardware-data-manifest
+          path: |
+            v309-v100-hw-sha256.txt
+            v309-v100-hw-bytes.txt
+            v309-v100-hw-manifest.txt
+          if-no-files-found: warn
