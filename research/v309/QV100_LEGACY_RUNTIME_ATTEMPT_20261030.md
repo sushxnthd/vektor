@@ -39,3 +39,10 @@ This failure is a reproducible negative result at the **build-preflight** tier, 
 - [Raw artifact 12993630232](https://github.com/sushxnthd/vektor/actions/runs/41088538480/artifacts/12993630232).
 - The actual source-pinned `make -j2 -C gpu-simulator` began compiling `trace_parser.cc` and `trace_driven.cc`. Both stopped on `fatal error: zstd.h: No such file or directory` from `trace-parser/warp_trace_stream.h`. Make exited 2. The pinned upstream source includes a `.tracez` streaming reader requiring libzstd development headers, even though the selected original workload uses `.traceg`.
 - Result: **COMPILER_DEPENDENCY_FAIL**, before any simulator binary or runtime. The next attempt may install the system `libzstd-dev` package inside the same digest-pinned container; its version and package provenance must be recorded, and no unverified cycles may be reported.
+
+## Fourth hosted attempt: upstream header-search-path regression
+
+- [GitHub Actions run 41088946031](https://github.com/sushxnthd/vektor/actions/runs/41088946031), head `a8aed38f46b007edcae23f2e86a91498defccc8e`, **FAILED** in C++ compilation.
+- The pinned CUDA 11 container successfully installed `libzstd-dev 1.3.3+dfsg-2ubuntu1.2`, passed upstream environment setup, and began compiling the trace reader. The next error was `fatal error: tracez_format.h: No such file or directory` in `gpu-simulator/trace-parser/warp_trace_stream.h`.
+- An immutable upstream tree inspection located `tracez_format.h` at `util/tracer_nvbit/tracer_tool/tracez_format.h` in the **same pinned Accel-Sim commit**; it is absent from the simulator's default include search paths. This is a source-tree/include-path integration defect, not missing trace data or a GPU measurement.
+- Proposed non-source-mutating repair: export `CPLUS_INCLUDE_PATH=/tmp/accel/util/tracer_nvbit/tracer_tool` during compilation and preserve the upstream source revision unchanged. Re-run the exact same frozen input and completion gate. Result tier: **COMPILER_INCLUDE_PATH_FAIL**.
