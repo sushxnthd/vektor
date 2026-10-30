@@ -50,13 +50,16 @@ jobs:
       - name: Build source-pinned Accel-Sim and attempt two complete QV100-SASS replays
         run: |
           set -euo pipefail
-          docker pull accelsim/ubuntu-18.04_cuda-11:latest
-          docker image inspect --format '{{json .RepoDigests}}' accelsim/ubuntu-18.04_cuda-11:latest > v309-legacy/evidence/container-digest.json
+          docker pull accelsim/ubuntu-18.04_cuda-11@sha256:d963b1a0bccdb9ade23d19f184a17724c9adf2c8ec580fcbff76c3a9a2bad02a
+          docker image inspect --format '{{json .RepoDigests}}' accelsim/ubuntu-18.04_cuda-11@sha256:d963b1a0bccdb9ade23d19f184a17724c9adf2c8ec580fcbff76c3a9a2bad02a > v309-legacy/evidence/container-digest.json
           docker run --rm --cpus=2 --memory=6g \
             -v "$GITHUB_WORKSPACE:/work" -w /work \
             -e CUDA_INSTALL_PATH=/usr/local/cuda-11.0 \
-            accelsim/ubuntu-18.04_cuda-11:latest bash -lc '
+            accelsim/ubuntu-18.04_cuda-11@sha256:d963b1a0bccdb9ade23d19f184a17724c9adf2c8ec580fcbff76c3a9a2bad02a bash -lc '
               set -euo pipefail
+              test -x "$CUDA_INSTALL_PATH/bin/nvcc" || { echo "BUILD_PREFLIGHT_FAIL: nvcc missing at pinned CUDA_INSTALL_PATH" >&2; exit 127; }
+              export PATH="$CUDA_INSTALL_PATH/bin:$PATH"
+              "$CUDA_INSTALL_PATH/bin/nvcc" --version > /work/v309-legacy/evidence/nvcc-version.txt
               git clone https://github.com/accel-sim/accel-sim-framework.git /tmp/accel
               git -C /tmp/accel checkout 7ba54ded60c4ba0083410c37d22d719166acd6dc
               git clone https://github.com/accel-sim/gpgpu-sim_distribution.git /tmp/accel/gpu-simulator/gpgpu-sim
