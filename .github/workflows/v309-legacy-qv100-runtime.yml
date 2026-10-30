@@ -60,6 +60,11 @@ jobs:
               test -x "$CUDA_INSTALL_PATH/bin/nvcc" || { echo "BUILD_PREFLIGHT_FAIL: nvcc missing at pinned CUDA_INSTALL_PATH" >&2; exit 127; }
               export PATH="$CUDA_INSTALL_PATH/bin:$PATH"
               "$CUDA_INSTALL_PATH/bin/nvcc" --version > /work/v309-legacy/evidence/nvcc-version.txt
+              # Pinned upstream tracez reader includes zstd.h even for legacy traceg workloads.
+              timeout 240 apt-get update -qq
+              DEBIAN_FRONTEND=noninteractive timeout 180 apt-get install -y -qq libzstd-dev
+              dpkg-query -W libzstd-dev > /work/v309-legacy/evidence/libzstd-package.txt
+              test -f /usr/include/zstd.h || { echo "BUILD_DEPENDENCY_FAIL: zstd.h missing after package install" >&2; exit 1; }
               git clone https://github.com/accel-sim/accel-sim-framework.git /tmp/accel
               git -C /tmp/accel checkout 7ba54ded60c4ba0083410c37d22d719166acd6dc
               git clone https://github.com/accel-sim/gpgpu-sim_distribution.git /tmp/accel/gpu-simulator/gpgpu-sim
