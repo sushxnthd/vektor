@@ -80,6 +80,9 @@ jobs:
                 nvcc --version | tail -4
               } > /work/v309-legacy/evidence/build-provenance.txt
               cd /tmp/accel
+              # The pinned source includes tracez_format.h under the tracer tree, not the simulator include tree.
+              test -f /tmp/accel/util/tracer_nvbit/tracer_tool/tracez_format.h
+              export CPLUS_INCLUDE_PATH="/tmp/accel/util/tracer_nvbit/tracer_tool${CPLUS_INCLUDE_PATH:+:$CPLUS_INCLUDE_PATH}"
               # Upstream setup script expands optional environment variables without nounset guards.
               set +u
               source gpu-simulator/setup_environment.sh
