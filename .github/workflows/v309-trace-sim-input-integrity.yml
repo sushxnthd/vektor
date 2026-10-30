@@ -1,0 +1,59 @@
+name: V309 authenticated trace-to-simulator input integrity
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/trace_sim_input_integrity.py
+      - research/v309/TRACE_SIM_INPUT_INTEGRITY_PROTOCOL_20261030.md
+      - .github/workflows/v309-trace-sim-input-integrity.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linkage:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent positive and eleven negative controls
+        run: |
+          set -euo pipefail
+          python3 research/v309/trace_sim_input_integrity.py --selftest > v309-trace-linkage-selftest.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('v309-trace-linkage-selftest.json'))
+          assert d['status']=='PASS' and d['negative_controls']==11
+          PY
+      - name: Bounded source-attested Tesla V100 archive download
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3             --connect-timeout 25 --max-time 240 --max-filesize 67108864             'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz'             -o /tmp/v309-v100-rodinia.tgz
+          test "$(stat -c%s /tmp/v309-v100-rodinia.tgz)" -le 67108864
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum --check
+      - name: Audit real command lists against trace members without extraction
+        run: |
+          set -euo pipefail
+          python3 research/v309/trace_sim_input_integrity.py /tmp/v309-v100-rodinia.tgz > v309-trace-linkage-result.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('v309-trace-linkage-result.json'))
+          assert d['status']=='PASS_AUDIT'
+          assert d['counts']['trace_members']==210
+          assert d['simulator_runtime_verified'] is False
+          assert d['hardware_counters_matched'] is False
+          assert d['physical_speedup_permitted'] is False
+          print(json.dumps({'strict_local_linkage':d['strict_local_linkage'],'counts':d['counts']},indent=2,sort_keys=True))
+          PY
+      - name: Preserve reproducible source-integrity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-trace-simulator-input-linkage-evidence
+          path: |
+            v309-trace-linkage-selftest.json
+            v309-trace-linkage-result.json
+          if-no-files-found: warn
