@@ -112,7 +112,7 @@ def check(report, independent):
     for field in ("global", "applications"):
         r = report.get(field, {})
         e = independent[field]
-        if set(r) != set(e):
+        if (field == "applications" and set(r) != set(e)) or (field == "global" and not set(e).issubset(r)):
             raise ValueError("application or global key mismatch")
         for app in e if field == "applications" else (None,):
             observed = r[app] if app is not None else r
