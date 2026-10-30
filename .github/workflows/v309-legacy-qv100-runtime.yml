@@ -89,8 +89,8 @@ jobs:
               set -u
               # Pinned GPGPU-Sim dev sources use C++17 traits and unordered_map in intersim2.
               # Command-line CXX overrides the upstream intersim2 Makefile CXX=g++ assignment.
-              echo "CXX=g++ -std=c++17 -include unordered_map" > /work/v309-legacy/evidence/compiler-override.txt
-              timeout 1500 make -j2 -C gpu-simulator CXX="g++ -std=c++17 -include unordered_map"
+              echo "CXX=g++ -std=c++17 -include unordered_map -Wl,--no-as-needed" > /work/v309-legacy/evidence/compiler-override.txt
+              timeout 1500 make -j2 -C gpu-simulator CXX="g++ -std=c++17 -include unordered_map -Wl,--no-as-needed"
               python3 /work/research/v309/legacy_qv100_runtime.py --simulate \
                 --binary /tmp/accel/gpu-simulator/bin/release/accel-sim.out \
                 --trace /work/v309-legacy/traces/kernelslist.g \
