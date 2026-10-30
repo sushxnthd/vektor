@@ -8,6 +8,8 @@ on:
       - research/v309/qv100_runtime_counter_audit.py
       - research/v309/qv100_dram_latency_sweep.py
       - research/v309/qv100_dram_buswidth_sweep.py
+      - research/v309/qv100_second_workload.py
+      - research/v309/QV100_SECOND_WORKLOAD_PROTOCOL_20261031.md
       - research/v309/QV100_DRAM_BUSWIDTH_PROTOCOL_20261030.md
       - research/v309/QV100_LEGACY_RUNTIME_PROTOCOL_20261030.md
       - .github/workflows/v309-legacy-qv100-runtime.yml
@@ -32,6 +34,7 @@ jobs:
           python3 research/v309/legacy_qv100_runtime.py --selftest | tee v309-legacy/evidence/selftest.json
           python3 research/v309/qv100_dram_latency_sweep.py --selftest | tee v309-legacy/evidence/latency-selftest.json
           python3 research/v309/qv100_dram_buswidth_sweep.py --selftest | tee v309-legacy/evidence/buswidth-selftest.json
+          python3 research/v309/qv100_second_workload.py --selftest | tee v309-legacy/evidence/second-workload-selftest.json
       - name: Authenticate historical original trace archive
         run: |
           set -euo pipefail
@@ -52,6 +55,24 @@ jobs:
           assert m['kernel_launches']>0 and m['selected_bytes']<=96*1024*1024
           assert m['hardware_validated'] is False
           print('Frozen selection:',m['selected_list'],'kernels:',m['kernel_launches'])
+          PY
+      - name: Freeze rank-two original workload before simulator outcomes
+        run: |
+          set -euo pipefail
+          python3 research/v309/qv100_second_workload.py \
+            --archive /tmp/v309-original-v100.tgz \
+            --destination v309-second/traces \
+            | tee v309-legacy/evidence/second-selection-stdout.json
+          python3 - <<'PY'
+          import json
+          first=json.load(open('v309-legacy/selection.json'))
+          second=json.load(open('v309-second/selection.json'))
+          assert second['selection_rank_one_based']==2
+          assert first['selected_list']==second['first_workload_list']
+          assert first['selected_list']!=second['selected_list']
+          assert second['kernel_launches']>0 and second['selected_bytes']<=96*1024*1024
+          assert not second['hardware_validated'] and not second['architecture_speedup_permitted']
+          print('Frozen second workload:',second['selected_list'],'kernels:',second['kernel_launches'])
           PY
       - name: Build source-pinned Accel-Sim and attempt two complete QV100-SASS replays
         run: |
@@ -104,6 +125,14 @@ jobs:
                 --trace-config /tmp/accel/gpu-simulator/configs/tested-cfgs/SM7_QV100/trace.config \
                 --manifest /work/v309-legacy/selection.json \
                 --evidence /work/v309-legacy/evidence
+              # Independent rank-two original workload, no parameter or hardware change.
+              python3 /work/research/v309/legacy_qv100_runtime.py --simulate \
+                --binary /tmp/accel/gpu-simulator/bin/release/accel-sim.out \
+                --trace /work/v309-second/traces/kernelslist.g \
+                --gpgpu /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --trace-config /tmp/accel/gpu-simulator/configs/tested-cfgs/SM7_QV100/trace.config \
+                --manifest /work/v309-second/selection.json \
+                --evidence /work/v309-second/evidence
               # Freeze the sole -dram_latency mutation BEFORE running any variant.
               python3 /work/research/v309/qv100_dram_latency_sweep.py --prepare \
                 /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
@@ -139,6 +168,12 @@ jobs:
             --selection v309-legacy/selection.json \
             --out v309-legacy/evidence/independent-counter-audit.json \
             | tee v309-legacy/evidence/independent-audit-stdout.json
+          python3 research/v309/qv100_runtime_counter_audit.py \
+            --repeat1 v309-second/evidence/repeat-1.log \
+            --repeat2 v309-second/evidence/repeat-2.log \
+            --selection v309-second/selection.json \
+            --out v309-second/evidence/independent-counter-audit.json \
+            | tee v309-legacy/evidence/second-audit-stdout.json
           python3 research/v309/qv100_dram_latency_sweep.py --audit \
             --folder v309-legacy/latency-configs \
             --evidence v309-legacy/evidence \
@@ -158,6 +193,8 @@ jobs:
           name: v309-qv100-source-pinned-runtime-attempt
           path: |
             v309-legacy/selection.json
+            v309-second/selection.json
+            v309-second/evidence/
             v309-legacy/latency-configs/
             v309-legacy/buswidth-configs/
             v309-legacy/evidence/
