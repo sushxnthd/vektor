@@ -28,7 +28,7 @@ ONE = Decimal(1)
 
 
 def blob_sha(data: bytes) -> str:
-    return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\\0" + data).hexdigest()
+    return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
 
 
 def parse(data: bytes, *, verify_blob: bool = True) -> list[dict]:
@@ -148,12 +148,12 @@ def selftest() -> dict:
         nums[COLUMNS.index("L1_RM") - 2] = a
         nums[COLUMNS.index("L2_RM") - 2] = b
         nums[COLUMNS.index("DRAM_Rd") - 2] = c
-        return (header + "\\n" + x + "," + y + "," + ",".join(nums) + "\\n").encode()
+        return (header + "\n" + x + "," + y + "," + ",".join(nums) + "\n").encode()
     ok = parse(fixture("a", "k", "0", "0", "1"), verify_blob=False)
     assert len(ok) == 1 and ok[0]["DRAM_Rd"] == 1
     # calculate needs at least one positive-denominator row, so add a control.
     sample = (fixture("a", "k", "0", "0", "1") +
-              fixture("b", "k", "2", "1", "2").split(b"\\n", 1)[1])
+              fixture("b", "k", "2", "1", "2").split(b"\n", 1)[1])
     report = calculate(parse(sample, verify_blob=False))
     independent_oracle(parse(sample, verify_blob=False), report)
     assert report["positive_dram_with_zero_l1_read_misses"] == 1
@@ -163,9 +163,9 @@ def selftest() -> dict:
         fixture("a", "k", "NaN", "0", "1"),
         fixture("a", "k", "Infinity", "0", "1"),
         fixture("a", "k", "oops", "0", "1"),
-        fixture("a", "k", "0", "0", "1") + fixture("a", "k", "0", "0", "1").split(b"\\n", 1)[1],
-        b"broken\\n",
-        b"\\xff\\xfe",
+        fixture("a", "k", "0", "0", "1") + fixture("a", "k", "0", "0", "1").split(b"\n", 1)[1],
+        b"broken\n",
+        b"\xff\xfe",
     ]
     for data in invalids:
         try:
