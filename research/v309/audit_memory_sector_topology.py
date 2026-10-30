@@ -49,9 +49,12 @@ def independent_row(line):
     lanes = [j for j in range(32) if mask & (1 << j)]
     payload = data[1:]
     if fmt == 0:
-        if len(payload) != len(lanes):
+        if len(payload) == 32:
+            addrs = [int(payload[j], 0) for j in lanes]
+        elif len(payload) == len(lanes):
+            addrs = [int(x, 0) for x in payload]
+        else:
             raise ValueError("list length")
-        addrs = [int(x, 0) for x in payload]
     elif fmt == 1:
         if len(payload) != 2 or lanes[-1] - lanes[0] + 1 != len(lanes):
             raise ValueError("stride length")
@@ -179,6 +182,11 @@ def selftest():
     ):
         independent_add(a, independent_row(s))
     assert a["global_proxy"] == 3 and a["sectors32"] == 7
+    slots = ["0x1000"] + ["0xdead"]*31
+    slot_row = independent_row("0 0 0 0 0010 00000001 0 LDG 1 R1 4 0 " + " ".join(slots))
+    assert slot_row[3][1] == [0x1000]
+    independent_add(a, slot_row)
+    assert a["global_proxy"] == 4 and a["sectors32"] == 8
     expected = {"global": a, "applications": {"fixture": a}}
     summary = {"sector_utilization": a["requested_unique_bytes"]/(32*a["sectors32"]),
                "packing_slack_share": a["packing_slack_rows"]/a["global_proxy"],
