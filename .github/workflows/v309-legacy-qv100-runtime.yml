@@ -1,0 +1,94 @@
+name: V309 source-pinned legacy QV100-SASS runtime gate
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/legacy_qv100_runtime.py
+      - research/v309/QV100_LEGACY_RUNTIME_PROTOCOL_20261030.md
+      - .github/workflows/v309-legacy-qv100-runtime.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  legacy-runtime:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 58
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent deterministic selection and malformed-source refusal tests
+        run: |
+          set -euo pipefail
+          mkdir -p v309-legacy/evidence
+          python3 research/v309/legacy_qv100_runtime.py --selftest | tee v309-legacy/evidence/selftest.json
+      - name: Authenticate historical original trace archive
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-original-v100.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-original-v100.tgz' | sha256sum -c
+      - name: Freeze smallest complete original workload and preserve all memory copies
+        run: |
+          set -euo pipefail
+          python3 research/v309/legacy_qv100_runtime.py \
+            --select /tmp/v309-original-v100.tgz --destination v309-legacy/traces \
+            | tee v309-legacy/evidence/selection-stdout.json
+          python3 - <<'PY'
+          import json
+          m=json.load(open('v309-legacy/selection.json'))
+          assert m['kernel_launches']>0 and m['selected_bytes']<=96*1024*1024
+          assert m['hardware_validated'] is False
+          print('Frozen selection:',m['selected_list'],'kernels:',m['kernel_launches'])
+          PY
+      - name: Build source-pinned Accel-Sim and attempt two complete QV100-SASS replays
+        run: |
+          set -euo pipefail
+          docker pull accelsim/ubuntu-18.04_cuda-11:latest
+          docker image inspect --format '{{json .RepoDigests}}' accelsim/ubuntu-18.04_cuda-11:latest > v309-legacy/evidence/container-digest.json
+          docker run --rm --cpus=2 --memory=6g \
+            -v "$GITHUB_WORKSPACE:/work" -w /work \
+            -e CUDA_INSTALL_PATH=/usr/local/cuda-11.0 \
+            accelsim/ubuntu-18.04_cuda-11:latest bash -lc '
+              set -euo pipefail
+              git clone https://github.com/accel-sim/accel-sim-framework.git /tmp/accel
+              git -C /tmp/accel checkout 7ba54ded60c4ba0083410c37d22d719166acd6dc
+              git clone https://github.com/accel-sim/gpgpu-sim_distribution.git /tmp/accel/gpu-simulator/gpgpu-sim
+              git -C /tmp/accel/gpu-simulator/gpgpu-sim checkout 4195dd4f229cbf03f4f38c49139ae94d01d23f03
+              git clone https://github.com/pybind/pybind11.git /tmp/accel/gpu-simulator/extern/pybind11
+              git -C /tmp/accel/gpu-simulator/extern/pybind11 checkout 18bbe9d7c9b0009b992e812e1b59e7a0d4474dbd
+              {
+                git -C /tmp/accel rev-parse HEAD
+                git -C /tmp/accel/gpu-simulator/gpgpu-sim rev-parse HEAD
+                git -C /tmp/accel/gpu-simulator/extern/pybind11 rev-parse HEAD
+                gcc --version | head -1
+                python3 --version
+                nvcc --version | tail -4
+              } > /work/v309-legacy/evidence/build-provenance.txt
+              cd /tmp/accel
+              source gpu-simulator/setup_environment.sh
+              timeout 1500 make -j2 -C gpu-simulator
+              python3 /work/research/v309/legacy_qv100_runtime.py --simulate \
+                --binary /tmp/accel/gpu-simulator/bin/release/accel-sim.out \
+                --trace /work/v309-legacy/traces/kernelslist.g \
+                --gpgpu /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --trace-config /tmp/accel/gpu-simulator/configs/tested-cfgs/SM7_QV100/trace.config \
+                --manifest /work/v309-legacy/selection.json \
+                --evidence /work/v309-legacy/evidence
+            ' 2>&1 | tee v309-legacy/evidence/build-and-runtime.log
+      - name: Preserve positive or negative evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-qv100-source-pinned-runtime-attempt
+          path: |
+            v309-legacy/selection.json
+            v309-legacy/evidence/
+          if-no-files-found: warn
+          retention-days: 30
