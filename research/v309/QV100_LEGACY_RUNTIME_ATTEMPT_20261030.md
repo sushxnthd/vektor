@@ -24,3 +24,11 @@ The old Docker tag `latest` is also mutable. Reuse the exact observed container 
 ## Decision
 
 This failure is a reproducible negative result at the **build-preflight** tier, not a falsification of any architecture mechanism or of the selected workload. Keep the existing research branch and draft PR, preserve the frozen workload and kill criteria, and do not promote V287/V296 or claim a GPU speedup. If a corrected build reaches simulator execution, require two complete runs and nonzero cycles/instructions with explicit simulator exit markers. Further physicality claims require matched-resource RTL, synthesis, timing, electrical and bandwidth evidence.
+
+## Second hosted attempt: shell strict-mode incompatibility
+
+- [GitHub Actions run 41088025400](https://github.com/sushxnthd/vektor/actions/runs/41088025400), head `e8c13640a86312c80c7c6cf209323977e3e0c238`, **FAILED** after the CUDA PATH fix.
+- [Raw artifact 12992053553](https://github.com/sushxnthd/vektor/actions/runs/41088025400/artifacts/12992053553).
+- The digest-pinned container was pulled successfully; `nvcc` preflight passed; all source-pinned repositories were checked out. The next failure was `gpu-simulator/setup_environment.sh: line 93: GPGPUSIM_SETUP_ENVIRONMENT_WAS_RUN: unbound variable` under the workflow's `set -u`.
+- The upstream script directly expands a potentially unset variable and is not nounset-safe. Temporarily disable `nounset` *only while sourcing this external setup script*, then re-enable it before build and simulation. Preserve `errexit` and `pipefail` throughout.
+- Result: **ENVIRONMENT_SETUP_FAIL**, before compilation. No simulated cycles or hardware performance observations. This does not falsify the architecture.
