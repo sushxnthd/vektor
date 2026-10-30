@@ -156,7 +156,7 @@ def profile(path):
                 try:
                     account(acc, parse_address_record(line))
                 except (ValueError, IndexError, AssertionError) as exc:
-                    raise ValueError(f"{member.name}:{line_no}: {exc}") from exc
+                    raise ValueError(f"{member.name}:{line_no}: {exc}; raw={line[:360]!r}") from exc
     overall = fresh()
     for acc in apps.values():
         for k in FIELDS:
