@@ -28,7 +28,7 @@ The first launch accounts for **128/129 = 99.22%** of reported cumulative L2 mis
 
 - Repeat 1 raw log SHA-256: `fae56e0412b42fbdf2792c7811b261218e9c67e7a43bab91552f5a2615302abc`
 - Repeat 2 raw log SHA-256: `db1d4a3e645a1451a11787a1cbdcd0f207e61d79a32a388a766ee270fad34c56`
-- The [updated hosted workflow](../../.github/workflows/v309-legacy-qv100-runtime.yml) now reruns the independent audit after every successful source-pinned simulator build, and uploads the JSON and raw logs even when subsequent checks fail. Hosted recheck after the new independent-gate commit must be inspected separately.
+- The [updated hosted workflow](../../.github/workflows/v309-legacy-qv100-runtime.yml) now reruns the independent audit after every successful source-pinned simulator build, and uploads the JSON and raw logs even when subsequent checks fail. [Hosted independent-gate recheck #41092244759](https://github.com/sushxnthd/vektor/actions/runs/41092244759) **PASSED**, including the fresh source-pinned build, both complete workload simulations, two positive and eight adversarial parser controls, and exact independent per-kernel counter replay. [New raw artifact #12995255077](https://github.com/sushxnthd/vektor/actions/runs/41092244759/artifacts/12995255077), SHA-256 `7048145df6c94e0e336880b86e5eae53dbd62df0306e43cf2f4a07fc01574ed5`.
 
 ## Boundary of the claim and next kill test
 
