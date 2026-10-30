@@ -7,6 +7,8 @@ on:
       - research/v309/legacy_qv100_runtime.py
       - research/v309/qv100_runtime_counter_audit.py
       - research/v309/qv100_dram_latency_sweep.py
+      - research/v309/qv100_dram_buswidth_sweep.py
+      - research/v309/QV100_DRAM_BUSWIDTH_PROTOCOL_20261030.md
       - research/v309/QV100_LEGACY_RUNTIME_PROTOCOL_20261030.md
       - .github/workflows/v309-legacy-qv100-runtime.yml
   workflow_dispatch:
@@ -29,6 +31,7 @@ jobs:
           mkdir -p v309-legacy/evidence
           python3 research/v309/legacy_qv100_runtime.py --selftest | tee v309-legacy/evidence/selftest.json
           python3 research/v309/qv100_dram_latency_sweep.py --selftest | tee v309-legacy/evidence/latency-selftest.json
+          python3 research/v309/qv100_dram_buswidth_sweep.py --selftest | tee v309-legacy/evidence/buswidth-selftest.json
       - name: Authenticate historical original trace archive
         run: |
           set -euo pipefail
@@ -113,6 +116,18 @@ jobs:
                 --selection /work/v309-legacy/selection.json \
                 --folder /work/v309-legacy/latency-configs \
                 --evidence /work/v309-legacy/evidence
+              # Frozen bus-width sensitivity: only -gpgpu_dram_buswidth 16 -> 8/32.
+              python3 /work/research/v309/qv100_dram_buswidth_sweep.py --prepare \
+                /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --folder /work/v309-legacy/buswidth-configs
+              python3 /work/research/v309/qv100_dram_buswidth_sweep.py --run \
+                --binary /tmp/accel/gpu-simulator/bin/release/accel-sim.out \
+                --trace /work/v309-legacy/traces/kernelslist.g \
+                --gpgpu /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --trace-config /tmp/accel/gpu-simulator/configs/tested-cfgs/SM7_QV100/trace.config \
+                --selection /work/v309-legacy/selection.json \
+                --folder /work/v309-legacy/buswidth-configs \
+                --evidence /work/v309-legacy/evidence
             ' 2>&1 | tee v309-legacy/evidence/build-and-runtime.log
       - name: Independent per-kernel replay audit and adversarial controls
         run: |
@@ -130,6 +145,12 @@ jobs:
             --selection v309-legacy/selection.json \
             --out v309-legacy/evidence/independent-latency-sweep.json \
             | tee v309-legacy/evidence/latency-sweep-stdout.json
+          python3 research/v309/qv100_dram_buswidth_sweep.py --audit \
+            --folder v309-legacy/buswidth-configs \
+            --evidence v309-legacy/evidence \
+            --selection v309-legacy/selection.json \
+            --out v309-legacy/evidence/independent-buswidth-sweep.json \
+            | tee v309-legacy/evidence/buswidth-sweep-stdout.json
       - name: Preserve positive or negative evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -138,6 +159,7 @@ jobs:
           path: |
             v309-legacy/selection.json
             v309-legacy/latency-configs/
+            v309-legacy/buswidth-configs/
             v309-legacy/evidence/
           if-no-files-found: warn
           retention-days: 30
