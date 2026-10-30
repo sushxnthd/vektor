@@ -7,6 +7,7 @@ This tests a conditional performance law, not a physical GPU architecture.
 import argparse
 import copy
 import json
+import math
 from pathlib import Path
 
 TIER = "PASS_INDEPENDENT_TWO_WORKLOAD_SENSITIVITY_AUDIT"
@@ -46,9 +47,13 @@ def check(report):
             raise ValueError("nonmonotone response outside frozen regime")
         f8 = (t8 - t16) / t16
         f32 = 2 * (t16 - t32) / t16
-        if abs(f8 - row.get("narrowing_cycle_penalty_fraction", float("nan"))) > 1e-12:
+        narrow_claim = row.get("narrowing_cycle_penalty_fraction")
+        wide_claim = row.get("widening_gain_fraction")
+        if any(type(v) not in (float, int) or not math.isfinite(v) for v in (narrow_claim, wide_claim)):
+            raise ValueError("missing or nonfinite response fractions")
+        if abs(f8 - narrow_claim) > 1e-12:
             raise ValueError("narrowing fraction does not match raw cycles")
-        if abs((t16-t32)/t16 - row.get("widening_gain_fraction", float("nan"))) > 1e-12:
+        if abs((t16-t32)/t16 - wide_claim) > 1e-12:
             raise ValueError("widening fraction does not match raw cycles")
         # If T(w)=T_fixed + K/w for all three widths, T8-T16=2*(T16-T32).
         residual = (t8 - t16) - 2*(t16-t32)
@@ -63,6 +68,12 @@ def check(report):
                 (t16-t32) < 0.01*t16,
             "plateau_from_16B_to_32B": t16 == t32
         }
+    if predictions != {
+        "P1_LUD_widening_below_2pct": out["second"]["observed_widening_gain_percent"] < 2,
+        "P2_LUD_narrowing_not_faster": out["second"]["cycles_8B"] >= out["second"]["cycles_16B"],
+        "P3_both_widening_below_2pct": all(out[k]["observed_widening_gain_percent"] < 2 for k in ("first", "second")),
+    }:
+        raise ValueError("frozen predictions do not match cycle evidence")
     return {
         "status": "PASS_CONDITIONAL_BOUNDARY_FALSIFICATION",
         "law_tested": "T(w)=T_fixed+K/w; requires equal work and a single unsaturated width-limited service fraction",
@@ -96,7 +107,7 @@ def selftest():
     assert o["second"]["smooth_inverse_width_law_consistent_with_1cycle"]
     # An exactly smooth, nonzero inverse-width response is accepted as consistent.
     b = copy.deepcopy(a)
-    b["first"] = row(1100, 1000, 950)
+    b["first"] = row(1010, 1000, 995)
     assert check(b)["first"]["smooth_inverse_width_law_consistent_with_1cycle"]
     mutations = [
         lambda x: x.update(status="PASS_FAKE"),
@@ -108,6 +119,7 @@ def selftest():
         lambda x: x.update(second_original_workload=x["first_original_workload"]),
         lambda x: x["first"].update(narrow_cycles=-1),
         lambda x: x["first"].update(widening_gain_fraction=0.5),
+        lambda x: x["first"].pop("narrowing_cycle_penalty_fraction"),
         lambda x: x["second"].update(cache_counter_invariance=False),
         lambda x: x["second"].update(wide_cycles=127310),
     ]
