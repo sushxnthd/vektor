@@ -9,6 +9,7 @@ on:
       - research/v309/qv100_dram_latency_sweep.py
       - research/v309/qv100_dram_buswidth_sweep.py
       - research/v309/qv100_second_workload.py
+      - research/v309/qv100_cross_workload_counter_falsification.py
       - research/v309/QV100_SECOND_WORKLOAD_PROTOCOL_20261031.md
       - research/v309/QV100_DRAM_BUSWIDTH_PROTOCOL_20261030.md
       - research/v309/QV100_LEGACY_RUNTIME_PROTOCOL_20261030.md
@@ -194,6 +195,16 @@ jobs:
             --selection v309-legacy/selection.json \
             --out v309-legacy/evidence/independent-buswidth-sweep.json \
             | tee v309-legacy/evidence/buswidth-sweep-stdout.json
+      - name: Independent cross-workload counter-proxy falsification
+        run: |
+          set -euo pipefail
+          python3 research/v309/qv100_cross_workload_counter_falsification.py --selftest \
+            | tee v309-legacy/evidence/cross-workload-selftest.json
+          python3 research/v309/qv100_cross_workload_counter_falsification.py \
+            --first v309-legacy/evidence/independent-counter-audit.json \
+            --second v309-second/evidence/independent-counter-audit.json \
+            --out v309-legacy/evidence/cross-workload-counter-falsification.json \
+            | tee v309-legacy/evidence/cross-workload-counter-stdout.json
       - name: Preserve positive or negative evidence
         if: always()
         uses: actions/upload-artifact@v4
