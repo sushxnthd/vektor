@@ -1,5 +1,8 @@
 # V309: Prospective rank-two QV100 counter-proxy falsification (2026-10-31)
 
+> **Independent acceptance update, 2026-10-31.** The previously pending source-pinned replay has now passed the complete hosted audit: [GitHub Actions #41126948686](https://github.com/sushxnthd/vektor/actions/runs/41126948686), [raw archived evidence #13011207568](https://github.com/sushxnthd/vektor/actions/runs/41126948686/artifacts/13011207568). Both original workloads passed per-kernel replay conservation, semantic equality across two repeats, and the independent cross-workload falsification checker. The LUD-64 figures below are therefore **independently accepted simulator counters**, no longer provisional. This supersedes only the earlier pending-audit wording below, which is retained as historical provenance. No physical architecture, DRAM-byte or hardware-speedup claim follows. A separately preregistered LUD bus-width intervention is now running; its results are not included here.
+
+
 ## Decision and evidence tier
 
 **Do not use L1D miss count as a stand-in for L2 miss count or off-chip memory demand.** The original rank-two Rodinia workload was frozen before the simulator was run. Its first hosted QV100-SASS replay completed twice, but the host-side independent audit failed on a filesystem ownership error, **not on a numerical disagreement**. This document preserves the negative result at the correct provisional evidence tier. A code fix and independent comparison have been committed; the result is not accepted until a new hosted run passes.
