@@ -12,7 +12,7 @@ from pathlib import PurePosixPath
 
 SHA = "aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1"
 CAP = 67108864
-NAMES = ("active_memory", "global_proxy", "decoded_global", "ambiguous_format0", "other_memory", "active_lanes",
+NAMES = ("active_memory", "global_proxy", "decoded_global", "ambiguous_format0", "ambiguous_format1", "other_memory", "active_lanes",
          "requested_unique_bytes", "sectors32", "sectors64", "lines128",
          "perfect_pack_floor32", "packing_slack_rows", "format0",
          "format1", "format2", "trace_files")
@@ -54,9 +54,11 @@ def independent_row(line):
             raise ValueError("bad ambiguous address payload")
         return mask, op, width, (0, None)
     elif fmt == 1:
-        if len(payload) != 2 or lanes[-1] - lanes[0] + 1 != len(lanes):
+        if len(payload) != 2:
             raise ValueError("stride length")
         b, s = int(payload[0], 0), int(payload[1], 0)
+        if lanes[-1] - lanes[0] + 1 != len(lanes):
+            return mask, op, width, (1, None)
         addrs = [b + j*s for j in range(len(lanes))]
     elif fmt == 2:
         if len(payload) != len(lanes):
@@ -82,8 +84,8 @@ def independent_add(acc, row):
     fmt, addrs = record
     acc["global_proxy"] += 1
     acc["format"+str(fmt)] += 1
-    if fmt == 0:
-        acc["ambiguous_format0"] += 1
+    if addrs is None:
+        acc["ambiguous_format0" if fmt == 0 else "ambiguous_format1"] += 1
         return
     acc["decoded_global"] += 1
     acc["active_lanes"] += mask.bit_count()
@@ -195,6 +197,10 @@ def selftest():
     independent_add(a, slot_row)
     assert a["global_proxy"] == 4 and a["decoded_global"] == 2
     assert a["ambiguous_format0"] == 2 and a["sectors32"] == 6
+    sparse_stride = independent_row("0 0 0 0 0010 00000005 0 LDG 1 R1 4 1 0x1000 4")
+    assert sparse_stride[3] == (1, None)
+    independent_add(a, sparse_stride)
+    assert a["ambiguous_format1"] == 1 and a["global_proxy"] == 5
     expected = {"global": a, "applications": {"fixture": a}}
     summary = {"sector_utilization": a["requested_unique_bytes"]/(32*a["sectors32"]),
                "packing_slack_share": a["packing_slack_rows"]/a["decoded_global"],
