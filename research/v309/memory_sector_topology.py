@@ -45,9 +45,12 @@ def parse_address_record(line):
     lanes = [i for i in range(32) if (mask >> i) & 1]
     n = len(lanes)
     if fmt == 0:
-        if len(data) != n:
+        if len(data) == 32:
+            addrs = [int(data[i], 0) for i in lanes]
+        elif len(data) == n:
+            addrs = [int(x, 0) for x in data]
+        else:
             raise ValueError("format0 address count mismatch")
-        addrs = [int(x, 0) for x in data]
     elif fmt == 1:
         if len(data) != 2 or lanes != list(range(lanes[0], lanes[-1] + 1)):
             raise ValueError("format1 needs contiguous active lanes and base/stride")
@@ -198,7 +201,12 @@ def selftest():
     assert a["sectors32"] == 7
     assert a["perfect_pack_floor32"] == 6
     account(a, parse_address_record(base + "00000003 0 LDS 1 R1 4 0 0x1000 0x1004"))
-    assert a["other_memory"] == 1 and a["global_proxy"] == 3
+    # Legacy tracer format-0 may include inactive lane slots.
+    full_slots = ["0x1000"] + ["0xdead"] * 31
+    slot_row = parse_address_record(base + "00000001 0 LDG 1 R1 4 0 " + " ".join(full_slots))
+    assert slot_row[3][1] == (0x1000,)
+    account(a, slot_row)
+    assert a["other_memory"] == 1 and a["global_proxy"] == 4
     mutants = [
         base + "00000003 0 LDG 1 R1 4 0 0x1000",
         base + "00000005 0 LDG 1 R1 4 1 0x1000 4",
