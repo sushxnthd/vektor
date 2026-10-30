@@ -14,7 +14,7 @@ from pathlib import PurePosixPath
 from v100_sass_profile import EXPECTED_SHA, parse_row
 from v100_trace_inventory import MAX_ARCHIVE, validate_name
 
-FIELDS = ("active_memory", "global_proxy", "other_memory", "active_lanes",
+FIELDS = ("active_memory", "global_proxy", "decoded_global", "ambiguous_format0", "other_memory", "active_lanes",
           "requested_unique_bytes", "sectors32", "sectors64", "lines128",
           "perfect_pack_floor32", "packing_slack_rows", "format0",
           "format1", "format2", "trace_files")
@@ -45,12 +45,11 @@ def parse_address_record(line):
     lanes = [i for i in range(32) if (mask >> i) & 1]
     n = len(lanes)
     if fmt == 0:
-        if len(data) in (16, 32) and max(lanes) < len(data):
-            addrs = [int(data[i], 0) for i in lanes]
-        elif len(data) == n:
-            addrs = [int(x, 0) for x in data]
-        else:
-            raise ValueError(f"format0 address count mismatch: active={n}, payload={len(data)}, tail={data[-5:]}")
+        # Old V100 trace format-0 has non-identifiable lane/address cardinality.
+        # Never infer lane topology from token order without tracer-version proof.
+        if not data or any(int(x, 0) < 0 or int(x, 0) > MAX_ADDR for x in data):
+            raise ValueError("invalid ambiguous format0 payload")
+        return mask, opcode, width, (0, None)
     elif fmt == 1:
         if len(data) != 2 or lanes != list(range(lanes[0], lanes[-1] + 1)):
             raise ValueError("format1 needs contiguous active lanes and base/stride")
@@ -102,10 +101,14 @@ def account(acc, row):
         return
     fmt, addrs = record
     n = mask.bit_count()
-    assert len(addrs) == n
     acc["global_proxy"] += 1
-    acc["active_lanes"] += n
     acc["format" + str(fmt)] += 1
+    if fmt == 0:
+        acc["ambiguous_format0"] += 1
+        return
+    assert len(addrs) == n
+    acc["decoded_global"] += 1
+    acc["active_lanes"] += n
     unique = union_bytes(addrs, width)
     s32 = touched(addrs, width, 32)
     acc["requested_unique_bytes"] += unique
@@ -120,11 +123,13 @@ def account(acc, row):
 
 
 def summarize(acc):
-    if not acc["global_proxy"]:
-        return {"sector_utilization": None, "packing_slack_share": None}
+    if not acc["decoded_global"]:
+        return {"sector_utilization": None, "packing_slack_share": None,
+                "layout_only_sector_slack": None, "decoded_global_share": 0.0}
     return {
         "sector_utilization": acc["requested_unique_bytes"] / (32 * acc["sectors32"]),
-        "packing_slack_share": acc["packing_slack_rows"] / acc["global_proxy"],
+        "packing_slack_share": acc["packing_slack_rows"] / acc["decoded_global"],
+        "decoded_global_share": acc["decoded_global"] / acc["global_proxy"],
         "layout_only_sector_slack": acc["sectors32"] - acc["perfect_pack_floor32"],
     }
 
@@ -166,19 +171,21 @@ def profile(path):
             overall[k] += acc[k]
     if overall["trace_files"] != 210 or overall["active_memory"] != 484259:
         raise ValueError("full corpus memory-row conservation failed")
-    if not overall["global_proxy"]:
-        raise ValueError("no global-proxy memory operations")
+    if not overall["decoded_global"]:
+        raise ValueError("no unambiguous decoded global-proxy memory operations")
     return {
         "evidence_tier": "authentic_V100_SASS_address_topology_NOT_transactions_or_stalls",
         "archive_sha256": EXPECTED_SHA,
         "global": {**overall, **summarize(overall)},
         "applications": {k: {**v, **summarize(v)} for k, v in sorted(apps.items())},
         "fixed_address_ideal_coalescer_improvement_sectors": 0,
+        "format0_policy": "ALL_EXCLUDED_AS_AMBIGUOUS",
         "prospective_holdout": "NONE; all Rodinia families previously inspected",
         "limits": [
             "global-proxy opcode stems are a classification, not a cache-path proof",
             "32/64/128-byte granularities are sensitivity assumptions",
             "perfect packing requires changing memory addresses or layout",
+            "format0 records are all excluded due to unverified lane/address association",
             "no measured sectors, counters, bandwidth, timing, occupancy, or RTX5090 claims",
         ],
     }
@@ -197,22 +204,24 @@ def selftest():
     assert a["sectors32"] == 6 and a["packing_slack_rows"] == 1
     repeated = base + "00000003 0 ATOM.E 1 R1 4 0 0x1000 0x1000"
     account(a, parse_address_record(repeated))
-    assert a["requested_unique_bytes"] == 128 + 8 + 4
-    assert a["sectors32"] == 7
-    assert a["perfect_pack_floor32"] == 6
+    assert a["requested_unique_bytes"] == 128 + 8
+    assert a["sectors32"] == 6
+    assert a["perfect_pack_floor32"] == 5
+    assert a["ambiguous_format0"] == 1
     account(a, parse_address_record(base + "00000003 0 LDS 1 R1 4 0 0x1000 0x1004"))
     # Legacy tracer format-0 may include inactive lane slots.
     full_slots = ["0x1000"] + ["0xdead"] * 15
     slot_row = parse_address_record(base + "00000001 0 LDG 1 R1 4 0 " + " ".join(full_slots))
-    assert slot_row[3][1] == (0x1000,)
+    assert slot_row[3] == (0, None)
     account(a, slot_row)
     assert a["other_memory"] == 1 and a["global_proxy"] == 4
+    assert a["decoded_global"] == 2 and a["ambiguous_format0"] == 2
     mutants = [
-        base + "00000003 0 LDG 1 R1 4 0 0x1000",
+        base + "00000003 0 LDG 1 R1 4 0",
         base + "00000005 0 LDG 1 R1 4 1 0x1000 4",
         base + "00000003 0 LDG 1 R1 4 2 0x1000",
         base + "00000003 0 LDG 1 R1 4 3 0x1000 4",
-        base + "00000003 0 LDG 1 R1 4 0 0xffffffffffffffff 0x1000",
+        base + "00000003 0 LDG 1 R1 4 0 -1",
         base + "00000003 0 LDG 1 R1 4 2 0x1000 -5000",
     ]
     for bad in mutants:
