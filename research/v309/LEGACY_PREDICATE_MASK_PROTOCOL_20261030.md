@@ -1,0 +1,16 @@
+# V309 historical predicate-mask provenance gate (frozen before full-corpus run, 2026-10-30)
+
+## Mechanistic source discovery
+A dated upstream Accel-Sim tracer snapshot, commit `0e2fddcdef37fc59ad786553892b75567a5f2cdb` (2020-03-09), prints `active_mask & predicate_mask` as the visible trace mask (source lines 662-663), but uses `std::bitset<32> mask(ma->active_mask)` for address compression (line 684). In format 0, it writes an address for each bit in **unmasked active_mask** (lines 731-735). In format 1, it determines the base and stride from **unmasked active_mask** (lines 696-729). This is a concrete, testable explanation for prior format-0 address-count discrepancies and noncontiguous printed masks with format-1 compression. It is **not** proof that this exact source commit produced the March 18 trace archive.
+
+Source: https://github.com/accel-sim/accel-sim-framework/blob/0e2fddcdef37fc59ad786553892b75567a5f2cdb/util/tracer_nvbit/tracer_tool/tracer_tool.cu#L660-L736
+
+## Frozen test
+1. Reuse the authenticated V100 Rodinia archive SHA-256 `aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1`; 210 trace files, 240465 global-proxy instruction rows.
+2. Let the serialized mask be M, the unobserved original active mask A, and unobserved predicate mask P. Under this dated-source hypothesis, M=A&P and M is a subset of A. For format-0 with n serialized address tokens, n=popcount(A). If n=popcount(M), A=M and the active-lane address sequence is uniquely identified; if n>popcount(M), the active-lane mapping is not uniquely identified by token order alone. Count both classes. n<popcount(M) or n>32 contradicts this producer hypothesis and must be reported, never silently decoded.
+3. For format-1, the original A is contiguous when the producer uses base+stride. The base is the address of A's first lane, not necessarily M's first lane. Enumerate every possible first lane s in [0, min(setbits(M))], construct address(lane)=base+(lane-s)*stride, and report the minimum and maximum touched 32-byte sector counts. This yields a source-conditional **sharp envelope**. If bounds differ, the previously assumed contiguous-M decoder does not identify the sector count. Count invariant and ambiguous rows and the aggregate envelope.
+4. Compare the existing decoded-format coverage only as a conditional earlier model, **not** independently established address truth. Do not revise the previous 32.99% utilization to a new point estimate without producer provenance. Do not promote hardware.
+5. Verify source-conditional examples, exhaustive small-mask oracle cases, archive hash, and global row conservation. Preserve raw counts by application. The already inspected Rodinia corpus is exploratory and cannot be a prospective architecture holdout.
+
+## Decision
+If any previously treated format-1 row has multiple possible sector counts under this source hypothesis, retract its **unconditional** exact sector count and present only conditional intervals. A surviving hardware candidate still requires validated trace semantics, independent counters/cycle model, equal-resource RTL, timing/area and unseen workload transfer. Retired V287/V296/V297-V308 remain retired. No RTX 5090 performance claim.
