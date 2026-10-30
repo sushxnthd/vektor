@@ -11,6 +11,7 @@ on:
       - research/v309/qv100_second_workload.py
       - research/v309/qv100_cross_workload_counter_falsification.py
       - research/v309/qv100_buswidth_transfer.py
+      - research/v309/qv100_width_boundary_falsification.py
       - research/v309/QV100_LUD_BUSWIDTH_TRANSFER_PREREG_20261031.md
       - research/v309/QV100_SECOND_WORKLOAD_PROTOCOL_20261031.md
       - research/v309/QV100_DRAM_BUSWIDTH_PROTOCOL_20261030.md
@@ -39,6 +40,7 @@ jobs:
           python3 research/v309/qv100_dram_buswidth_sweep.py --selftest | tee v309-legacy/evidence/buswidth-selftest.json
           python3 research/v309/qv100_second_workload.py --selftest | tee v309-legacy/evidence/second-workload-selftest.json
           python3 research/v309/qv100_buswidth_transfer.py --selftest | tee v309-legacy/evidence/transfer-selftest.json
+          python3 research/v309/qv100_width_boundary_falsification.py --selftest | tee v309-legacy/evidence/width-boundary-selftest.json
       - name: Authenticate historical original trace archive
         run: |
           set -euo pipefail
@@ -239,6 +241,13 @@ jobs:
             --second-sweep v309-second/evidence/independent-buswidth-sweep.json \
             --out v309-legacy/evidence/buswidth-transfer.json \
             | tee v309-legacy/evidence/buswidth-transfer-stdout.json
+      - name: Falsify conditional smooth width-service law on independently accepted cycles
+        run: |
+          set -euo pipefail
+          python3 research/v309/qv100_width_boundary_falsification.py \
+            --transfer v309-legacy/evidence/buswidth-transfer.json \
+            --out v309-legacy/evidence/width-boundary-falsification.json \
+            | tee v309-legacy/evidence/width-boundary-stdout.json
       - name: Preserve positive or negative evidence
         if: always()
         uses: actions/upload-artifact@v4
