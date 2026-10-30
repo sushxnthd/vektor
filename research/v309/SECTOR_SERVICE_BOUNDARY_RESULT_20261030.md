@@ -7,7 +7,7 @@
 - Frozen [protocol](SECTOR_SERVICE_BOUNDARY_PROTOCOL_20261030.md) committed at `a20e39f` **before** the implementation.
 - [Executable rational model](sector_service_boundary.py) committed at `c95f8db`.
 - [Hosted GitHub Actions #41012765180](https://github.com/sushxnthd/vektor/actions/runs/41012765180): **PASS**. Includes 729 independent total-service-time oracle comparisons, monotonicity checks and invalid-input refusal.
-- Previously audited inputs: 3,937,565 active SASS rows; 1,586,194–1,595,385 32-byte sectors **conditional on an unverified historical tracer-source model**. These span 50,758,208–51,052,320 conditional sector-service bytes, or approximately **12.891–12.966 bytes per dynamic instruction**. These are not measured DRAM bytes.
+- Previously audited inputs: 3,937,565 active SASS rows; 1,586,194–1,595,385 32-byte sectors **conditional on an unverified historical tracer-source model**. These span 50,758,208–51,052,320 conditional sector-service bytes, or approximately **12.891–12.965 bytes per dynamic instruction**. These are not measured DRAM bytes.
 
 ## Frozen predictive boundary
 
