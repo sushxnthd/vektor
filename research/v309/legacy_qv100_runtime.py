@@ -134,7 +134,8 @@ def simulate(binary, trace, gpgpu, trace_config, evidence, manifest):
         raw = logfile.read_bytes()
         stats = parse_stats(raw.decode("utf-8", "replace"))
         completed = stats["gpu_sim_cycle_records"]
-        good = (code == 0 and not timeout and
+        exit_marker = "GPGPU-Sim: *** exit detected ***" in raw.decode("utf-8", "replace")
+        good = (code == 0 and not timeout and exit_marker and
                 completed >= manifest["kernel_launches"] and
                 stats["gpu_tot_sim_cycle"] is not None and
                 stats["gpu_tot_sim_cycle"] > 0 and
@@ -144,6 +145,7 @@ def simulate(binary, trace, gpgpu, trace_config, evidence, manifest):
                      "log_sha256": digest(raw), "log_bytes": len(raw),
                      "kernel_stats_records": completed,
                      "expected_launches": manifest["kernel_launches"],
+                     "simulator_exit_marker": exit_marker,
                      "full_completion_proxy": bool(good),
                      "stats": stats})
     valid = all(r["full_completion_proxy"] for r in runs)
