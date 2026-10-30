@@ -1,0 +1,56 @@
+name: V309 read-counter collision impossibility audit
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/read_counter_collision.py
+      - research/v309/READ_COUNTER_COLLISION_PROTOCOL_20261030.md
+      - .github/workflows/v309-read-counter-collision.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read-counter-identifiability:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Synthetic collisions and independent O(n squared) oracle
+        run: |
+          set -euo pipefail
+          python3 research/v309/read_counter_collision.py --selftest
+      - name: Verify immutable source and compute collision certificates
+        run: |
+          set -euo pipefail
+          python3 research/v309/read_counter_collision.py > v309-read-counter-collision.json
+          python3 - <<'PY'
+          import json
+          from decimal import Decimal
+          d=json.load(open('v309-read-counter-collision.json'))
+          assert d['status']=='PASS'
+          assert d['matched_to_v309_traces'] is False
+          assert d['hardware_mechanism_promoted'] is False
+          a=d['analyses']['all_read_counters']
+          assert a['rows']==25
+          assert a['impossible_exact_deterministic_reconstruction'] is True
+          c=a['strongest_collision']
+          assert all(Decimal(v)==0 for v in c['features'])
+          assert c['rows'] >= 3
+          assert Decimal(c['maximum_dram_read']) > Decimal(c['minimum_dram_read'])
+          assert Decimal(c['ratio_exact']) > 100
+          print('PASS: exact read-counter collision proves non-identifiability on published sample')
+          print('Worst-case unavoidable multiplicative error >=',c['minimax_multiplicative_factor'])
+          PY
+      - name: Preserve audited certificate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-read-counter-collision
+          path: v309-read-counter-collision.json
+          if-no-files-found: warn
