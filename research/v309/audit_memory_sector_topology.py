@@ -49,7 +49,7 @@ def independent_row(line):
     lanes = [j for j in range(32) if mask & (1 << j)]
     payload = data[1:]
     if fmt == 0:
-        if len(payload) == 32:
+        if len(payload) in (16, 32) and max(lanes) < len(payload):
             addrs = [int(payload[j], 0) for j in lanes]
         elif len(payload) == len(lanes):
             addrs = [int(x, 0) for x in payload]
@@ -182,7 +182,7 @@ def selftest():
     ):
         independent_add(a, independent_row(s))
     assert a["global_proxy"] == 3 and a["sectors32"] == 7
-    slots = ["0x1000"] + ["0xdead"]*31
+    slots = ["0x1000"] + ["0xdead"]*15
     slot_row = independent_row("0 0 0 0 0010 00000001 0 LDG 1 R1 4 0 " + " ".join(slots))
     assert slot_row[3][1] == [0x1000]
     independent_add(a, slot_row)
