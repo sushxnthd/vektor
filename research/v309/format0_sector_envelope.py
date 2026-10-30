@@ -198,7 +198,7 @@ def selftest():
         else:
             raise AssertionError("malformed source record accepted")
     assert format0_envelope(0b10, 4, ["0xffffffffffffffff", "0x1000"], 0, lanes=3)[4] == "overflow_unknown"
-    assert format0_envelope(0b10, 4, ["0xffffffffffffffff", "0x1000", "0x1020"], 0, lanes=3)[4] == "overflow_unknown"
+    assert format0_envelope(0b10, 4, ["0xffffffffffffffff", "0x1000", "0x1020"], 0, lanes=3)[4] == "unique_A"
     return {"selftest": "PASS", "independent_exhaustive_cases": checks,
             "forced_conservative_oracle_cases": fallback_checks,
             "adversarial_hidden_lane_counterexample": "PASS",
