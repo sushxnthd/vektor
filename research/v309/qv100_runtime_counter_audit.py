@@ -85,6 +85,31 @@ def audit(a_bytes, b_bytes, expected_launches):
     }
 
 
+
+def validate_selection(selection):
+    """Accept only preregistered original-source selection ranks, never hardware claims."""
+    status = selection.get('status')
+    if status == 'SELECTED_INPUT_ONLY':
+        if selection.get('selection_rank_one_based', 1) != 1:
+            raise ValueError('rank-one manifest has conflicting rank')
+    elif status == 'SECOND_WORKLOAD_SELECTED_INPUT_ONLY':
+        if (selection.get('selection_rank_one_based') != 2 or
+                selection.get('complete_candidate_count', 0) < 2 or
+                not selection.get('first_workload_list') or
+                selection.get('first_workload_list') == selection.get('selected_list')):
+            raise ValueError('rank-two manifest has invalid prospective selection')
+    else:
+        raise ValueError('not an original selected input manifest')
+    if (not isinstance(selection.get('selected_list'), str) or
+            not selection['selected_list'].endswith('/kernelslist.g') or
+            type(selection.get('kernel_launches')) is not int or
+            selection['kernel_launches'] <= 0 or
+            selection.get('hardware_validated') is not False or
+            selection.get('architecture_speedup_permitted') is not False):
+        raise ValueError('selection identity, launch count or evidence tier invalid')
+    return selection['kernel_launches']
+
+
 def fixture(rows, marker=True):
     parts = []
     for row in rows:
@@ -125,7 +150,33 @@ def selftest():
         except ValueError:
             continue
         raise AssertionError('adversarial control accepted')
-    return {'status': 'PASS', 'positive_controls': 2, 'negative_controls': len(bad)}
+    # The rank-two manifest was previously rejected despite successful simulation.
+    first = {'status': 'SELECTED_INPUT_ONLY', 'selected_list': 'x/kernelslist.g',
+             'kernel_launches': 2, 'hardware_validated': False,
+             'architecture_speedup_permitted': False}
+    second = dict(first, status='SECOND_WORKLOAD_SELECTED_INPUT_ONLY',
+                  selection_rank_one_based=2, complete_candidate_count=11,
+                  first_workload_list='a/kernelslist.g')
+    assert validate_selection(first) == 2
+    assert validate_selection(second) == 2
+    manifest_bad = [
+        dict(second, selection_rank_one_based=1),
+        dict(second, complete_candidate_count=1),
+        dict(second, first_workload_list=second['selected_list']),
+        dict(second, hardware_validated=True),
+        dict(second, kernel_launches=0),
+        dict(second, selected_list='forged'),
+        dict(first, status='UNVERIFIED_INPUT'),
+        dict(first, selection_rank_one_based=2),
+    ]
+    for manifest in manifest_bad:
+        try:
+            validate_selection(manifest)
+        except ValueError:
+            continue
+        raise AssertionError('forged selection manifest accepted')
+    return {'status': 'PASS', 'positive_controls': 4,
+            'negative_controls': len(bad) + len(manifest_bad)}
 
 
 def main():
@@ -142,10 +193,9 @@ def main():
         if not all([a.repeat1, a.repeat2, a.selection, a.out]):
             p.error('provide two raw repeat logs, original selection.json and --out')
         selection = json.loads(Path(a.selection).read_text())
-        if selection.get('status') != 'SELECTED_INPUT_ONLY':
-            raise ValueError('not an original selected input manifest')
+        expected_launches = validate_selection(selection)
         result = audit(Path(a.repeat1).read_bytes(), Path(a.repeat2).read_bytes(),
-                       selection['kernel_launches'])
+                       expected_launches)
         result['selected_list'] = selection['selected_list']
         Path(a.out).write_text(json.dumps(result, sort_keys=True, indent=2) + '\n')
     print(json.dumps(result, sort_keys=True, indent=2))
