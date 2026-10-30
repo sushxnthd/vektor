@@ -1,0 +1,58 @@
+{
+  "experiment": "V309_QV100_DRAM_BUSWIDTH_PROSPECTIVE",
+  "date_utc": "2026-10-30",
+  "evidence_tier": "source_pinned_trace_driven_simulator_only",
+  "workflow_run": 41106976532,
+  "workflow_url": "https://github.com/sushxnthd/vektor/actions/runs/41106976532",
+  "artifact_id": 13002390491,
+  "artifact_zip_sha256": "fbcacfa7209b6ee2c300eecfc4be1746357d6f6c25c462a6edb41d5c146a65b0",
+  "status": "PASS_INDEPENDENT_BUSWIDTH_AUDIT",
+  "baseline_sim_cycles": 28717,
+  "baseline_sim_instructions": 1059640,
+  "expected_launches": 4,
+  "baseline_cache_counters": {
+    "L1D_total_cache_misses": 3534,
+    "L2_total_cache_misses": 129
+  },
+  "variants": [
+    {
+      "buswidth_bytes": 8,
+      "sim_cycles": 28729,
+      "cycle_delta": 12,
+      "cycle_delta_percent": 0.041787094752243625,
+      "cache_counters_match_baseline": true
+    },
+    {
+      "buswidth_bytes": 32,
+      "sim_cycles": 28717,
+      "cycle_delta": 0,
+      "cycle_delta_percent": 0,
+      "cache_counters_match_baseline": true
+    }
+  ],
+  "predictions": {
+    "p1_narrower_is_slower": true,
+    "p2_wider_not_slower": true,
+    "p3_small_widening_benefit": true
+  },
+  "counter_invariance": true,
+  "manifest_sha256": "a8bd562b9671b79627539f4efa39c6d6434a0bf9d45c2e379efff17308fb0ef9",
+  "raw_log_sha256": {
+    "8": [
+      "5d1e8d9bbec1c82206f6a4bc949f610fc0a71bf3ad87eea5bf087360b4945e8a",
+      "55ac7990799764b721106d968127950def941b130d653ec2da787dcbb7b4b74c"
+    ],
+    "32": [
+      "18c212d665bc68fd28ebc954c36e2bc87a2d17080fd4cef1d504eb3e49c0461a",
+      "9c6f75fe3705beb624116c211e742a495774eff6b748eca33f17842d147b1ef2"
+    ],
+    "baseline": [
+      "867cf4c1aa908fd8af0f00897d4bf2f08779b16703cec9c5cf39c762ea9051bb",
+      "533ba6af29e77194e59f9924dabff3423b62a69ebc0a61f4ce1968ec054fa000"
+    ]
+  },
+  "hardware_calibrated": false,
+  "equal_resource_architecture_comparison": false,
+  "physical_speedup_demonstrated": false,
+  "claim": "No simulated gain from doubling buswidth on the frozen Pathfinder workload; no claim for other workloads or physical hardware."
+}
