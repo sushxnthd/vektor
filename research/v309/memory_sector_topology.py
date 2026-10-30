@@ -225,7 +225,7 @@ def selftest():
     assert a["ambiguous_format1"] == 1
     mutants = [
         base + "00000003 0 LDG 1 R1 4 0",
-        base + "00000005 0 LDG 1 R1 4 1 0x1000 4",
+        base + "00000005 0 LDG 1 R1 4 1 0x1000",
         base + "00000003 0 LDG 1 R1 4 2 0x1000",
         base + "00000003 0 LDG 1 R1 4 3 0x1000 4",
         base + "00000003 0 LDG 1 R1 4 0 -1",
