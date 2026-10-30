@@ -50,7 +50,7 @@ def parse_address_record(line):
         elif len(data) == n:
             addrs = [int(x, 0) for x in data]
         else:
-            raise ValueError("format0 address count mismatch")
+            raise ValueError(f"format0 address count mismatch: active={n}, payload={len(data)}, tail={data[-5:]}")
     elif fmt == 1:
         if len(data) != 2 or lanes != list(range(lanes[0], lanes[-1] + 1)):
             raise ValueError("format1 needs contiguous active lanes and base/stride")
