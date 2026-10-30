@@ -107,11 +107,17 @@ def account(acc, record):
         acc["format1_sector_lower32"] += lo
         acc["format1_sector_upper32"] += hi
         acc["format1_candidate_starts"] += candidates
+        first_visible = (mask & -mask).bit_length() - 1
+        printed_contiguous = k == mask.bit_length() - first_visible
         if lo == hi:
             acc["format1_sector_identifiable32"] += 1
         else:
             acc["format1_sector_ambiguous32"] += 1
             acc["format1_sector_uncertainty32"] += hi - lo
+            if printed_contiguous:
+                acc["format1_ambiguous_previously_decoded32"] += 1
+            else:
+                acc["format1_ambiguous_previously_excluded32"] += 1
         if mask & 1:
             acc["format1_first_lane_zero"] += 1
         return
