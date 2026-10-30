@@ -58,3 +58,9 @@ This failure is a reproducible negative result at the **build-preflight** tier, 
 - [GitHub Actions run 41090106858](https://github.com/sushxnthd/vektor/actions/runs/41090106858), head `21cf3eb2a857d161fa8c73f763f2c3bbdfdb8c30`, **FAILED before the intended C++17 build**.
 - The build command is nested inside `bash -lc '...'`. The newly inserted comment apostrophe and single-quoted `printf` format broke the outer quoting; the host shell tried to write `/work/v309-legacy/evidence/compiler-override.txt` and failed. This is a **WORKFLOW_QUOTING_FAIL**, not a compiler result or GPU result.
 - Repair by avoiding single quotes entirely inside the nested script and using a double-quoted `echo`. Keep source revisions, workload, image and two-repeat gate fixed.
+
+## Seventh hosted attempt: full compilation reached final linker, zstd symbol ordering failure
+
+- [GitHub Actions run 41090476757](https://github.com/sushxnthd/vektor/actions/runs/41090476757), head `5dd924415dc758e179eea8ce2b70107f27b1e163`, **FAILED** in the final Accel-Sim executable link after a successful C++17 build of GPGPU-Sim and trace code.
+- Final link emitted unresolved `ZSTD_freeDDict`, `ZSTD_createDDict`, `ZSTD_createDCtx`, `ZSTD_getFrameContentSize`, `ZSTD_decompress_usingDDict` and related symbols. The pinned Accel-Sim Makefile lists `-lzstd` in `LIBS` **before** `accel-sim.cc main.cc` in the link command, which can drop the shared library under the linker's default `--as-needed` behavior before the consuming objects are compiled.
+- This is **LINK_LIBRARY_ORDER_FAIL**. It demonstrates compilation, not a runnable simulator. A controlled `-Wl,--no-as-needed` link flag may be added to the existing recorded compiler override to retain the DSO without changing source code; successful linking and execution must be verified separately.
