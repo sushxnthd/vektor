@@ -32,6 +32,7 @@ def scan(path):
     files=0
     remaining_old=MAX_TOTAL_CHOICES
     remaining_dp=DP_GLOBAL_TRANSITION_CAP
+    capped_examples=[]
     with tarfile.open(fileobj=io.BytesIO(blob),mode="r:gz") as tar:
         for member in tar:
             validate_name(member.name)
@@ -80,6 +81,16 @@ def scan(path):
                                     max_transitions=min(DP_ROW_TRANSITION_CAP,remaining_dp))
                                 remaining_dp-=meta["transitions"]
                                 acc["dp_"+meta["status"]]+=1
+                                if meta["status"]!="exact":
+                                    capped_examples.append({
+                                        "trace":member.name,"line":line_no,
+                                        "mask":hex(mask),"width_bytes":width,
+                                        "address_tokens":len(data),
+                                        "status":meta["status"],
+                                        "peak_states":meta.get("peak_states"),
+                                        "transitions":meta["transitions"],
+                                        "tokens_sha256":hashlib.sha256(" ".join(data).encode()).hexdigest(),
+                                    })
                                 acc["dp_transitions"]+=meta["transitions"]
                                 if meta["status"]=="exact":
                                     if not (old_lo<=lo<=hi<=old_hi):
@@ -112,6 +123,7 @@ def scan(path):
         "evidence_tier":"unverified_historical_tracer_source_conditional_NOT_GPU_transactions",
         "producer_identity_verified":False,"archive_sha256":EXPECTED_SHA,
         "trace_files":files,"global":dict(g),
+        "capped_examples":capped_examples[:10],
         "applications":{k:dict(v) for k,v in sorted(apps.items())},
         "budgets":{"old_mask_choices":MAX_TOTAL_CHOICES,"dp_global_transitions":DP_GLOBAL_TRANSITION_CAP,
                    "dp_row_transitions":DP_ROW_TRANSITION_CAP,"dp_row_states":DP_ROW_STATE_CAP},
