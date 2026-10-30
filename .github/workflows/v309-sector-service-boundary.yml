@@ -1,0 +1,50 @@
+name: V309 conditional sector-service boundary falsification
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/sector_service_boundary.py
+      - research/v309/SECTOR_SERVICE_BOUNDARY_PROTOCOL_20261030.md
+      - .github/workflows/v309-sector-service-boundary.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  conditional-boundary:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent exact-rational time-oracle and synthetic win/no-win gates
+        run: |
+          set -euo pipefail
+          python3 research/v309/sector_service_boundary.py --selftest
+          python3 research/v309/sector_service_boundary.py > v309-sector-service-evidence.json
+          python3 - <<'PY'
+          import json
+          from fractions import Fraction
+          r=json.load(open('v309-sector-service-evidence.json'))
+          assert r['status']=='PASS' and r['archive_producer_verified'] is False
+          assert r['rows']==3937565
+          assert r['source_conditional_sector_interval']==[1586194,1595385]
+          assert r['selftest']['independent_time_oracle_cases']==729
+          for endpoint in ('sector_low','sector_high'):
+              assert Fraction(r['cases']['frozen_predicted_win_synthetic'][endpoint]['gain'])==Fraction(1,3)
+              assert Fraction(r['cases']['frozen_predicted_no_win_synthetic'][endpoint]['gain'])==Fraction(-1,21)
+              assert Fraction(r['cases']['equal_resource_ideal_fixed_address_coalescer'][endpoint]['gain'])==0
+              assert Fraction(r['cases']['fixed_address_coalescer_with_control_cost'][endpoint]['gain'])<=0
+          print('PASS: conditional synthetic boundary only; no GPU hardware promotion')
+          PY
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-conditional-sector-service-boundary
+          path: v309-sector-service-evidence.json
+          if-no-files-found: warn
