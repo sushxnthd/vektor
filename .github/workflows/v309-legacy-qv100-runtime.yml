@@ -10,6 +10,8 @@ on:
       - research/v309/qv100_dram_buswidth_sweep.py
       - research/v309/qv100_second_workload.py
       - research/v309/qv100_cross_workload_counter_falsification.py
+      - research/v309/qv100_buswidth_transfer.py
+      - research/v309/QV100_LUD_BUSWIDTH_TRANSFER_PREREG_20261031.md
       - research/v309/QV100_SECOND_WORKLOAD_PROTOCOL_20261031.md
       - research/v309/QV100_DRAM_BUSWIDTH_PROTOCOL_20261030.md
       - research/v309/QV100_LEGACY_RUNTIME_PROTOCOL_20261030.md
@@ -36,6 +38,7 @@ jobs:
           python3 research/v309/qv100_dram_latency_sweep.py --selftest | tee v309-legacy/evidence/latency-selftest.json
           python3 research/v309/qv100_dram_buswidth_sweep.py --selftest | tee v309-legacy/evidence/buswidth-selftest.json
           python3 research/v309/qv100_second_workload.py --selftest | tee v309-legacy/evidence/second-workload-selftest.json
+          python3 research/v309/qv100_buswidth_transfer.py --selftest | tee v309-legacy/evidence/transfer-selftest.json
       - name: Authenticate historical original trace archive
         run: |
           set -euo pipefail
@@ -158,6 +161,18 @@ jobs:
                 --selection /work/v309-legacy/selection.json \
                 --folder /work/v309-legacy/buswidth-configs \
                 --evidence /work/v309-legacy/evidence
+              # Frozen prospective rank-two LUD width sensitivity, same pinned binary/config.
+              python3 /work/research/v309/qv100_dram_buswidth_sweep.py --prepare \
+                /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --folder /work/v309-second/buswidth-configs
+              python3 /work/research/v309/qv100_dram_buswidth_sweep.py --run \
+                --binary /tmp/accel/gpu-simulator/bin/release/accel-sim.out \
+                --trace /work/v309-second/traces/kernelslist.g \
+                --gpgpu /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --trace-config /tmp/accel/gpu-simulator/configs/tested-cfgs/SM7_QV100/trace.config \
+                --selection /work/v309-second/selection.json \
+                --folder /work/v309-second/buswidth-configs \
+                --evidence /work/v309-second/evidence
             ' 2>&1 | tee v309-legacy/evidence/build-and-runtime.log
       - name: Restore runner ownership of simulator-generated evidence
         run: |
@@ -166,7 +181,8 @@ jobs:
           # must be able to write its own result beside those immutable raw logs.
           sudo chown -R "$(id -u):$(id -g)" \
             v309-second/evidence v309-legacy/evidence \
-            v309-legacy/latency-configs v309-legacy/buswidth-configs
+            v309-legacy/latency-configs v309-legacy/buswidth-configs \
+            v309-second/buswidth-configs
       - name: Independent per-kernel replay audit and adversarial controls
         run: |
           set -euo pipefail
@@ -195,6 +211,12 @@ jobs:
             --selection v309-legacy/selection.json \
             --out v309-legacy/evidence/independent-buswidth-sweep.json \
             | tee v309-legacy/evidence/buswidth-sweep-stdout.json
+          python3 research/v309/qv100_dram_buswidth_sweep.py --audit \
+            --folder v309-second/buswidth-configs \
+            --evidence v309-second/evidence \
+            --selection v309-second/selection.json \
+            --out v309-second/evidence/independent-buswidth-sweep.json \
+            | tee v309-legacy/evidence/second-buswidth-sweep-stdout.json
       - name: Independent cross-workload counter-proxy falsification
         run: |
           set -euo pipefail
@@ -205,6 +227,18 @@ jobs:
             --second v309-second/evidence/independent-counter-audit.json \
             --out v309-legacy/evidence/cross-workload-counter-falsification.json \
             | tee v309-legacy/evidence/cross-workload-counter-stdout.json
+      - name: Independent frozen two-workload bus-width transfer test
+        run: |
+          set -euo pipefail
+          python3 research/v309/qv100_buswidth_transfer.py \
+            --first-selection v309-legacy/selection.json \
+            --second-selection v309-second/selection.json \
+            --first-audit v309-legacy/evidence/independent-counter-audit.json \
+            --second-audit v309-second/evidence/independent-counter-audit.json \
+            --first-sweep v309-legacy/evidence/independent-buswidth-sweep.json \
+            --second-sweep v309-second/evidence/independent-buswidth-sweep.json \
+            --out v309-legacy/evidence/buswidth-transfer.json \
+            | tee v309-legacy/evidence/buswidth-transfer-stdout.json
       - name: Preserve positive or negative evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -214,6 +248,7 @@ jobs:
             v309-legacy/selection.json
             v309-second/selection.json
             v309-second/evidence/
+            v309-second/buswidth-configs/
             v309-legacy/latency-configs/
             v309-legacy/buswidth-configs/
             v309-legacy/evidence/
