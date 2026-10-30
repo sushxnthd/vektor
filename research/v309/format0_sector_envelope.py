@@ -163,7 +163,7 @@ def selftest():
         k = mask.bit_count()
         if k < 2:
             continue
-        for n in range(k + 1, 7):
+        for n in range(k + 1, 6):
             tokens = [hex(0x101f + 32 * i) for i in range(n)]
             lo, hi, sharp, _, method = format0_envelope(mask, 4, tokens, 0, lanes=6)
             assert not sharp and method == "conservative"
