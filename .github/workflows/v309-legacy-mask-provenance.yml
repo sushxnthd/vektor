@@ -43,7 +43,7 @@ jobs:
           g=p['global']
           assert p['source_snapshot_is_proven_producer'] is False
           assert g['global_proxy']==240465
-          assert g['format_0']+g['format_1']+g['format_2']==240465
+          assert g.get('format_0',0)+g.get('format_1',0)+g.get('format_2',0)==240465
           assert g['format0_exact_under_hypothesis']+g['format0_predicate_hidden']+g.get('format0_source_incompatible',0)==g['format_0']
           assert g['format1_sector_identifiable32']+g['format1_sector_ambiguous32']==g['format_1']
           assert g['format1_sector_lower32']<=g['format1_sector_upper32']
