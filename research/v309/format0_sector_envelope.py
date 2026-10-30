@@ -81,7 +81,7 @@ def format0_envelope(mask, width, tokens, budget, lanes=32):
         for lane in visible:
             touched.update(ss[(a & ((1 << lane) - 1)).bit_count()])
         count = len(touched)
-        return count, count, True, 1, "unique_A"
+        return count, count, True, 0, "unique_A"
 
     if k == 1:
         ranks = possible_ranks(mask, n, visible[0], lanes)
