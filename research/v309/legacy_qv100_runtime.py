@@ -101,8 +101,8 @@ def select_archive(filename, destination):
 def parse_stats(log):
     results = {}
     for key in STATS:
-        matches = re.findall(r"(?m)^\\s*" + re.escape(key) +
-                             r"\\s*=\\s*(\\d+)\\b", log)
+        matches = re.findall(r"(?m)^\s*" + re.escape(key) +
+                             r"\s*=\s*(\d+)\b", log)
         results[key] = int(matches[-1]) if matches else None
         results[key + "_records"] = len(matches)
     return results
@@ -174,9 +174,9 @@ def selftest():
         stream = io.BytesIO()
         with tarfile.open(fileobj=stream, mode="w:gz") as tar:
             for name, payload in [
-                ("a/traces/kernelslist.g", b"MemcpyHtoD,0x1,4\\nkernel-1.traceg\\n"),
-                ("a/traces/kernel-1.traceg", b"0 0 0 0 00 ff 1 R1 MOV 0 0\\n"),
-                ("b/traces/kernelslist.g", b"kernel-2.traceg\\n"),
+                ("a/traces/kernelslist.g", b"MemcpyHtoD,0x1,4\nkernel-1.traceg\n"),
+                ("a/traces/kernel-1.traceg", b"0 0 0 0 00 ff 1 R1 MOV 0 0\n"),
+                ("b/traces/kernelslist.g", b"kernel-2.traceg\n"),
                 ("b/traces/kernel-2.traceg", b"x" * 512),
             ]:
                 entry = tarfile.TarInfo(name)
