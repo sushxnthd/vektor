@@ -1,0 +1,75 @@
+name: V309 finite-capacity certified LDG LRU sensitivity
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/cache_capacity_replay.py
+      - research/v309/CACHE_CAPACITY_REPLAY_PROTOCOL_20261030.md
+      - .github/workflows/v309-cache-capacity-replay.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  replay:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Frozen synthetic regimes and independent reference LRU
+        run: python3 research/v309/cache_capacity_replay.py --selftest
+      - name: Acquire authenticated 21 MB historical V100 trace archive
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Replay certified LDG subsequences under finite-capacity LRU
+        run: python3 research/v309/cache_capacity_replay.py /tmp/v309-v100-rodinia.tgz > v309-cache-capacity-replay.json
+      - name: Independent corpus and finite-capacity conservation audit
+        run: |
+          python3 - <<'PY'
+          import json
+          x=json.load(open('v309-cache-capacity-replay.json'))
+          assert x['status']=='PASS' and x['producer_identity_verified'] is False
+          g=x['global']; files=x['files']; apps=x['applications']
+          assert len(files)==210 and len(apps)==11
+          assert tuple(g[k] for k in ('global_proxy','ldg_rows','certified_rows','line_references','unique_lines'))==(240465,197197,190219,530930,159345)
+          assert x['selftest']['independent_oracle_comparisons']==8192
+          for key in ('global_proxy','ldg_rows','certified_rows','line_references','unique_lines'):
+              assert sum(f.get(key,0) for f in files)==g[key]
+              assert sum(a.get(key,0) for a in apps.values())==g[key]
+          for mode in ('skip','flush'):
+              values=[]
+              for c in x['capacities_in_lines']:
+                  k=str(c); misses=g['misses'][mode][k]
+                  assert misses==sum(f['misses'][mode][k] for f in files)
+                  assert misses==sum(a['misses'][mode][k] for a in apps.values())
+                  assert g['unique_lines']<=misses<=g['line_references']
+                  values.append(misses)
+              assert values==sorted(values,reverse=True)
+          for c in x['capacities_in_lines']:
+              k=str(c)
+              assert g['misses']['skip'][k]<=g['misses']['flush'][k]
+          print('PASS: exact corpus, file and application conservation')
+          print('R',g['line_references'],'U',g['unique_lines'])
+          for c in x['capacities_in_lines']:
+              k=str(c)
+              print('capacity',c,'skip',g['misses']['skip'][k],'flush',g['misses']['flush'][k])
+          for app,a in sorted(apps.items()):
+              print('app',app,'R',a['line_references'],'U',a['unique_lines'],
+                    'C64_skip',a['misses']['skip']['64'],'C64_flush',a['misses']['flush']['64'])
+          print('CAUTION: conditional replay, not GPU cache or DRAM measurements')
+          PY
+      - name: Preserve raw evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-conditional-cache-capacity-replay
+          path: v309-cache-capacity-replay.json
+          if-no-files-found: warn
