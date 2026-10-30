@@ -27,8 +27,10 @@ MAX_TOTAL_CHOICES = 2_000_000
 
 
 def sectors(addr, width):
-    if addr < 0 or addr > MAX64 or width <= 0 or addr + width - 1 > MAX64:
-        raise ValueError("invalid uint64 address interval")
+    if addr < 0 or addr > MAX64 or width <= 0:
+        raise ValueError("invalid uint64 address token or width")
+    if addr + width - 1 > MAX64:
+        return None  # unknown width-extended footprint; do not invent wrap semantics
     return frozenset(range(addr // 32, (addr + width - 1) // 32 + 1))
 
 
@@ -66,6 +68,13 @@ def format0_envelope(mask, width, tokens, budget, lanes=32):
     ss = [sectors(int(t, 0), width) for t in tokens]
     visible = [i for i in range(lanes) if mask & (1 << i)]
     h = n - k
+    # The historical tracer may serialize garbage/sentinel addresses for
+    # predicated-off lanes. Reject no row solely for such a hidden token.
+    # If an overflowing token could be visible, conservatively bound rather
+    # than interpreting 64-bit address wrap as an actual memory transaction.
+    if any(ss[j] is None for lane in visible
+           for j in possible_ranks(mask, n, lane, lanes)):
+        return 1, k * ((width + 30) // 32 + 1), False, 0, "overflow_unknown"
     if h == 0 or n == lanes:
         a = mask if h == 0 else (1 << lanes) - 1
         touched = set()
@@ -181,18 +190,19 @@ def selftest():
                 actual.append(len(touched))
             assert actual and lo <= min(actual) and hi >= max(actual)
             fallback_checks += 1
-    for invalid in [(0b11, 4, ["0x1000"]), (0b1, 4, ["-1"]),
-                    (0b1, 4, ["0xffffffffffffffff"])]:
+    for invalid in [(0b11, 4, ["0x1000"]), (0b1, 4, ["-1"])]:
         try:
             format0_envelope(*invalid, budget=0)
         except ValueError:
             pass
         else:
             raise AssertionError("malformed source record accepted")
+    assert format0_envelope(0b10, 4, ["0xffffffffffffffff", "0x1000"], 0, lanes=3)[4] == "overflow_unknown"
+    assert format0_envelope(0b10, 4, ["0xffffffffffffffff", "0x1000", "0x1020"], 0, lanes=3)[4] == "overflow_unknown"
     return {"selftest": "PASS", "independent_exhaustive_cases": checks,
             "forced_conservative_oracle_cases": fallback_checks,
             "adversarial_hidden_lane_counterexample": "PASS",
-            "malformed_records_rejected": 3}
+            "malformed_records_rejected": 2, "overflow_unknown_fixture": "PASS"}
 
 
 def scan(path):
