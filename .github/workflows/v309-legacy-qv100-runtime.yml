@@ -75,7 +75,10 @@ jobs:
                 nvcc --version | tail -4
               } > /work/v309-legacy/evidence/build-provenance.txt
               cd /tmp/accel
+              # Upstream setup script expands optional environment variables without nounset guards.
+              set +u
               source gpu-simulator/setup_environment.sh
+              set -u
               timeout 1500 make -j2 -C gpu-simulator
               python3 /work/research/v309/legacy_qv100_runtime.py --simulate \
                 --binary /tmp/accel/gpu-simulator/bin/release/accel-sim.out \
