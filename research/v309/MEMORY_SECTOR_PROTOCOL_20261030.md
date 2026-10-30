@@ -16,3 +16,6 @@ This is an exploratory **workload qualification**, not a new hardware mechanism.
 ## Source
 Accel-Sim NVBit tracer implementation: https://github.com/accel-sim/accel-sim-framework/blob/dev/util/tracer_nvbit/tracer_tool/tracer_tool.cu
 Purdue archive: https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz
+
+## Pre-result parser compatibility amendment (2026-10-30)
+The first authenticated archive decode failed closed at Needleman-Wunsch kernel-1 line 51. Its active mask was `00000001`, but format-0 encoded **32 lane-slot addresses**, including inactive lanes, rather than one address per active lane. The original rule "format-0 one address per active lane" was therefore false for this tracer revision. No memory-sector outcome was computed or inspected before this correction. Permit format-0 payloads of either 32 lane slots (select active lane indices) or exactly popcount(mask) compacted addresses. Continue to reject all other lengths. The correction does not change the global-proxy opcode classification, ideal-coalescer baseline, metrics or no-promotion decision. Preserve the failed CI run as negative parser evidence.
