@@ -104,7 +104,7 @@ def sector_only_gain(n: int, before: int, after: int) -> Fraction:
 
 
 def fstr(v: Fraction) -> str:
-    return f"{v.numerator}/{v.denominator}"
+    return str(v.numerator) if v.denominator == 1 else f"{v.numerator}/{v.denominator}"
 
 
 def evaluate(family: str, capacity: int = 4) -> dict:
