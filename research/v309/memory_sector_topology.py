@@ -45,7 +45,7 @@ def parse_address_record(line):
     lanes = [i for i in range(32) if (mask >> i) & 1]
     n = len(lanes)
     if fmt == 0:
-        if len(data) == 32:
+        if len(data) in (16, 32) and max(lanes) < len(data):
             addrs = [int(data[i], 0) for i in lanes]
         elif len(data) == n:
             addrs = [int(x, 0) for x in data]
@@ -202,7 +202,7 @@ def selftest():
     assert a["perfect_pack_floor32"] == 6
     account(a, parse_address_record(base + "00000003 0 LDS 1 R1 4 0 0x1000 0x1004"))
     # Legacy tracer format-0 may include inactive lane slots.
-    full_slots = ["0x1000"] + ["0xdead"] * 31
+    full_slots = ["0x1000"] + ["0xdead"] * 15
     slot_row = parse_address_record(base + "00000001 0 LDG 1 R1 4 0 " + " ".join(full_slots))
     assert slot_row[3][1] == (0x1000,)
     account(a, slot_row)
