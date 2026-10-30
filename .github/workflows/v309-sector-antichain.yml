@@ -6,6 +6,7 @@ on:
     paths:
       - research/v309/sector_antichain_dp.py
       - research/v309/sector_antichain_full_audit.py
+      - research/v309/sector_antichain_independent_oracle.py
       - research/v309/ANTICHAIN_DP_PROTOCOL_20261030.md
       - .github/workflows/v309-sector-antichain.yml
   workflow_dispatch:
@@ -26,6 +27,10 @@ jobs:
         run: |
           set -euo pipefail
           python3 research/v309/sector_antichain_dp.py --selftest
+      - name: Independent 32-lane original-mask oracle and 64-bit boundary tests
+        run: |
+          set -euo pipefail
+          python3 research/v309/sector_antichain_independent_oracle.py
       - name: Acquire authenticated bounded historical V100 trace archive
         run: |
           set -euo pipefail
