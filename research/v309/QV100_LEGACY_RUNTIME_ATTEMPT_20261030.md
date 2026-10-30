@@ -32,3 +32,10 @@ This failure is a reproducible negative result at the **build-preflight** tier, 
 - The digest-pinned container was pulled successfully; `nvcc` preflight passed; all source-pinned repositories were checked out. The next failure was `gpu-simulator/setup_environment.sh: line 93: GPGPUSIM_SETUP_ENVIRONMENT_WAS_RUN: unbound variable` under the workflow's `set -u`.
 - The upstream script directly expands a potentially unset variable and is not nounset-safe. Temporarily disable `nounset` *only while sourcing this external setup script*, then re-enable it before build and simulation. Preserve `errexit` and `pipefail` throughout.
 - Result: **ENVIRONMENT_SETUP_FAIL**, before compilation. No simulated cycles or hardware performance observations. This does not falsify the architecture.
+
+## Third hosted attempt: missing zstd development headers
+
+- [GitHub Actions run 41088538480](https://github.com/sushxnthd/vektor/actions/runs/41088538480), head `817150e58fe2bede088b46413fbddb4d04c21acc`, **FAILED** after successful CUDA preflight and successful upstream environment setup.
+- [Raw artifact 12993630232](https://github.com/sushxnthd/vektor/actions/runs/41088538480/artifacts/12993630232).
+- The actual source-pinned `make -j2 -C gpu-simulator` began compiling `trace_parser.cc` and `trace_driven.cc`. Both stopped on `fatal error: zstd.h: No such file or directory` from `trace-parser/warp_trace_stream.h`. Make exited 2. The pinned upstream source includes a `.tracez` streaming reader requiring libzstd development headers, even though the selected original workload uses `.traceg`.
+- Result: **COMPILER_DEPENDENCY_FAIL**, before any simulator binary or runtime. The next attempt may install the system `libzstd-dev` package inside the same digest-pinned container; its version and package provenance must be recorded, and no unverified cycles may be reported.
