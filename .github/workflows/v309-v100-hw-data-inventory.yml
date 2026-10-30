@@ -26,6 +26,10 @@ jobs:
           wc -c /tmp/v309-volta-tesla-v100-hw.tgz | tee v309-v100-hw-bytes.txt
           tar -tzf /tmp/v309-volta-tesla-v100-hw.tgz > v309-v100-hw-manifest.txt
           wc -l v309-v100-hw-manifest.txt
+          echo 'EXACT RODINIA 2.0-ft MEMBERS:'
+          grep -Eic 'rodinia[-_]2[.]0-ft' v309-v100-hw-manifest.txt || true
+          echo 'RODINIA 3.1 MEMBERS:'
+          grep -Eic 'rodinia[-_]3[.]1' v309-v100-hw-manifest.txt || true
           echo 'RODINIA MATCHING CANDIDATE NAMES (first 100):'
           grep -i 'rodinia' v309-v100-hw-manifest.txt | head -n 100 || true
           echo 'PROFILER/COUNTER METADATA FILES (first 100):'
