@@ -14,7 +14,7 @@ from pathlib import PurePosixPath
 from v100_sass_profile import EXPECTED_SHA, parse_row
 from v100_trace_inventory import MAX_ARCHIVE, validate_name
 
-FIELDS = ("active_memory", "global_proxy", "decoded_global", "ambiguous_format0", "other_memory", "active_lanes",
+FIELDS = ("active_memory", "global_proxy", "decoded_global", "ambiguous_format0", "ambiguous_format1", "other_memory", "active_lanes",
           "requested_unique_bytes", "sectors32", "sectors64", "lines128",
           "perfect_pack_floor32", "packing_slack_rows", "format0",
           "format1", "format2", "trace_files")
@@ -51,9 +51,11 @@ def parse_address_record(line):
             raise ValueError("invalid ambiguous format0 payload")
         return mask, opcode, width, (0, None)
     elif fmt == 1:
-        if len(data) != 2 or lanes != list(range(lanes[0], lanes[-1] + 1)):
-            raise ValueError("format1 needs contiguous active lanes and base/stride")
+        if len(data) != 2:
+            raise ValueError("format1 needs base/stride")
         base, stride = int(data[0], 0), int(data[1], 0)
+        if lanes != list(range(lanes[0], lanes[-1] + 1)):
+            return mask, opcode, width, (1, None)
         addrs = [base + i * stride for i in range(n)]
     elif fmt == 2:
         if len(data) != n:
@@ -103,8 +105,8 @@ def account(acc, row):
     n = mask.bit_count()
     acc["global_proxy"] += 1
     acc["format" + str(fmt)] += 1
-    if fmt == 0:
-        acc["ambiguous_format0"] += 1
+    if addrs is None:
+        acc["ambiguous_format0" if fmt == 0 else "ambiguous_format1"] += 1
         return
     assert len(addrs) == n
     acc["decoded_global"] += 1
@@ -186,6 +188,7 @@ def profile(path):
             "32/64/128-byte granularities are sensitivity assumptions",
             "perfect packing requires changing memory addresses or layout",
             "format0 records are all excluded due to unverified lane/address association",
+            "noncontiguous format1 rows excluded due to unverified legacy stride semantics",
             "no measured sectors, counters, bandwidth, timing, occupancy, or RTX5090 claims",
         ],
     }
@@ -214,8 +217,12 @@ def selftest():
     slot_row = parse_address_record(base + "00000001 0 LDG 1 R1 4 0 " + " ".join(full_slots))
     assert slot_row[3] == (0, None)
     account(a, slot_row)
-    assert a["other_memory"] == 1 and a["global_proxy"] == 4
+    sparse_stride = parse_address_record(base + "00000005 0 LDG 1 R1 4 1 0x1000 4")
+    assert sparse_stride[3] == (1, None)
+    account(a, sparse_stride)
+    assert a["other_memory"] == 1 and a["global_proxy"] == 5
     assert a["decoded_global"] == 2 and a["ambiguous_format0"] == 2
+    assert a["ambiguous_format1"] == 1
     mutants = [
         base + "00000003 0 LDG 1 R1 4 0",
         base + "00000005 0 LDG 1 R1 4 1 0x1000 4",
