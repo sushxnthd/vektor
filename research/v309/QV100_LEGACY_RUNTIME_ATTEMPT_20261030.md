@@ -52,3 +52,9 @@ This failure is a reproducible negative result at the **build-preflight** tier, 
 - [GitHub Actions run 41089385724](https://github.com/sushxnthd/vektor/actions/runs/41089385724), head `21df2972279aff0f57b00c64b7e4b0e6240a46e8`, **FAILED** after successful dependency installation and trace parser/header compilation.
 - GPGPU-Sim 4.2.0 pinned at `4195dd4f...` began building its interconnect model with GCC 7.5.0 in the historical CUDA 11 container. The intersim2 compile command omitted `-std=c++17`; pinned GPGPU-Sim `statistics.h` uses C++17 `std::is_arithmetic_v` and `abstract_hardware_model.h` uses `std::unordered_map` without a visible include. Compilation failed with both diagnostics; make exited 2.
 - Result tier: **GPGPUSIM_COMPILER_LANGUAGE_FAIL**, not simulation. This exposes a real version/toolchain mismatch between the current GPGPU-Sim development head and the older CUDA 11 image. A controlled compiler-flag/header-inclusion repair must be declared and logged; if further incompatibilities persist, stop patching and choose a historically compatible, separately pinned GPGPU-Sim revision with an explicit amended protocol.
+
+## Sixth hosted attempt: workflow shell quoting regression
+
+- [GitHub Actions run 41090106858](https://github.com/sushxnthd/vektor/actions/runs/41090106858), head `21cf3eb2a857d161fa8c73f763f2c3bbdfdb8c30`, **FAILED before the intended C++17 build**.
+- The build command is nested inside `bash -lc '...'`. The newly inserted comment apostrophe and single-quoted `printf` format broke the outer quoting; the host shell tried to write `/work/v309-legacy/evidence/compiler-override.txt` and failed. This is a **WORKFLOW_QUOTING_FAIL**, not a compiler result or GPU result.
+- Repair by avoiding single quotes entirely inside the nested script and using a double-quoted `echo`. Keep source revisions, workload, image and two-repeat gate fixed.
