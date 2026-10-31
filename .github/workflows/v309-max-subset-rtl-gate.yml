@@ -8,6 +8,7 @@ on:
       - "rtl/vtile/compact_greedy_arbiter.sv"
       - "research/v309/factored_issue_law_holdout.py"
       - "research/v309/bank_equality_moment_law.py"
+      - "research/v309/audit_matched_stdcells.py"
       - "verification/rtl/tb_max_subset_arbiter.sv"
       - ".github/workflows/v309-max-subset-rtl-gate.yml"
   workflow_dispatch:
@@ -108,6 +109,42 @@ jobs:
           if factored_ratio > 2:
               sys.exit('FROZEN_AREA_PREFILTER_FAIL: factored candidate exceeds 2x generic cells; do not promote')
           PY
+      - name: Map original, compact and exact-max to pinned Nangate45 cells
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=build/v309_max_subset/standard_cells
+          mkdir -p "$out"
+          lib="$out/NangateOpenCellLibrary_typical.lib"
+          curl --fail --location --retry 3 --max-time 120 \
+            'https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib' \
+            --output "$lib"
+          actual="$(git hash-object "$lib")"
+          test "$actual" = '90e4afb274cfc6514c587c434c77903d554117d1' || {
+            echo "PINNED_LIBERTY_BLOB_DRIFT: $actual"; exit 1;
+          }
+          sha256sum "$lib" | tee "$out/liberty_sha256.txt"
+          for name in original_greedy compact_greedy factored_exact_max; do
+            case "$name" in
+              original_greedy)
+                rtl=rtl/vtile/rf_bank_arbiter.sv
+                top=vektor_rf_bank_arbiter ;;
+              compact_greedy)
+                rtl=rtl/vtile/compact_greedy_arbiter.sv
+                top=vektor_v309_compact_greedy_arbiter ;;
+              factored_exact_max)
+                rtl=rtl/vtile/factored_subset_arbiter.sv
+                top=vektor_v309_factored_subset_arbiter ;;
+            esac
+            yosys -p "read_liberty -lib $lib; read_verilog -sv $rtl; synth -top $top -noabc; abc -liberty $lib; clean; stat -liberty $lib; write_json $out/$name.json" \
+              2>&1 | tee "$out/$name.log"
+          done
+      - name: Independently audit matched standard-cell area and load proxies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/v309/audit_matched_stdcells.py \
+            | tee build/v309_max_subset/standard_cells/audit.log
       - name: Preserve complete logs even on a killed candidate
         if: always()
         uses: actions/upload-artifact@v4
