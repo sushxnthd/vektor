@@ -13,5 +13,6 @@ set_input_delay -clock virtual_issue_clock 0 [all_inputs]
 set_output_delay -clock virtual_issue_clock 0 [all_outputs]
 set_input_transition $slew [all_inputs]
 set_load $load [all_outputs]
-report_checks -path_delay max -group_path_count 1
-report_check_types -max_slew -max_cap -max_fanout
+report_checks -path_delay max
+# OpenSTA 2.0.17 (Ubuntu 22.04) lacks report_check_types and
+# -group_path_count; electrical violation reporting requires a later tool.
