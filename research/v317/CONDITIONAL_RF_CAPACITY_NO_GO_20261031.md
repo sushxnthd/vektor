@@ -1,5 +1,7 @@
 # V317: cache-aware RF capacity no-go certificate (2026-10-31)
 
+> **CORRECTION (2026-10-31, V317 bank-skew falsification):** The aggregate pooled-RF no-win condition below is **not sufficient for a physically banked RF** unless independent per-bank balance or effective pooling is established. Exact two-bank counterfactuals with the same aggregate demand and ports yield 1.000x versus 1.250x candidate gain; the pooled model incorrectly predicts 1.000x for both. See [bank-skew falsification](BANK_SKEW_AGGREGATE_NO_GO_FALSIFICATION_20261031.md). Treat the original no-go as restricted to the pooled-resource abstraction. No measured GPU result is implied.
+
 **Evidence tier:** conditional analytic resource envelope with synthetic parameter intervals. This is **not** a physical GPU speedup, novelty result, workload trace, or replacement for a modern GPU baseline. The exploratory regimes were evaluated locally before this report was committed; they are **not** prospectively frozen unseen workloads.
 
 ## Why this matters
