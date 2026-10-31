@@ -4,15 +4,21 @@ module tb_v312_rejection_fallback;
     reg [15:0] primary_src0_flat, primary_src1_flat;
     reg [15:0] backup_src0_flat, backup_src1_flat;
     wire [3:0] issue_valid, use_backup;
+    wire [3:0] factored_issue, factored_backup;
     integer used[0:15];
     integer t, i, a, b, c, d, k, pf, bf;
     reg [3:0] expected_issue, expected_backup;
-    integer accepted;
     vektor_v312_rejection_fallback dut(
         .primary_valid(primary_valid), .backup_valid(backup_valid),
         .primary_src0_flat(primary_src0_flat), .primary_src1_flat(primary_src1_flat),
         .backup_src0_flat(backup_src0_flat), .backup_src1_flat(backup_src1_flat),
         .issue_valid(issue_valid), .use_backup(use_backup)
+    );
+    vektor_v312_factored_fallback factored(
+        .primary_valid(primary_valid), .backup_valid(backup_valid),
+        .primary_src0_flat(primary_src0_flat), .primary_src1_flat(primary_src1_flat),
+        .backup_src0_flat(backup_src0_flat), .backup_src1_flat(backup_src1_flat),
+        .issue_valid(factored_issue), .use_backup(factored_backup)
     );
     task check;
         begin
@@ -34,8 +40,10 @@ module tb_v312_rejection_fallback;
                 end
             end
             #1;
-            if (issue_valid !== expected_issue || use_backup !== expected_backup) begin
-                $display("FAIL t=%0d issue=%b expected=%b backup=%b expected=%b",t,issue_valid,expected_issue,use_backup,expected_backup);
+            if (issue_valid !== expected_issue || use_backup !== expected_backup ||
+                factored_issue !== expected_issue || factored_backup !== expected_backup) begin
+                $display("FAIL t=%0d counted=%b/%b factored=%b/%b expected=%b/%b",
+                    t,issue_valid,use_backup,factored_issue,factored_backup,expected_issue,expected_backup);
                 $fatal(1);
             end
             for (k=0;k<16;k=k+1)
@@ -43,27 +51,24 @@ module tb_v312_rejection_fallback;
         end
     endtask
     initial begin
-        // Frozen hotspot: 2 primaries, 2 fallback grants when all backups ready.
         primary_valid=4'b1111; backup_valid=4'b1111;
         primary_src0_flat=16'h0000; primary_src1_flat=16'h1111;
         backup_src0_flat=16'h8642; backup_src1_flat=16'h9753;
         t=0; check();
         if (issue_valid!==4'b1111 || use_backup!==4'b1100)
             $fatal(1,"Hotspot frozen vector failed");
-        // Frozen disjoint: all four primaries, no backups.
         primary_src0_flat=16'h6420; primary_src1_flat=16'h7531;
         backup_src0_flat=16'hECA8; backup_src1_flat=16'hFDB9;
         t=1; check();
         if (issue_valid!==4'b1111 || use_backup!==4'b0000)
             $fatal(1,"Disjoint frozen vector failed");
-        // Randomized independent software port-count oracle, including same-bank operands.
         for (t=2;t<50002;t=t+1) begin
             primary_valid=$random; backup_valid=$random;
             primary_src0_flat=$random; primary_src1_flat=$random;
             backup_src0_flat=$random; backup_src1_flat=$random;
             check();
         end
-        $display("PASS V312: 50002 independent RTL oracle vectors, bank-port safety");
+        $display("PASS V312: 50002 vectors, both RTL implementations, independent oracle");
         $finish;
     end
 endmodule
