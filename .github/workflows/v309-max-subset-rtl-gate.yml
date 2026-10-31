@@ -6,6 +6,7 @@ on:
     paths:
       - "rtl/vtile/max_subset_arbiter.sv"
       - "rtl/vtile/factored_subset_arbiter.sv"
+      - "rtl/vtile/compact_greedy_arbiter.sv"
       - "research/v309/factored_issue_law_holdout.py"
       - "verification/rtl/tb_max_subset_arbiter.sv"
       - ".github/workflows/v309-max-subset-rtl-gate.yml"
@@ -32,6 +33,7 @@ jobs:
             -o build/v309_max_subset/tb \
             rtl/vtile/max_subset_arbiter.sv \
             rtl/vtile/factored_subset_arbiter.sv \
+            rtl/vtile/compact_greedy_arbiter.sv \
             rtl/vtile/rf_bank_arbiter.sv \
             verification/rtl/tb_max_subset_arbiter.sv
           vvp build/v309_max_subset/tb 2>&1 | tee build/v309_max_subset/rtl_simulation.log
@@ -48,6 +50,8 @@ jobs:
           set -euo pipefail
           yosys -p 'read_verilog -sv rtl/vtile/rf_bank_arbiter.sv; synth -top vektor_rf_bank_arbiter; stat; ltp -noff' \
             2>&1 | tee build/v309_max_subset/greedy_yosys.log
+          yosys -p 'read_verilog -sv rtl/vtile/compact_greedy_arbiter.sv; synth -top vektor_v309_compact_greedy_arbiter; stat; ltp -noff' \
+            2>&1 | tee build/v309_max_subset/compact_greedy_yosys.log
           yosys -p 'read_verilog -sv rtl/vtile/max_subset_arbiter.sv; synth -top vektor_v309_max_subset_arbiter; stat; ltp -noff' \
             2>&1 | tee build/v309_max_subset/optimal_yosys.log
           yosys -p 'read_verilog -sv rtl/vtile/factored_subset_arbiter.sv; synth -top vektor_v309_factored_subset_arbiter; stat; ltp -noff' \
@@ -66,21 +70,26 @@ jobs:
               depth = re.findall(r'length\s*=\s*(\d+)', s)
               return {'generic_cells': int(matches[-1]), 'ltp_length_if_available': int(depth[-1]) if depth else None}
           baseline = parse('greedy_yosys.log')
+          compact = parse('compact_greedy_yosys.log')
           brute_force = parse('optimal_yosys.log')
           factored = parse('factored_yosys.log')
           brute_ratio = brute_force['generic_cells']/baseline['generic_cells']
           factored_ratio = factored['generic_cells']/baseline['generic_cells']
+          factored_to_compact = factored['generic_cells']/compact['generic_cells']
           # Frozen brute-force rejection must remain visible. Never silently
           # substitute a new implementation for the rejected 16-subset RTL.
           result = {
               'source_commit': os.environ.get('GITHUB_SHA'),
               'evidence_tier': 'generic_yosys_synthesis_not_routed_physical',
-              'baseline': baseline, 'rejected_brute_force': brute_force,
+              'baseline': baseline, 'compact_greedy_stronger_baseline': compact,
+              'rejected_brute_force': brute_force,
               'factored_candidate': factored,
               'rejected_brute_force_cell_ratio': brute_ratio,
               'factored_candidate_cell_ratio': factored_ratio,
+              'factored_to_compact_greedy_cell_ratio': factored_to_compact,
               'frozen_max_cell_ratio': 2.0,
               'brute_force_still_rejected': brute_ratio > 2,
+              'compact_greedy_matched_baseline_gate': 'PASS' if factored_to_compact <= 2 else 'FAIL_KILL_FACTORED_RTL',
               'factored_preliminary_area_gate': 'PASS' if factored_ratio <= 2 else 'FAIL_KILL_FACTORED_RTL',
               'clock_or_area_or_power_gain_claimed': False,
           }
@@ -88,6 +97,8 @@ jobs:
           print(json.dumps(result, indent=2))
           if brute_ratio <= 2:
               sys.exit('SOURCE_OR_TOOL_DRIFT: previous brute-force rejection not reproduced')
+          if factored_to_compact > 2:
+              sys.exit('STRONGER_BASELINE_FAIL: factored candidate exceeds 2x compact greedy; kill')
           if factored_ratio > 2:
               sys.exit('FROZEN_AREA_PREFILTER_FAIL: factored candidate exceeds 2x generic cells; do not promote')
           PY
