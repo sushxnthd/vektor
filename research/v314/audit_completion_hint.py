@@ -46,20 +46,23 @@ def audit_events(name, policy):
     for bank in range(BANKS):
         assert reads_by_bank[bank] <= PORTS * MEASURE
         assert completed_demand[bank] <= reads_by_bank[bank] + 2 * SLOTS * DEPTH
-    return stats
+    return stats, dict(bank0_reads=reads_by_bank[0],
+                       bank0_read_utilization=reads_by_bank[0] / (PORTS * MEASURE),
+                       bank0_completed_demand=completed_demand[0])
 
 
 def main():
     for name in REGIMES:
-        base = audit_events(name, "age")
-        candidate = audit_events(name, "hint")
+        base, base_pressure = audit_events(name, "age")
+        candidate, candidate_pressure = audit_events(name, "hint")
         result = evaluate(name)
         assert result["baseline"] == base and result["candidate"] == candidate
         print(name, "issued", base["issued"], candidate["issued"],
               "ratio", format(result["completion_ratio"], ".8f"),
               "p99", base["p99_latency"], candidate["p99_latency"],
               "prediction_pass", result["prediction_pass"],
-              "materiality_pass", result["materiality_pass"])
+              "materiality_pass", result["materiality_pass"],
+              "bank0_pressure", base_pressure, candidate_pressure)
         if name == "no_win":
             assert result["prediction_pass"] is True
         if name == "hot":
