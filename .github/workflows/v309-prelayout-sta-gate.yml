@@ -1,7 +1,8 @@
 name: V309 matched prelayout STA and slew/load sensitivity
 
 on:
-  pull_request:
+  push:
+    branches: ["research/v309-external-ptx-bottleneck-gate"]
     paths:
       - "rtl/vtile/compact_greedy_arbiter.sv"
       - "rtl/vtile/factored_subset_arbiter.sv"
