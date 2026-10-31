@@ -1,8 +1,8 @@
 name: V309 matched OpenROAD placement-estimated RC physical prefilter
 
 on:
-  push:
-    branches: ["research/v309-external-ptx-bottleneck-gate"]
+  pull_request:
+    branches: ["main"]
     paths:
       - "rtl/vtile/compact_greedy_arbiter.sv"
       - "rtl/vtile/factored_subset_arbiter.sv"
