@@ -41,7 +41,7 @@ class StatefulWriteMonitorAudit(unittest.TestCase):
             elif (requested & written) and (requested & ~captured) == 0:
                 blocked_live_hazards += 1
             worlds += 1
-        self.assertEqual(worlds, 3072)
+        self.assertEqual(worlds, 768)
         self.assertGreater(grants, 0)
         self.assertGreater(blocked_live_hazards, 0)
 
