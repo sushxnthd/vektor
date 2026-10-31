@@ -1,5 +1,7 @@
 # V317 bounded-collector exact-service result (2026-11-01)
 
+> **2026-11-01 correction:** The exact two-class gain law below assumes every AB and BC instruction needs an independent B-bank read (no cross-instruction same-value sharing). A new frozen strong-baseline challenge with register-identity multicast proves that the gain collapses from 2.000x to 1.000x at full matching B reuse, even with identical bank ports and collector capacity in the abstract model. See [operand-identity reuse falsification](OPERAND_IDENTITY_REUSE_STRONG_BASELINE_RESULT_20261101.md). The older law remains correct only for its no-sharing model.
+
 **Decision: retain V317 as a falsification/evidence instrument; do not promote hypothetical B-read elimination to hardware.** This report corrects a **failed preregistered prediction**, establishes an exact occupancy threshold for a restricted two-class model, and validates it on frozen count holdouts. It is not a GPU speedup.
 
 ## Provenance and methods
