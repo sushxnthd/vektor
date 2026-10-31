@@ -21,6 +21,13 @@ for name in compact_greedy factored_exact_max; do
   test -s "$lib"
   yosys -p "read_liberty -lib $lib; read_verilog -sv $rtl; synth -top $top -noabc; abc -liberty $lib; clean; stat -liberty $lib; write_verilog -noattr -noexpr $out/$name.v" \
     2>&1 | tee "$out/$name.synthesis.log"
+  # Post-hoc attribution only: same mapped netlist, no wire RC.
+  export V309_NETLIST="$out/$name.v"
+  export V309_TOP="$top"
+  export V309_LIBERTY="$lib"
+  export V309_SDC=/work/research/v309/orfs_placement.sdc
+  openroad -exit /work/research/v309/orfs_zero_wire_control.tcl \
+    2>&1 | tee "$out/$name.zero_wire.sta.log"
   for variant in dense relaxed; do
     case "$variant" in
       dense) die='0 0 30 30'; core='3 3 27 27' ;;
