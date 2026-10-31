@@ -32,7 +32,7 @@ def parse(raw):
 def parse_zero_wire(raw):
     if raw.count("V309_SAME_NETLIST_ZERO_WIRE_BEGIN") != 1 or raw.count("V309_SAME_NETLIST_ZERO_WIRE_END") != 1:
         raise AssertionError("missing unique same-netlist zero-wire markers")
-    if re.search(r"^(?:Error:|ERROR|\\[ERROR)", raw, re.M):
+    if re.search(r"^(?:Error:|ERROR|\[ERROR)", raw, re.M):
         raise AssertionError("OpenROAD zero-wire control error")
     vals = ARRIVAL.findall(raw)
     if len(vals) != 1:
