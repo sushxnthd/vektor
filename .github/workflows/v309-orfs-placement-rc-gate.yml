@@ -37,10 +37,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build/v309_orfs/{results,logs,reports,objects}
-          docker pull openroad/flow
-          docker image inspect openroad/flow > build/v309_orfs/container_image_inspect.json
-          docker image inspect --format '{{.Id}}' openroad/flow | tee build/v309_orfs/container_image_id.txt
-          docker image inspect --format '{{json .RepoDigests}}' openroad/flow | tee build/v309_orfs/container_repo_digests.json
+          image=ghcr.io/the-openroad-project/openlane:1.0.2
+          docker pull "$image"
+          docker image inspect "$image" > build/v309_orfs/container_image_inspect.json
+          docker image inspect --format '{{.Id}}' "$image" | tee build/v309_orfs/container_image_id.txt
+          docker image inspect --format '{{json .RepoDigests}}' "$image" | tee build/v309_orfs/container_repo_digests.json
+          git clone --depth 1 https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts.git build/v309_orfs/orfs
+          git -C build/v309_orfs/orfs rev-parse HEAD | tee build/v309_orfs/orfs_source_commit.txt
           printf '%s\n' "$GITHUB_SHA" > build/v309_orfs/source_commit.txt
       - name: Place both matched controllers at two frozen floorplans
         shell: bash
@@ -48,11 +51,8 @@ jobs:
           set -euo pipefail
           docker run --rm \
             -v "$PWD":/work \
-            -v "$PWD/build/v309_orfs/results":/OpenROAD-flow-scripts/flow/results \
-            -v "$PWD/build/v309_orfs/logs":/OpenROAD-flow-scripts/flow/logs \
-            -v "$PWD/build/v309_orfs/reports":/OpenROAD-flow-scripts/flow/reports \
-            -v "$PWD/build/v309_orfs/objects":/OpenROAD-flow-scripts/flow/objects \
-            openroad/flow \
+            -w /work \
+            ghcr.io/the-openroad-project/openlane:1.0.2 \
             bash /work/research/v309/orfs_matched_placement.sh
       - name: Independently enforce frozen clock-limited upper-bound kill
         shell: bash
