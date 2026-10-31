@@ -9,17 +9,18 @@ ROOT = pathlib.Path("build/v309_sta")
 CORNERS = ("optimistic", "nominal", "stressed")
 DESIGNS = ("compact_greedy", "factored_exact_max")
 FROZEN_MAX_OPTIMISTIC_RATIO = 1.0973483338585934
+ARRIVAL_LINE = re.compile(r"^\s*([0-9]+(?:\.[0-9]+)?)\s+data arrival time\s*$", re.MULTILINE)
 
 
 def arrival(path):
     raw = path.read_text()
+    if re.search(r"^Error:", raw, re.MULTILINE):
+        raise AssertionError(f"OpenSTA Tcl error in {path}")
     # OpenSTA reports a data arrival time for the worst constrained path.
     # OpenSTA 2.0.17 puts the value BEFORE the label. A loose regex using
     # \\s+ after the label crosses a newline and incorrectly captures the
     # following 1.00 ns required-time clock. Never accept that false pass.
-    vals = re.findall(
-        r"^\s*([0-9]+(?:\.[0-9]+)?)\s+data arrival time\s*$",
-        raw, re.MULTILINE)
+    vals = ARRIVAL_LINE.findall(raw)
     if len(vals) != 1:
         raise AssertionError(f"expected exactly one positive arrival path in {path}; found {vals}")
     result = float(vals[0])
@@ -29,6 +30,11 @@ def arrival(path):
 
 
 def main():
+    # Regression guard: a 1.00-ns required-time clock MUST NOT be parsed as
+    # the 0.50-ns data arrival, and the negative slack copy is not a path.
+    fixture = "  0.50   data arrival time\n\n  1.00 data required time\n -0.50 data arrival time\n"
+    if ARRIVAL_LINE.findall(fixture) != ["0.50"]:
+        raise AssertionError("false-positive OpenSTA arrival parser regression")
     results = {}
     for corner in CORNERS:
         values = {name: arrival(ROOT / f"{name}_{corner}.log")
