@@ -6,6 +6,7 @@ on:
     paths:
       - "rtl/vtile/max_subset_arbiter.sv"
       - "rtl/vtile/factored_subset_arbiter.sv"
+      - "research/v309/factored_issue_law_holdout.py"
       - "verification/rtl/tb_max_subset_arbiter.sv"
       - ".github/workflows/v309-max-subset-rtl-gate.yml"
   workflow_dispatch:
@@ -35,6 +36,12 @@ jobs:
             verification/rtl/tb_max_subset_arbiter.sv
           vvp build/v309_max_subset/tb 2>&1 | tee build/v309_max_subset/rtl_simulation.log
           grep -q 'V309_MAX_SUBSET_ORACLE_PASS cases=109076' build/v309_max_subset/rtl_simulation.log
+      - name: Run independently preregistered synthetic issue-law holdouts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/v309/factored_issue_law_holdout.py \
+            | tee build/v309_max_subset/issue_law_holdout.json
       - name: Synthesize same-interface incumbent and candidate
         shell: bash
         run: |
