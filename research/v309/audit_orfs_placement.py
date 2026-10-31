@@ -29,6 +29,17 @@ def parse(raw):
     return delay
 
 
+def parse_zero_wire(raw):
+    if raw.count("V309_SAME_NETLIST_ZERO_WIRE_BEGIN") != 1 or raw.count("V309_SAME_NETLIST_ZERO_WIRE_END") != 1:
+        raise AssertionError("missing unique same-netlist zero-wire markers")
+    if re.search(r"^(?:Error:|ERROR|\\[ERROR)", raw, re.M):
+        raise AssertionError("OpenROAD zero-wire control error")
+    vals = ARRIVAL.findall(raw)
+    if len(vals) != 1:
+        raise AssertionError(f"invalid zero-wire arrival: {vals}")
+    return float(vals[0])
+
+
 def selftest():
     raw = ("V309_PLACEMENT_ESTIMATED_RC_BEGIN\n"
            "  0.46 data arrival time\n"
@@ -50,6 +61,12 @@ def selftest():
 
 def main():
     selftest()
+    zero_wire = {}
+    for design in DESIGNS:
+        path = ROOT / f"{design}.zero_wire.sta.log"
+        if not path.is_file():
+            raise AssertionError(f"missing same-netlist zero-wire control {path}")
+        zero_wire[design] = parse_zero_wire(path.read_text())
     rows = {}
     for variant in VARIANTS:
         delays = {}
@@ -66,6 +83,9 @@ def main():
         "evidence_tier": "ORFS_Nangate45_placement_estimated_RC_NOT_routed_extracted",
         "frozen_hot2_issue_gain": HOT2_PREDICTED_ISSUE_RATIO,
         "corners": rows,
+        "posthoc_same_netlist_zero_wire_arrivals_ns": zero_wire,
+        "posthoc_zero_wire_candidate_to_baseline_ratio": zero_wire["factored_exact_max"] / zero_wire["compact_greedy"],
+        "wire_only_causal_attribution_claimed": False,
         "worst_corner_ideal_hot2_throughput_upper_bound": hot2_upper_bound,
         "optimistic_physical_timing_prefilter": "KILL_IF_CLOCK_LIMITED" if hot2_upper_bound <= 1 else "SURVIVES_ONLY_AS_UPPER_BOUND",
         "max_cap_slew_electrical_signoff": "UNVERIFIED_REPORT_REQUIRES_INDEPENDENT_VIOLATION_AUDIT",
