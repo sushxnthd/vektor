@@ -1,4 +1,4 @@
-\`timescale 1ns/1ps
+`timescale 1ns/1ps
 module tb_v317_forwarding_gate;
     reg valid;
     reg [1:0] cw, cb, rw, rb;
