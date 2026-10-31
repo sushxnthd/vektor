@@ -37,7 +37,7 @@ Local source-script result:
 
 This is an **exhaustive reduced-domain test**, not a full 16-bank formal proof, although the equal-demand induction covers the general model. The script includes adversarial same-bank/different-register aliases and a mutation control demonstrating that it can distinguish an actually non-reuse-aware allocator.
 
-The workflow now executes this checker alongside the earlier RTL and frozen synthetic-law tests; source-pinned hosted CI must be inspected separately. Do not treat local script execution as hosted verification.
+The workflow now executes this checker alongside the earlier RTL and frozen synthetic-law tests. **Source-pinned hosted CI [#41171623266](https://github.com/sushxnthd/vektor/actions/runs/41171623266) PASSED** on commit c32550d8: independent RTL oracle, both frozen synthetic-law checks, exhaustive strong-control falsifier and matched generic synthesis all passed. This is hosted verification of the checker, not physical GPU validation.
 
 ## What the result does and does not kill
 
@@ -49,4 +49,4 @@ The workflow now executes this checker alongside the earlier RTL and frozen synt
 
 **Next architecture selection gate:** choose one distinct mechanism with a positive *incremental* boundary against a reuse-aware equal-resource control, then preregister win and no-win workloads before RTL/physical work. Do not run additional V310 no-reuse synthetic speedup sweeps as if they advanced hardware novelty.
 
-**Evidence tier:** analytical strong-control identity plus locally executed exhaustive reduced-domain checker; hosted confirmation pending at report commit. No RTX-5090-equivalence claim.
+**Evidence tier:** analytical strong-control identity plus source-pinned hosted exhaustive reduced-domain checker (CI #41171623266 PASSED). No RTX-5090-equivalence claim.
