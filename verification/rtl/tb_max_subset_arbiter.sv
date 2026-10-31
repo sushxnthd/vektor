@@ -7,6 +7,7 @@ module tb_max_subset_arbiter;
     wire [3:0] optimal;
     wire [3:0] factored;
     wire [3:0] greedy;
+    wire [3:0] compact_greedy;
     integer combo;
     integer mask;
     integer digits;
@@ -25,6 +26,11 @@ module tb_max_subset_arbiter;
     vektor_rf_bank_arbiter incumbent (
         .request_valid(valid), .src0_bank_flat(bank0),
         .src1_bank_flat(bank1), .grant(greedy)
+    );
+
+    vektor_v309_compact_greedy_arbiter optimized_incumbent (
+        .request_valid(valid), .src0_bank_flat(bank0),
+        .src1_bank_flat(bank1), .grant(compact_greedy)
     );
 
     function integer count_bits(input [3:0] x);
@@ -101,6 +107,11 @@ module tb_max_subset_arbiter;
                 !safe_subset(greedy, valid, bank0, bank1)) begin
                 $display("FAIL_PORTS valid=%h a=%h b=%h opt=%h greedy=%h",
                          valid, bank0, bank1, optimal, greedy);
+                $fatal(1);
+            end
+            if (compact_greedy !== greedy) begin
+                $display("FAIL_COMPACT_GREEDY_EQUIV valid=%h a=%h b=%h original=%h compact=%h",
+                         valid, bank0, bank1, greedy, compact_greedy);
                 $fatal(1);
             end
             if (count_bits(optimal) < count_bits(greedy)) begin
