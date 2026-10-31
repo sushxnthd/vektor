@@ -1,0 +1,31 @@
+name: v317 SASS provenance audit
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+  pull_request:
+    paths:
+      - 'research/v317/**'
+      - '.github/workflows/v317-sass-provenance.yml'
+jobs:
+  lexical-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent frozen regression
+        run: python -m unittest discover -s research/v317 -p 'test_*.py' -v
+      - name: Produce source-pinned synthetic evidence
+        run: |
+          mkdir -p build/v317
+          python research/v317/sass_audit.py --input research/v317/synthetic_sass_fixture.sass > build/v317/lexical_audit.json
+          python research/v317/bank_skew_identifiability.py > build/v317/bank_skew_identifiability.json
+          python -m json.tool build/v317/lexical_audit.json > /dev/null
+          python -m json.tool build/v317/bank_skew_identifiability.json > /dev/null
+          git rev-parse HEAD > build/v317/commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v317-synthetic-sass-lexical-audit
+          path: build/v317/
