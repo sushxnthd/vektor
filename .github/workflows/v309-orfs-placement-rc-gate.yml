@@ -1,0 +1,69 @@
+name: V309 matched OpenROAD placement-estimated RC physical prefilter
+
+on:
+  push:
+    branches: ["research/v309-external-ptx-bottleneck-gate"]
+    paths:
+      - "rtl/vtile/compact_greedy_arbiter.sv"
+      - "rtl/vtile/factored_subset_arbiter.sv"
+      - "research/v309/orfs_placement.sdc"
+      - "research/v309/orfs_placement_sta.tcl"
+      - "research/v309/orfs_matched_placement.sh"
+      - "research/v309/audit_orfs_placement.py"
+      - ".github/workflows/v309-orfs-placement-rc-gate.yml"
+  workflow_dispatch:
+
+jobs:
+  matched-placed-rc:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check independent audit syntax and adversarial fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile research/v309/audit_orfs_placement.py
+          python3 - <<'PY'
+          import importlib.util
+          spec = importlib.util.spec_from_file_location("audit", "research/v309/audit_orfs_placement.py")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          module.selftest()
+          print("V309_PLACED_RC_AUDIT_NEGATIVE_CONTROLS_PASS")
+          PY
+      - name: Pull documented ORFS toolchain and record immutable image identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/v309_orfs/{results,logs,reports,objects}
+          docker pull openroad/flow
+          docker image inspect openroad/flow > build/v309_orfs/container_image_inspect.json
+          docker image inspect --format '{{.Id}}' openroad/flow | tee build/v309_orfs/container_image_id.txt
+          docker image inspect --format '{{json .RepoDigests}}' openroad/flow | tee build/v309_orfs/container_repo_digests.json
+          printf '%s\n' "$GITHUB_SHA" > build/v309_orfs/source_commit.txt
+      - name: Place both matched controllers at two frozen floorplans
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$PWD":/work \
+            -v "$PWD/build/v309_orfs/results":/OpenROAD-flow-scripts/flow/results \
+            -v "$PWD/build/v309_orfs/logs":/OpenROAD-flow-scripts/flow/logs \
+            -v "$PWD/build/v309_orfs/reports":/OpenROAD-flow-scripts/flow/reports \
+            -v "$PWD/build/v309_orfs/objects":/OpenROAD-flow-scripts/flow/objects \
+            openroad/flow \
+            bash /work/research/v309/orfs_matched_placement.sh
+      - name: Independently enforce frozen clock-limited upper-bound kill
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo chown -R "$(id -u):$(id -g)" build/v309_orfs
+          python3 research/v309/audit_orfs_placement.py | tee build/v309_orfs/independent_audit.log
+      - name: Preserve placed databases, matched timing, electrical and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-orfs-matched-placement-rc-evidence
+          path: build/v309_orfs/
+          if-no-files-found: warn
