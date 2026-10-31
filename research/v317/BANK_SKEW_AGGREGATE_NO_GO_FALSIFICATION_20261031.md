@@ -1,3 +1,5 @@
+> **SECOND CORRECTION (2026-10-31, atomic coissue):** The per-bank condition below is sufficient for **no gain in the fluid resource-envelope expression**, not for actual atomic multi-bank issue throughput. A globally optimal exact scheduler on three banks can gain 1.200x from hypothetical read removal even when *every* average per-bank ratio exceeds issue width. See [atomic bank-coissue falsification](ATOMIC_BANK_COISSUE_FALSIFICATION_20261031.md). Do not treat this document as a hardware-level no-win certificate.
+
 # V317: aggregate RF no-win inference falsified by bank skew (2026-10-31)
 
 **Decision:** the earlier V317 pooled-register-file no-win condition is **not** a valid general certificate for independently ported RF banks. This is an exact, synthetic *model-identifiability falsification*, not measured GPU IPC or a new hardware mechanism.
