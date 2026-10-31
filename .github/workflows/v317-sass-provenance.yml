@@ -23,9 +23,11 @@ jobs:
           python research/v317/sass_audit.py --input research/v317/synthetic_sass_fixture.sass > build/v317/lexical_audit.json
           python research/v317/bank_skew_identifiability.py > build/v317/bank_skew_identifiability.json
           python -m research.v317.bounded_collector_evidence > build/v317/bounded_collector.json
+          python -m research.v317.operand_identity_reuse_evidence > build/v317/operand_identity_reuse.json
           python -m json.tool build/v317/lexical_audit.json > /dev/null
           python -m json.tool build/v317/bank_skew_identifiability.json > /dev/null
           python -m json.tool build/v317/bounded_collector.json > /dev/null
+          python -m json.tool build/v317/operand_identity_reuse.json > /dev/null
           git rev-parse HEAD > build/v317/commit.txt
       - uses: actions/upload-artifact@v4
         with:
