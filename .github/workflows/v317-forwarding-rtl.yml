@@ -1,0 +1,44 @@
+name: v317 forwarding freshness RTL
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+  pull_request:
+    paths:
+      - 'research/v317/rtl/**'
+      - 'research/v317/freshness_gate.py'
+      - 'research/v317/test_freshness_gate.py'
+      - '.github/workflows/v317-forwarding-rtl.yml'
+jobs:
+  semantic-and-generic-rtl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Independent semantic world audit
+        run: |
+          mkdir -p build/v317
+          python -m unittest research.v317.test_freshness_gate -v
+          python -m research.v317.freshness_gate > build/v317/forwarding_freshness.json
+          python -m json.tool build/v317/forwarding_freshness.json > /dev/null
+      - name: Simulate forwarding RTL
+        run: |
+          iverilog -g2012 -s tb_v317_forwarding_gate -o build/v317/tb_forwarding_gate research/v317/rtl/forwarding_gate.sv research/v317/rtl/tb_forwarding_gate.sv
+          vvp build/v317/tb_forwarding_gate | tee build/v317/forwarding_sim.log
+      - name: Generic synthesis and logic depth (not physical signoff)
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv research/v317/rtl/forwarding_gate.sv; synth -top vektor_v317_forwarding_gate; stat; ltp -noff' 2>&1 | tee build/v317/forwarding_yosys.log
+      - name: Source pin
+        if: always()
+        run: |
+          git rev-parse HEAD > build/v317/commit.txt
+      - name: Archive evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-forwarding-freshness-rtl
+          path: build/v317/
