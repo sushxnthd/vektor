@@ -28,6 +28,7 @@ class FreshnessGateTests(unittest.TestCase):
         r = audit()
         self.assertEqual(r["conservative_gate_unsafe_admissions"], 0)
         self.assertGreater(r["naive_register_name_invalid_admissions"], 0)
+        self.assertGreater(r["naive_register_name_wrong_value_admissions"], 0)
         self.assertGreater(r["conservative_gate_accepted"], 0)
         self.assertEqual(r["matched_reuse_aware_baseline_incremental_transaction_advantage"], 0)
 

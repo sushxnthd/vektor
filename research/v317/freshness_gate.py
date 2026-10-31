@@ -34,7 +34,7 @@ def masked_equal(a: int, b: int, mask: int) -> bool:
 
 
 def audit():
-    total = legal = safe_accepted = unsafe_safe = naive_accepted = naive_bad = 0
+    total = legal = safe_accepted = unsafe_safe = naive_accepted = naive_bad = naive_wrong_values = 0
     unsafe_examples = []
     for cw, rw, cr, rr, cb, rb in product(range(2), repeat=6):
         for captured, requested, dirty, old, current in product(
@@ -54,6 +54,8 @@ def audit():
                     unsafe_safe += 1
             if naive:
                 naive_accepted += 1
+                if not masked_equal(old, current, requested):
+                    naive_wrong_values += 1
                 if (not same_location or (requested & ~captured)
                         or not masked_equal(old, current, requested)):
                     naive_bad += 1
@@ -86,6 +88,7 @@ def audit():
         "conservative_gate_unsafe_admissions": unsafe_safe,
         "naive_register_name_admissions": naive_accepted,
         "naive_register_name_invalid_admissions": naive_bad,
+        "naive_register_name_wrong_value_admissions": naive_wrong_values,
         "naive_invalid_examples": unsafe_examples,
         "finite_tag_wrap_witnesses": wrap,
         "disjoint_masked_write_transfer": {"clean_lane_accepted": True,
