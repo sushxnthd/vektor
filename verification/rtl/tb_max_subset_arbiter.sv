@@ -5,6 +5,7 @@ module tb_max_subset_arbiter;
     reg [15:0] bank0;
     reg [15:0] bank1;
     wire [3:0] optimal;
+    wire [3:0] factored;
     wire [3:0] greedy;
     integer combo;
     integer mask;
@@ -16,6 +17,10 @@ module tb_max_subset_arbiter;
     vektor_v309_max_subset_arbiter dut (
         .request_valid(valid), .src0_bank_flat(bank0),
         .src1_bank_flat(bank1), .grant(optimal)
+    );
+    vektor_v309_factored_subset_arbiter factored_dut (
+        .request_valid(valid), .src0_bank_flat(bank0),
+        .src1_bank_flat(bank1), .grant(factored)
     );
     vektor_rf_bank_arbiter incumbent (
         .request_valid(valid), .src0_bank_flat(bank0),
@@ -85,6 +90,13 @@ module tb_max_subset_arbiter;
                          valid, bank0, bank1, optimal, expected);
                 $fatal(1);
             end
+            if (factored !== expected) begin
+                $display("FAIL_FACTORED valid=%h a=%h b=%h got=%h expected=%h",
+                         valid, bank0, bank1, factored, expected);
+                $fatal(1);
+            end
+            if (!safe_subset(factored, valid, bank0, bank1))
+                $fatal(1, "FAIL_FACTORED_PORTS");
             if (!safe_subset(optimal, valid, bank0, bank1) ||
                 !safe_subset(greedy, valid, bank0, bank1)) begin
                 $display("FAIL_PORTS valid=%h a=%h b=%h opt=%h greedy=%h",
@@ -106,7 +118,7 @@ module tb_max_subset_arbiter;
         bank1 = {4'd2,4'd1,4'd0,4'd1};
         #1;
         check();
-        if (greedy !== 4'h9 || optimal !== 4'he)
+        if (greedy !== 4'h9 || optimal !== 4'he || factored !== 4'he)
             $fatal(1, "FAIL_WIN_MOTIF greedy=%h optimal=%h", greedy, optimal);
 
         valid = 4'hf;
@@ -114,7 +126,7 @@ module tb_max_subset_arbiter;
         bank1 = {4'd7,4'd5,4'd3,4'd1};
         #1;
         check();
-        if (greedy !== 4'hf || optimal !== 4'hf)
+        if (greedy !== 4'hf || optimal !== 4'hf || factored !== 4'hf)
             $fatal(1, "FAIL_NO_WIN_MOTIF");
 
         valid = 4'hf;
@@ -147,7 +159,20 @@ module tb_max_subset_arbiter;
                 check();
             end
         end
-        if (tested != 104980) $fatal(1, "FAIL_TEST_COUNT %0d", tested);
+        if (tested != 104980) $fatal(1, "FAIL_FROZEN_TEST_COUNT %0d", tested);
+        $display("V309_FROZEN_ORACLE_PASS cases=%0d", tested);
+        // Added after brute-force rejection: deterministic full-bank samples.
+        // The frozen reduced-bank coverage above remains exactly unchanged.
+        for (combo = 0; combo < 4096; combo = combo + 1) begin
+            for (i = 0; i < 4; i = i + 1) begin
+                bank0[i*4 +: 4] = (combo + 3*i + (combo >> 4)) & 15;
+                bank1[i*4 +: 4] = ((combo * 7) + 5*i + (combo >> 6)) & 15;
+            end
+            valid = combo[3:0];
+            #1;
+            check();
+        end
+        if (tested != 109076) $fatal(1, "FAIL_EXTENDED_TEST_COUNT %0d", tested);
         $display("V309_MAX_SUBSET_ORACLE_PASS cases=%0d", tested);
         $finish;
     end
