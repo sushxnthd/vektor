@@ -1,0 +1,26 @@
+name: V315 prospective RF/ALU capacity and strong-baseline screen
+on:
+  push:
+    branches:
+      - research/v315-phase-aware-remat-boundary
+  workflow_dispatch:
+jobs:
+  prospective-capacity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Frozen predictions and hindsight static baseline
+        run: python3 research/v315/remat_capacity_screen.py | tee v315-holdout.json
+      - name: Independent numerical law and conservation audit
+        run: python3 research/v315/audit_remat_capacity.py | tee v315-audit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v315-capacity-screen
+          path: |
+            v315-holdout.json
+            v315-audit.txt
