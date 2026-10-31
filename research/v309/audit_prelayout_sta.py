@@ -18,7 +18,7 @@ def arrival(path):
     # \\s+ after the label crosses a newline and incorrectly captures the
     # following 1.00 ns required-time clock. Never accept that false pass.
     vals = re.findall(
-        r"^\\s*([0-9]+(?:\\.[0-9]+)?)\\s+data arrival time\\s*$",
+        r"^\s*([0-9]+(?:\.[0-9]+)?)\s+data arrival time\s*$",
         raw, re.MULTILINE)
     if len(vals) != 1:
         raise AssertionError(f"expected exactly one positive arrival path in {path}; found {vals}")
