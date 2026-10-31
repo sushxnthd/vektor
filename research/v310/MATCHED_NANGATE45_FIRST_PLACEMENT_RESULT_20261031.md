@@ -26,3 +26,11 @@ The earlier [V310 independent RTL/law CI #41166575481](https://github.com/sushxn
 Implement and physically cost the full register-ID comparator and operand fanout datapath; compare against a **strong reuse-capable equal-resource alternative**. Measure actual identical-register operand frequencies and correlated bank conflicts from real execution traces before selecting a workload win/no-win split. Freeze a tile-level boundary, then run matched extracted-RC/electrical/area and workload throughput checks. **Kill V310 immediately** if the full-system strong control or timing/area/bandwidth constraints erase its benefit.
 
 V309's physically failed exact-max candidate remains retired in [draft PR #26](https://github.com/sushxnthd/vektor/pull/26). This is the single active V310 mechanism on its separate persistent branch and draft PR #27. No RTX 5090 equivalence or finished architecture claim.
+
+## Conditional positive boundary from the measured *controller-only* delay
+
+Let x=o*h and q be verified duplicate-source probability in the separately frozen two-slot model. With measured placed controller delay ratio D=0.43/0.41=1.0487804878, the idealized **clock-limited, issue-bound** inequality G(x,q)>D is equivalent to
+
+    x > 2*(D-1)/(q*q + D-1),  provided q*q + D-1 > 0.
+
+For q=0.60, the necessary offered-load times bank-overlap threshold is **x>0.23866**. The frozen medium-overlap regime has x=0.75*0.50=0.375 and thus predicts an optimistic 1.08308/1.04878=**1.0327x** issue-times-frequency, while the frozen h=0 no-win regime predicts **0.95349x** under that clock-limited assumption. With a bandwidth ceiling beta=0.9 of baseline issue capacity, the same simplified roofline predicts **1.0x** for both, regardless of the issue-stage opportunity. These are *derived conditional predictions* using a measured local controller ratio, not held-out measured GPU throughput. They can be falsified by stronger controls, comparator/fanout cost, tile slack and real workload effects.
