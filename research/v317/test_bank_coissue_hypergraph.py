@@ -84,6 +84,25 @@ class IndependentAtomicBankAudit(unittest.TestCase):
         self.assertEqual(model.schedule_cycles(counts, model.BASE, ports=(2, 2, 2)), 3)
         self.assertEqual(model.schedule_cycles(counts, model.CANDIDATE, ports=(2, 2, 2)), 3)
 
+    def test_exploratory_all_banks_slack_still_packing_limited(self):
+        # NOT a preregistered holdout: four classes, including a zero-RF-read
+        # instruction, show that the old per-bank no-win certificate applies
+        # only to the fluid envelope, not necessarily atomic coissue IPC.
+        counts = (2, 2, 2, 3)
+        before_masks = model.BASE + (0,)
+        after_masks = model.CANDIDATE + (0,)
+        self.assertEqual(matching_oracle(labeled_masks(counts, before_masks)), 6)
+        self.assertEqual(matching_oracle(labeled_masks(counts, after_masks)), 5)
+        self.assertEqual(model.schedule_cycles(counts, before_masks), 6)
+        self.assertEqual(model.schedule_cycles(counts, after_masks), 5)
+        self.assertEqual(model.mean_capacity_lower_bound(counts, before_masks), 5)
+        self.assertEqual(model.mean_capacity_lower_bound(counts, after_masks), 5)
+        # All baseline bank demands are 4/9 per instruction, less than
+        # 1/2 port/instruction at issue width two.
+        self.assertEqual(
+            [sum(n for n, m in zip(counts, before_masks) if m & (1 << b))
+             for b in range(3)], [4, 4, 4])
+
     def test_fail_closed_input_and_no_hardware_claim(self):
         for counts, masks in [((1, 2), (1,)), ((-1,), (1,)), ((1,), (8,))]:
             with self.assertRaises(ValueError):
