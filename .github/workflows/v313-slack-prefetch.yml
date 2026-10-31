@@ -1,0 +1,17 @@
+name: V313 prospective early-operand staging screen
+on:
+  push:
+    branches:
+      - research/v313-version-safe-slack-prefetch
+  workflow_dispatch:
+
+jobs:
+  holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify frozen prospective win, no-win, and transfer
+        run: python3 research/v313/slack_prefetch_holdout.py --regime all
