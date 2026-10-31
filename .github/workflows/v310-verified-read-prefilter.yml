@@ -1,0 +1,59 @@
+name: V310 verified duplicate-read RTL and prospective law prefilter
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "rtl/vtile/v310_verified_read_coalescer.sv"
+      - "rtl/vtile/v310_compact_greedy_control.sv"
+      - "verification/rtl/tb_v310_verified_read_coalescer.sv"
+      - "research/v310/**"
+      - ".github/workflows/v310-verified-read-prefilter.yml"
+  workflow_dispatch:
+
+jobs:
+  independent-functional-and-generic-prefilter:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source RTL tools and record versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog yosys
+          mkdir -p build/v310
+          iverilog -V > build/v310/iverilog_version.txt 2>&1
+          yosys -V > build/v310/yosys_version.txt 2>&1
+          git rev-parse HEAD > build/v310/source_sha.txt
+      - name: Independent RTL port-counting oracle
+        shell: bash
+        run: |
+          set -euo pipefail
+          iverilog -g2012 -s tb_v310_verified_read_coalescer -o build/v310/tb.vvp \
+            rtl/vtile/v310_compact_greedy_control.sv \
+            rtl/vtile/v310_verified_read_coalescer.sv \
+            verification/rtl/tb_v310_verified_read_coalescer.sv
+          vvp build/v310/tb.vvp | tee build/v310/rtl_oracle.log
+          grep -F 'V310_INDEPENDENT_RTL_ORACLE_PASS cases=109076' build/v310/rtl_oracle.log
+      - name: Frozen synthetic issue-law and unseen-regime checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/v310/audit_verified_read_law.py --output build/v310/issue_law.json | tee build/v310/issue_law_stdout.json
+      - name: Matched generic synthesis (informational, not Nangate45 signoff)
+        shell: bash
+        run: |
+          set -euo pipefail
+          yosys -Q -T -p 'read_verilog -sv rtl/vtile/v310_compact_greedy_control.sv; synth -top vektor_v310_compact_greedy_arbiter; stat' > build/v310/baseline_yosys.log
+          yosys -Q -T -p 'read_verilog -sv rtl/vtile/v310_verified_read_coalescer.sv; synth -top vektor_v310_verified_read_coalescer; stat' > build/v310/candidate_yosys.log
+          tail -35 build/v310/baseline_yosys.log
+          tail -35 build/v310/candidate_yosys.log
+      - name: Preserve raw source-pinned prefilter evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v310-verified-read-rtl-law-and-generic-synthesis
+          path: build/v310/
+          if-no-files-found: warn
