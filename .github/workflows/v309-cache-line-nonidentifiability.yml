@@ -1,0 +1,56 @@
+name: V309 cache-line traffic non-identifiability falsification
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/cache_line_nonidentifiability.py
+      - research/v309/CACHE_LINE_NONIDENTIFIABILITY_PROTOCOL_20261030.md
+      - .github/workflows/v309-cache-line-nonidentifiability.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  falsification:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent LRU oracle and preregistered sign-reversal checks
+        run: |
+          set -euo pipefail
+          python3 research/v309/cache_line_nonidentifiability.py --selftest
+          python3 research/v309/cache_line_nonidentifiability.py > v309-cache-line-counterexample.json
+          python3 - <<'PY'
+          import json
+          from fractions import Fraction
+          r=json.load(open('v309-cache-line-counterexample.json'))
+          assert r['status']=='PASS'
+          assert r['gpu_hardware_mechanism_promoted'] is False
+          assert r['historical_trace_producer_verified'] is False
+          assert r['selftest']['independent_lru_oracle_cases']==3120
+          a=r['cases']['same_line_reuse']
+          b=r['cases']['distinct_line_stream']
+          assert (a['instructions'],a['sector_count_before'],a['sector_count_after']) == (64,256,192)
+          assert (b['instructions'],b['sector_count_before'],b['sector_count_after']) == (64,256,192)
+          assert (a['line_fills_before'],a['line_fills_after']) == (1,1)
+          assert (b['line_fills_before'],b['line_fills_after']) == (256,192)
+          assert Fraction(a['sector_only_gain']) == Fraction(b['sector_only_gain']) == Fraction(1,3)
+          assert Fraction(a['line_fill_model_gain']) == Fraction(-1,21)
+          assert Fraction(b['line_fill_model_gain']) == Fraction(1,3)
+          assert a['equal_resource_unchanged_address_fill_reduction']=='0'
+          assert b['equal_resource_unchanged_address_fill_reduction']=='0'
+          print('PASS: same sector data, opposite modeled gain signs; sector-only predictive claim falsified')
+          PY
+      - name: Preserve reproducible evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-cache-line-nonidentifiability
+          path: v309-cache-line-counterexample.json
+          if-no-files-found: warn

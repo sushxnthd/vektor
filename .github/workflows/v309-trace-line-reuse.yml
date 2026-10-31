@@ -1,0 +1,69 @@
+name: V309 source-conditional LDG line-reuse audit
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/trace_line_reuse.py
+      - research/v309/TRACE_LINE_REUSE_PROTOCOL_20261030.md
+      - .github/workflows/v309-trace-line-reuse.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent byte-set and synthetic no-win/win controls
+        run: python3 research/v309/trace_line_reuse.py --selftest
+      - name: Acquire SHA-256 authenticated historical V100 SASS archive
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Reconstruct source-conditional LDG line identity per trace file
+        run: python3 research/v309/trace_line_reuse.py /tmp/v309-v100-rodinia.tgz > v309-trace-line-reuse.json
+      - name: Independent conservation and denominator checks
+        run: |
+          python3 - <<'PY'
+          import json
+          from fractions import Fraction
+          x=json.load(open('v309-trace-line-reuse.json'))
+          g=x['global']; files=x['files']; apps=x['applications']
+          assert x['status']=='PASS' and x['producer_identity_verified'] is False
+          assert x['trace_files']==len(files)==210 and g['global_proxy']==240465
+          assert g['ldg_rows']>0 and g['certified_rows']>0
+          assert g['certified_rows']+g.get('excluded_format0_hidden_lanes',0)+g.get('excluded_format1_shifted_start',0)==g['ldg_rows']
+          assert g['line_references']>=g['unique_lines']>=0
+          assert g['duplicate_line_references']==g['line_references']-g['unique_lines']
+          for k in ('ldg_rows','certified_rows','line_references','unique_lines'):
+              assert sum(f[k] for f in files)==g[k],(k,'file conservation')
+              assert sum(a[k] for a in apps.values())==g[k],(k,'app conservation')
+          for f in files:
+              r=f['line_references']; u=f['unique_lines']
+              assert 0<=u<=r and f['certified_rows']<=f['ldg_rows']
+              assert f['reuse_fraction']==(str(Fraction(r-u,r)) if r else None)
+          assert g['reuse_fraction']==str(Fraction(g['duplicate_line_references'],g['line_references']))
+          assert x['files_without_certified_LDG']==sum(f['certified_rows']==0 for f in files)
+          print('FULL-CORPUS SOURCE-CONDITIONAL SUBSET AUDIT PASSED')
+          print('GLOBAL',g)
+          for app,counts in sorted(apps.items()):
+              print('APP',app,'LDG',counts['ldg_rows'],'CERTIFIED',counts['certified_rows'],
+                    'R',counts['line_references'],'U',counts['unique_lines'],
+                    'RHO',counts['reuse_fraction'])
+          PY
+      - name: Preserve raw evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-source-conditional-LDG-line-reuse
+          path: v309-trace-line-reuse.json
+          if-no-files-found: warn

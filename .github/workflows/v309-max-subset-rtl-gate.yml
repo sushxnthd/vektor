@@ -1,0 +1,155 @@
+name: V309 exact bank-subset RTL physicality prefilter
+
+on:
+  push:
+    branches: ["research/v309-external-ptx-bottleneck-gate"]
+    paths:
+      - "rtl/vtile/max_subset_arbiter.sv"
+      - "rtl/vtile/factored_subset_arbiter.sv"
+      - "rtl/vtile/compact_greedy_arbiter.sv"
+      - "research/v309/factored_issue_law_holdout.py"
+      - "research/v309/bank_equality_moment_law.py"
+      - "research/v309/audit_matched_stdcells.py"
+      - "verification/rtl/tb_max_subset_arbiter.sv"
+      - ".github/workflows/v309-max-subset-rtl-gate.yml"
+  workflow_dispatch:
+
+jobs:
+  exact-subset-prefilter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install source-identified open RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+          mkdir -p build/v309_max_subset
+          iverilog -V > build/v309_max_subset/iverilog_version.txt 2>&1
+          yosys -V > build/v309_max_subset/yosys_version.txt
+      - name: Simulate exhaustive oracle and frozen win/no-win motifs
+        shell: bash
+        run: |
+          set -euo pipefail
+          iverilog -g2012 -s tb_max_subset_arbiter \
+            -o build/v309_max_subset/tb \
+            rtl/vtile/max_subset_arbiter.sv \
+            rtl/vtile/factored_subset_arbiter.sv \
+            rtl/vtile/compact_greedy_arbiter.sv \
+            rtl/vtile/rf_bank_arbiter.sv \
+            verification/rtl/tb_max_subset_arbiter.sv
+          vvp build/v309_max_subset/tb 2>&1 | tee build/v309_max_subset/rtl_simulation.log
+          grep -q 'V309_MAX_SUBSET_ORACLE_PASS cases=109076' build/v309_max_subset/rtl_simulation.log
+      - name: Run independently preregistered synthetic issue-law holdouts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/v309/factored_issue_law_holdout.py \
+            | tee build/v309_max_subset/issue_law_holdout.json
+      - name: Predict unseen bank regimes from equality-partition moments
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/v309/bank_equality_moment_law.py \
+            | tee build/v309_max_subset/equality_moment_holdout.json
+      - name: Synthesize same-interface incumbent and candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/rf_bank_arbiter.sv; synth -top vektor_rf_bank_arbiter; stat; ltp -noff' \
+            2>&1 | tee build/v309_max_subset/greedy_yosys.log
+          yosys -p 'read_verilog -sv rtl/vtile/compact_greedy_arbiter.sv; synth -top vektor_v309_compact_greedy_arbiter; stat; ltp -noff' \
+            2>&1 | tee build/v309_max_subset/compact_greedy_yosys.log
+          yosys -p 'read_verilog -sv rtl/vtile/max_subset_arbiter.sv; synth -top vektor_v309_max_subset_arbiter; stat; ltp -noff' \
+            2>&1 | tee build/v309_max_subset/optimal_yosys.log
+          yosys -p 'read_verilog -sv rtl/vtile/factored_subset_arbiter.sv; synth -top vektor_v309_factored_subset_arbiter; stat; ltp -noff' \
+            2>&1 | tee build/v309_max_subset/factored_yosys.log
+      - name: Apply frozen generic-cell physicality prefilter
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re, sys
+          p = pathlib.Path('build/v309_max_subset')
+          def parse(name):
+              s = (p/name).read_text()
+              matches = re.findall(r'Number of cells:\s*(\d+)', s)
+              if not matches:
+                  raise RuntimeError(f'missing generic cell count in {name}')
+              depth = re.findall(r'length\s*=\s*(\d+)', s)
+              return {'generic_cells': int(matches[-1]), 'ltp_length_if_available': int(depth[-1]) if depth else None}
+          baseline = parse('greedy_yosys.log')
+          compact = parse('compact_greedy_yosys.log')
+          brute_force = parse('optimal_yosys.log')
+          factored = parse('factored_yosys.log')
+          brute_ratio = brute_force['generic_cells']/baseline['generic_cells']
+          factored_ratio = factored['generic_cells']/baseline['generic_cells']
+          factored_to_compact = factored['generic_cells']/compact['generic_cells']
+          # Frozen brute-force rejection must remain visible. Never silently
+          # substitute a new implementation for the rejected 16-subset RTL.
+          result = {
+              'source_commit': os.environ.get('GITHUB_SHA'),
+              'evidence_tier': 'generic_yosys_synthesis_not_routed_physical',
+              'baseline': baseline, 'compact_greedy_stronger_baseline': compact,
+              'rejected_brute_force': brute_force,
+              'factored_candidate': factored,
+              'rejected_brute_force_cell_ratio': brute_ratio,
+              'factored_candidate_cell_ratio': factored_ratio,
+              'factored_to_compact_greedy_cell_ratio': factored_to_compact,
+              'frozen_max_cell_ratio': 2.0,
+              'brute_force_still_rejected': brute_ratio > 2,
+              'compact_greedy_matched_baseline_gate': 'PASS' if factored_to_compact <= 2 else 'FAIL_KILL_FACTORED_RTL',
+              'factored_preliminary_area_gate': 'PASS' if factored_ratio <= 2 else 'FAIL_KILL_FACTORED_RTL',
+              'clock_or_area_or_power_gain_claimed': False,
+          }
+          (p/'summary.json').write_text(json.dumps(result, indent=2, sort_keys=True)+'\n')
+          print(json.dumps(result, indent=2))
+          if brute_ratio <= 2:
+              sys.exit('SOURCE_OR_TOOL_DRIFT: previous brute-force rejection not reproduced')
+          if factored_to_compact > 2:
+              sys.exit('STRONGER_BASELINE_FAIL: factored candidate exceeds 2x compact greedy; kill')
+          if factored_ratio > 2:
+              sys.exit('FROZEN_AREA_PREFILTER_FAIL: factored candidate exceeds 2x generic cells; do not promote')
+          PY
+      - name: Map original, compact and exact-max to pinned Nangate45 cells
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=build/v309_max_subset/standard_cells
+          mkdir -p "$out"
+          lib="$out/NangateOpenCellLibrary_typical.lib"
+          curl --fail --location --retry 3 --max-time 120 \
+            'https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib' \
+            --output "$lib"
+          actual="$(git hash-object "$lib")"
+          test "$actual" = '90e4afb274cfc6514c587c434c77903d554117d1' || {
+            echo "PINNED_LIBERTY_BLOB_DRIFT: $actual"; exit 1;
+          }
+          sha256sum "$lib" | tee "$out/liberty_sha256.txt"
+          for name in original_greedy compact_greedy factored_exact_max; do
+            case "$name" in
+              original_greedy)
+                rtl=rtl/vtile/rf_bank_arbiter.sv
+                top=vektor_rf_bank_arbiter ;;
+              compact_greedy)
+                rtl=rtl/vtile/compact_greedy_arbiter.sv
+                top=vektor_v309_compact_greedy_arbiter ;;
+              factored_exact_max)
+                rtl=rtl/vtile/factored_subset_arbiter.sv
+                top=vektor_v309_factored_subset_arbiter ;;
+            esac
+            yosys -p "read_liberty -lib $lib; read_verilog -sv $rtl; synth -top $top -noabc; abc -liberty $lib; clean; stat -liberty $lib; write_json $out/$name.json" \
+              2>&1 | tee "$out/$name.log"
+          done
+      - name: Independently audit matched standard-cell area and load proxies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/v309/audit_matched_stdcells.py \
+            | tee build/v309_max_subset/standard_cells/audit.log
+      - name: Preserve complete logs even on a killed candidate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-max-subset-rtl-physicality-prefilter
+          path: build/v309_max_subset/
+          if-no-files-found: warn

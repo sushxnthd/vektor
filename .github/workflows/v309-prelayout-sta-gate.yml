@@ -1,0 +1,93 @@
+name: V309 matched prelayout STA and slew/load sensitivity
+
+on:
+  push:
+    branches: ["research/v309-external-ptx-bottleneck-gate"]
+    paths:
+      - "rtl/vtile/compact_greedy_arbiter.sv"
+      - "rtl/vtile/factored_subset_arbiter.sv"
+      - "research/v309/sta_prelayout_issue.tcl"
+      - "research/v309/audit_prelayout_sta.py"
+      - ".github/workflows/v309-prelayout-sta-gate.yml"
+  workflow_dispatch:
+
+jobs:
+  matched-prelayout-sta:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source standard-cell synthesis and STA tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y yosys opensta
+          mkdir -p build/v309_sta
+          yosys -V | tee build/v309_sta/yosys_version.txt
+          dpkg-query -W opensta | tee build/v309_sta/opensta_package_version.txt
+          command -v sta
+      - name: Verify pinned Nangate45 library and map both controllers
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=build/v309_sta
+          lib="$out/NangateOpenCellLibrary_typical.lib"
+          curl --fail --location --retry 3 --max-time 120 \
+            'https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/master/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib' \
+            --output "$lib"
+          test "$(git hash-object "$lib")" = '90e4afb274cfc6514c587c434c77903d554117d1' || {
+            echo PINNED_LIBERTY_SOURCE_DRIFT; exit 1;
+          }
+          sha256sum "$lib" | tee "$out/liberty_sha256.txt"
+          for name in compact_greedy factored_exact_max; do
+            case "$name" in
+              compact_greedy)
+                rtl=rtl/vtile/compact_greedy_arbiter.sv
+                top=vektor_v309_compact_greedy_arbiter ;;
+              factored_exact_max)
+                rtl=rtl/vtile/factored_subset_arbiter.sv
+                top=vektor_v309_factored_subset_arbiter ;;
+            esac
+            yosys -p "read_liberty -lib $lib; read_verilog -sv $rtl; synth -top $top -noabc; abc -liberty $lib; clean; stat -liberty $lib; write_verilog -noattr -noexpr $out/$name.v" \
+              2>&1 | tee "$out/$name.mapping.log"
+          done
+      - name: Evaluate three frozen input-slew and output-load corners
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=build/v309_sta
+          for corner in optimistic nominal stressed; do
+            case "$corner" in
+              optimistic) slew=0.020; load=0.005 ;;
+              nominal) slew=0.050; load=0.020 ;;
+              stressed) slew=0.100; load=0.100 ;;
+            esac
+            for name in compact_greedy factored_exact_max; do
+              case "$name" in
+                compact_greedy) top=vektor_v309_compact_greedy_arbiter ;;
+                factored_exact_max) top=vektor_v309_factored_subset_arbiter ;;
+              esac
+              LIB_FILE="$out/NangateOpenCellLibrary_typical.lib" \
+              NETLIST="$out/$name.v" TOP_MODULE="$top" \
+              INPUT_SLEW_NS="$slew" OUTPUT_LOAD_PF="$load" \
+                sta -exit research/v309/sta_prelayout_issue.tcl \
+                  2>&1 | tee "$out/${name}_${corner}.log"
+              if grep -q "^Error:" "$out/${name}_${corner}.log"; then
+                echo "OPENSTA_TCL_ERROR: $name $corner"; exit 1
+              fi
+            done
+          done
+      - name: Independently enforce frozen optimistic prelayout timing kill
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/v309/audit_prelayout_sta.py \
+            | tee build/v309_sta/independent_audit.log
+      - name: Preserve all raw mapped netlists and timing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-prelayout-sta-evidence
+          path: build/v309_sta/
+          if-no-files-found: warn
