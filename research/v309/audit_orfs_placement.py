@@ -8,7 +8,7 @@ import sys
 ROOT = pathlib.Path("build/v309_orfs")
 DESIGNS = ("compact_greedy", "factored_exact_max")
 VARIANTS = ("dense", "relaxed")
-ARRIVAL = re.compile(r"^\\s*([0-9]+(?:\\.[0-9]+)?)\\s+data arrival time\\s*$", re.M)
+ARRIVAL = re.compile(r"^\s*([0-9]+(?:\.[0-9]+)?)\s+data arrival time\s*$", re.M)
 HOT2_PREDICTED_ISSUE_RATIO = 1.0973483338585934
 
 
@@ -17,7 +17,7 @@ def parse(raw):
         raise AssertionError("missing unique OpenROAD placement-estimated-RC markers")
     if raw.count("V309_PLACEMENT_ELECTRICAL_BEGIN") != 1 or raw.count("V309_PLACEMENT_ELECTRICAL_END") != 1:
         raise AssertionError("missing electrical report markers")
-    if re.search(r"^(?:Error:|ERROR|\\[ERROR)", raw, re.M):
+    if re.search(r"^(?:Error:|ERROR|\[ERROR)", raw, re.M):
         raise AssertionError("OpenROAD error")
     section = raw.split("V309_PLACEMENT_ELECTRICAL_BEGIN")[0]
     values = ARRIVAL.findall(section)
@@ -30,12 +30,12 @@ def parse(raw):
 
 
 def selftest():
-    raw = ("V309_PLACEMENT_ESTIMATED_RC_BEGIN\\n"
-           "  0.46 data arrival time\\n"
-           "  1.00 data required time\\n"
-           "V309_PLACEMENT_ELECTRICAL_BEGIN\\n"
-           "No violations\\nV309_PLACEMENT_ELECTRICAL_END\\n"
-           "V309_PLACEMENT_ESTIMATED_RC_END\\n")
+    raw = ("V309_PLACEMENT_ESTIMATED_RC_BEGIN\n"
+           "  0.46 data arrival time\n"
+           "  1.00 data required time\n"
+           "V309_PLACEMENT_ELECTRICAL_BEGIN\n"
+           "No violations\nV309_PLACEMENT_ELECTRICAL_END\n"
+           "V309_PLACEMENT_ESTIMATED_RC_END\n")
     assert parse(raw) == 0.46
     for fake in (raw.replace("0.46 data arrival time", "1.00 data required time"),
                  raw.replace("V309_PLACEMENT_ESTIMATED_RC_BEGIN", "V309_PRELAYOUT_ONLY"),
@@ -71,7 +71,7 @@ def main():
         "max_cap_slew_electrical_signoff": "UNVERIFIED_REPORT_REQUIRES_INDEPENDENT_VIOLATION_AUDIT",
         "routed_extracted_signoff_or_real_GPU_speedup_claimed": False,
     }
-    ROOT.joinpath("placement_audit.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\\n")
+    ROOT.joinpath("placement_audit.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps(result, indent=2, sort_keys=True))
     if hot2_upper_bound <= 1:
         sys.exit("FROZEN_CLOCK_LIMITED_HOT2_NO_GO: kill factored mechanism under this placement model")
