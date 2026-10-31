@@ -1,0 +1,37 @@
+name: V311 prospective phase-cohort bank-salt falsification
+
+on:
+  push:
+    branches:
+      - research/v311-phase-cohort-bank-salt-falsification
+  pull_request:
+    paths:
+      - "research/v311/**"
+      - ".github/workflows/v311-phase-salt-falsification.yml"
+
+jobs:
+  falsify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run frozen independent synthetic holdouts and adversarial controls
+        run: |
+          python3 research/v311/phase_salt_falsifier.py --json > v311_result.json
+          python3 - <<'PY'
+          import json
+          with open("v311_result.json") as f:
+              d = json.load(f)
+          assert d["mutation_controls_rejected"] == 3
+          assert d["rotating"]["n_opportunities"] == 400000
+          assert d["stationary"]["n_opportunities"] == 400000
+          assert d["rotating"]["predicted_ratio"] < d["frozen_materiality_ratio"]
+          assert abs(d["rotating"]["predicted_ratio"] - d["rotating"]["holdout_ratio"]) < .01
+          assert d["stationary"]["holdout_ratio"] == 1.
+          assert d["decision"].startswith("RETIRE_NARROW_V311")
+          print("V311_FROZEN_NEGATIVE_RESULT_PASS")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v311-preregistered-negative-evidence
+          path: v311_result.json
