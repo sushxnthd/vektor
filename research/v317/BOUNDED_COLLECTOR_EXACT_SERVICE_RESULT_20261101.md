@@ -8,7 +8,7 @@
 - Exact breadth-first shortest-path scheduler and independently coded trace validator at [2e78973](https://github.com/sushxnthd/vektor/commit/2e78973e3b61be100c68b871ebc5b9bbee60e933). Independent depth-limited reachability checks small worlds without calling the scheduler transition function.
 - Frozen regime and adversarial tests at [fe78860](https://github.com/sushxnthd/vektor/commit/fe78860c0460edd9670da646f0a8974639971bea).
 - **Second** prospective two-class law protocol frozen at [03682d5](https://github.com/sushxnthd/vektor/commit/03682d575f33c513a0b5e773ae1fe458dd57fb99) after the initial pilot but before opening the specified new count holdouts; 72-world checker at [27b9f93](https://github.com/sushxnthd/vektor/commit/27b9f9360ec6bd357f8beecae05b29cc4f1a769e).
-- Reproduction: `python -m unittest research.v317.test_bounded_collector_exact research.v317.test_two_class_collector_law -v`; `python research/v317/bounded_collector_evidence.py > bounded_collector.json`. The V317 hosted audit workflow now includes these tests and uploads the JSON with the source commit.
+- Reproduction: `python -m unittest research.v317.test_bounded_collector_exact research.v317.test_two_class_collector_law -v`; `python -m research.v317.bounded_collector_evidence > bounded_collector.json`. The V317 hosted audit workflow now includes these tests and uploads the JSON with the source commit.
 
 ## Matched synthetic service model
 
