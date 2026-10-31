@@ -42,7 +42,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 research/v310/audit_verified_read_law.py --output build/v310/issue_law.json | tee build/v310/issue_law_stdout.json
-      - name: Matched generic synthesis (informational, not Nangate45 signoff)
+      - name: Prospective occupancy-overlap law and bandwidth-saturation no-win\n        shell: bash\n        run: |\n          set -euo pipefail\n          python3 research/v310/audit_overlap_occupancy_law.py --output build/v310/overlap_occupancy_law.json | tee build/v310/overlap_occupancy_law_stdout.json\n      - name: Matched generic synthesis (informational, not Nangate45 signoff)
         shell: bash
         run: |
           set -euo pipefail
