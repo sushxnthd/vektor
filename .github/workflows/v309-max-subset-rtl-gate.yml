@@ -7,6 +7,7 @@ on:
       - "rtl/vtile/factored_subset_arbiter.sv"
       - "rtl/vtile/compact_greedy_arbiter.sv"
       - "research/v309/factored_issue_law_holdout.py"
+      - "research/v309/bank_equality_moment_law.py"
       - "verification/rtl/tb_max_subset_arbiter.sv"
       - ".github/workflows/v309-max-subset-rtl-gate.yml"
   workflow_dispatch:
@@ -43,6 +44,12 @@ jobs:
           set -euo pipefail
           python3 research/v309/factored_issue_law_holdout.py \
             | tee build/v309_max_subset/issue_law_holdout.json
+      - name: Predict unseen bank regimes from equality-partition moments
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/v309/bank_equality_moment_law.py \
+            | tee build/v309_max_subset/equality_moment_holdout.json
       - name: Synthesize same-interface incumbent and candidate
         shell: bash
         run: |
