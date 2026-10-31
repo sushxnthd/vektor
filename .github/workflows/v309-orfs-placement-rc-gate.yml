@@ -9,6 +9,7 @@ on:
       - "research/v309/orfs_placement.sdc"
       - "research/v309/orfs_placement_sta.tcl"
       - "research/v309/orfs_place_direct.tcl"
+      - "research/v309/orfs_zero_wire_control.tcl"
       - "research/v309/orfs_matched_placement.sh"
       - "research/v309/audit_orfs_placement.py"
       - ".github/workflows/v309-orfs-placement-rc-gate.yml"
@@ -44,6 +45,8 @@ jobs:
           docker image inspect --format '{{.Id}}' "$image" | tee build/v309_orfs/container_image_id.txt
           docker image inspect --format '{{json .RepoDigests}}' "$image" | tee build/v309_orfs/container_repo_digests.json
           git clone --depth 1 https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts.git build/v309_orfs/orfs
+          git -C build/v309_orfs/orfs fetch --depth 1 origin 202c7fccbce32e86db899c54b0a0f0484f869cc3
+          git -C build/v309_orfs/orfs checkout --detach 202c7fccbce32e86db899c54b0a0f0484f869cc3
           git -C build/v309_orfs/orfs rev-parse HEAD | tee build/v309_orfs/orfs_source_commit.txt
           sha256sum build/v309_orfs/orfs/flow/platforms/nangate45/lef/NangateOpenCellLibrary.tech.lef build/v309_orfs/orfs/flow/platforms/nangate45/lef/NangateOpenCellLibrary.macro.mod.lef build/v309_orfs/orfs/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib | tee build/v309_orfs/platform_sha256.txt
           printf '%s\n' "$GITHUB_SHA" > build/v309_orfs/source_commit.txt
