@@ -1,0 +1,29 @@
+name: v312-rejection-fallback-screen
+on:
+  push:
+    branches: ["research/v312-rejection-aware-bank-fallback"]
+  pull_request:
+    paths:
+      - "research/v312/**"
+      - ".github/workflows/v312-rejection-fallback.yml"
+  workflow_dispatch:
+jobs:
+  prospective-synthetic-screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frozen finite-state prediction and seeded holdouts
+        run: |
+          mkdir -p build/v312
+          python3 research/v312/rejection_fallback_screen.py > build/v312/results.json
+          cat build/v312/results.json
+      - name: Independent reference and adversarial audit
+        run: |
+          python3 research/v312/audit_rejection_fallback.py build/v312/results.json
+      - name: Preserve exact evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v312-rejection-fallback-screen
+          path: build/v312/
