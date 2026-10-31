@@ -34,7 +34,7 @@ jobs:
             rtl/vtile/rf_bank_arbiter.sv \
             verification/rtl/tb_max_subset_arbiter.sv
           vvp build/v309_max_subset/tb 2>&1 | tee build/v309_max_subset/rtl_simulation.log
-          grep -q 'V309_MAX_SUBSET_ORACLE_PASS cases=104980' build/v309_max_subset/rtl_simulation.log
+          grep -q 'V309_MAX_SUBSET_ORACLE_PASS cases=109076' build/v309_max_subset/rtl_simulation.log
       - name: Synthesize same-interface incumbent and candidate
         shell: bash
         run: |
@@ -77,7 +77,7 @@ jobs:
               'factored_preliminary_area_gate': 'PASS' if factored_ratio <= 2 else 'FAIL_KILL_FACTORED_RTL',
               'clock_or_area_or_power_gain_claimed': False,
           }
-          (p/'summary.json').write_text(json.dumps(result, indent=2, sort_keys=True)+'\\n')
+          (p/'summary.json').write_text(json.dumps(result, indent=2, sort_keys=True)+'\n')
           print(json.dumps(result, indent=2))
           if brute_ratio <= 2:
               sys.exit('SOURCE_OR_TOOL_DRIFT: previous brute-force rejection not reproduced')
