@@ -5,6 +5,7 @@ on:
     branches: ["research/v309-external-ptx-bottleneck-gate"]
     paths:
       - "rtl/vtile/max_subset_arbiter.sv"
+      - "rtl/vtile/factored_subset_arbiter.sv"
       - "verification/rtl/tb_max_subset_arbiter.sv"
       - ".github/workflows/v309-max-subset-rtl-gate.yml"
   workflow_dispatch:
@@ -29,6 +30,7 @@ jobs:
           iverilog -g2012 -s tb_max_subset_arbiter \
             -o build/v309_max_subset/tb \
             rtl/vtile/max_subset_arbiter.sv \
+            rtl/vtile/factored_subset_arbiter.sv \
             rtl/vtile/rf_bank_arbiter.sv \
             verification/rtl/tb_max_subset_arbiter.sv
           vvp build/v309_max_subset/tb 2>&1 | tee build/v309_max_subset/rtl_simulation.log
@@ -41,6 +43,8 @@ jobs:
             2>&1 | tee build/v309_max_subset/greedy_yosys.log
           yosys -p 'read_verilog -sv rtl/vtile/max_subset_arbiter.sv; synth -top vektor_v309_max_subset_arbiter; stat; ltp -noff' \
             2>&1 | tee build/v309_max_subset/optimal_yosys.log
+          yosys -p 'read_verilog -sv rtl/vtile/factored_subset_arbiter.sv; synth -top vektor_v309_factored_subset_arbiter; stat; ltp -noff' \
+            2>&1 | tee build/v309_max_subset/factored_yosys.log
       - name: Apply frozen generic-cell physicality prefilter
         shell: bash
         run: |
@@ -55,21 +59,30 @@ jobs:
               depth = re.findall(r'length\s*=\s*(\d+)', s)
               return {'generic_cells': int(matches[-1]), 'ltp_length_if_available': int(depth[-1]) if depth else None}
           baseline = parse('greedy_yosys.log')
-          candidate = parse('optimal_yosys.log')
-          ratio = candidate['generic_cells']/baseline['generic_cells']
+          brute_force = parse('optimal_yosys.log')
+          factored = parse('factored_yosys.log')
+          brute_ratio = brute_force['generic_cells']/baseline['generic_cells']
+          factored_ratio = factored['generic_cells']/baseline['generic_cells']
+          # Frozen brute-force rejection must remain visible. Never silently
+          # substitute a new implementation for the rejected 16-subset RTL.
           result = {
               'source_commit': os.environ.get('GITHUB_SHA'),
               'evidence_tier': 'generic_yosys_synthesis_not_routed_physical',
-              'baseline': baseline, 'candidate': candidate,
-              'candidate_to_baseline_cell_ratio': ratio,
+              'baseline': baseline, 'rejected_brute_force': brute_force,
+              'factored_candidate': factored,
+              'rejected_brute_force_cell_ratio': brute_ratio,
+              'factored_candidate_cell_ratio': factored_ratio,
               'frozen_max_cell_ratio': 2.0,
-              'preliminary_area_gate': 'PASS' if ratio <= 2 else 'FAIL_KILL_THIS_RTL',
+              'brute_force_still_rejected': brute_ratio > 2,
+              'factored_preliminary_area_gate': 'PASS' if factored_ratio <= 2 else 'FAIL_KILL_FACTORED_RTL',
               'clock_or_area_or_power_gain_claimed': False,
           }
-          (p/'summary.json').write_text(json.dumps(result, indent=2, sort_keys=True)+'\n')
+          (p/'summary.json').write_text(json.dumps(result, indent=2, sort_keys=True)+'\\n')
           print(json.dumps(result, indent=2))
-          if ratio > 2:
-              sys.exit('FROZEN_AREA_PREFILTER_FAIL: brute-force candidate exceeds 2x generic cells; do not promote')
+          if brute_ratio <= 2:
+              sys.exit('SOURCE_OR_TOOL_DRIFT: previous brute-force rejection not reproduced')
+          if factored_ratio > 2:
+              sys.exit('FROZEN_AREA_PREFILTER_FAIL: factored candidate exceeds 2x generic cells; do not promote')
           PY
       - name: Preserve complete logs even on a killed candidate
         if: always()
