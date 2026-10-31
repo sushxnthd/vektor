@@ -1,3 +1,5 @@
+> **SECOND CORRECTION (2026-10-31, atomic coissue):** Even a bank-aware average-demand condition is not generally sufficient to certify zero benefit in an atomic multi-bank issue scheduler. The old pooled and per-bank no-win criteria are exact only within their respective fluid resource-envelope abstractions; they do not bound realized instruction packing, readiness or IPC. See [exact coissue counterexample](ATOMIC_BANK_COISSUE_FALSIFICATION_20261031.md).
+
 # V317: cache-aware RF capacity no-go certificate (2026-10-31)
 
 > **CORRECTION (2026-10-31, V317 bank-skew falsification):** The aggregate pooled-RF no-win condition below is **not sufficient for a physically banked RF** unless independent per-bank balance or effective pooling is established. Exact two-bank counterfactuals with the same aggregate demand and ports yield 1.000x versus 1.250x candidate gain; the pooled model incorrectly predicts 1.000x for both. See [bank-skew falsification](BANK_SKEW_AGGREGATE_NO_GO_FALSIFICATION_20261031.md). Treat the original no-go as restricted to the pooled-resource abstraction. No measured GPU result is implied.
