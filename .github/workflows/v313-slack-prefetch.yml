@@ -15,3 +15,5 @@ jobs:
           persist-credentials: false
       - name: Verify frozen prospective win, no-win, and transfer
         run: python3 research/v313/slack_prefetch_holdout.py --regime all
+      - name: Independent same-information strong collector falsification
+        run: python3 research/v313/strong_early_collector.py
