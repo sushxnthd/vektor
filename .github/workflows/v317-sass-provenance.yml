@@ -21,7 +21,9 @@ jobs:
         run: |
           mkdir -p build/v317
           python research/v317/sass_audit.py --input research/v317/synthetic_sass_fixture.sass > build/v317/lexical_audit.json
+          python research/v317/bank_skew_identifiability.py > build/v317/bank_skew_identifiability.json
           python -m json.tool build/v317/lexical_audit.json > /dev/null
+          python -m json.tool build/v317/bank_skew_identifiability.json > /dev/null
           git rev-parse HEAD > build/v317/commit.txt
       - uses: actions/upload-artifact@v4
         with:
