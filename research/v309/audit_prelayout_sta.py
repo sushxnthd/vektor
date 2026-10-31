@@ -14,10 +14,15 @@ FROZEN_MAX_OPTIMISTIC_RATIO = 1.0973483338585934
 def arrival(path):
     raw = path.read_text()
     # OpenSTA reports a data arrival time for the worst constrained path.
-    vals = re.findall(r"data arrival time\s+(-?[0-9]+(?:\.[0-9]+)?)", raw)
-    if not vals:
-        raise AssertionError(f"missing constrained arrival-time path in {path}")
-    result = float(vals[-1])
+    # OpenSTA 2.0.17 puts the value BEFORE the label. A loose regex using
+    # \\s+ after the label crosses a newline and incorrectly captures the
+    # following 1.00 ns required-time clock. Never accept that false pass.
+    vals = re.findall(
+        r"^\\s*([0-9]+(?:\\.[0-9]+)?)\\s+data arrival time\\s*$",
+        raw, re.MULTILINE)
+    if len(vals) != 1:
+        raise AssertionError(f"expected exactly one positive arrival path in {path}; found {vals}")
+    result = float(vals[0])
     if not (result > 0):
         raise AssertionError(f"invalid nonpositive data arrival time in {path}: {result}")
     return result
