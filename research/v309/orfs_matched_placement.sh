@@ -22,6 +22,7 @@ for name in compact_greedy factored_exact_max; do
   yosys -p "read_liberty -lib $lib; read_verilog -sv $rtl; synth -top $top -noabc; abc -liberty $lib; clean; stat -liberty $lib; write_verilog -noattr -noexpr $out/$name.v" \
     2>&1 | tee "$out/$name.synthesis.log"
   # Post-hoc attribution only: same mapped netlist, no wire RC.
+  export V309_PLATFORM_DIR="$platform"
   export V309_NETLIST="$out/$name.v"
   export V309_TOP="$top"
   export V309_LIBERTY="$lib"
