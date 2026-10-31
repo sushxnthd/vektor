@@ -1,8 +1,7 @@
 name: V309 exact bank-subset RTL physicality prefilter
 
 on:
-  push:
-    branches: ["research/v309-external-ptx-bottleneck-gate"]
+  pull_request:
     paths:
       - "rtl/vtile/max_subset_arbiter.sv"
       - "rtl/vtile/factored_subset_arbiter.sv"
