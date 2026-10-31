@@ -120,15 +120,21 @@ def evaluate(name):
     assert baseline["offered"] == candidate["offered"]
     ratio = candidate["issued"] / baseline["issued"]
     if name == "hot":
-        assert 1.0005 <= ratio <= 1.004, ("small-win prediction falsified", ratio)
-    if name == "no_win":
-        assert ratio == 1.0 and baseline["dropped"] == 0 and candidate["dropped"] == 0
-        assert candidate["p99_latency"] <= baseline["p99_latency"]
-    if name == "transfer":
-        assert 1.0 <= ratio <= 1.006, ("transfer prediction falsified", ratio)
+        prediction_pass = 1.0005 <= ratio <= 1.004
+    elif name == "no_win":
+        prediction_pass = (ratio == 1.0 and baseline["dropped"] == 0
+                           and candidate["dropped"] == 0
+                           and candidate["p99_latency"] <= baseline["p99_latency"])
+    elif name == "transfer":
+        prediction_pass = 1.0 <= ratio <= 1.006
+    else:
+        prediction_pass = None  # sensitivity regime had no directional prediction
+    p99_ok = candidate["p99_latency"] <= baseline["p99_latency"]
     return dict(baseline=baseline, candidate=candidate, completion_ratio=ratio,
+                prediction_pass=prediction_pass,
                 materiality_pass=ratio >= 1.02,
-                p99_nonregression=candidate["p99_latency"] <= baseline["p99_latency"])
+                p99_nonregression=p99_ok,
+                retire=(name == "hot" and (ratio < 1.02 or not p99_ok or not prediction_pass)))
 
 
 def main():
