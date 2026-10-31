@@ -91,11 +91,13 @@ def simulate(stream, policy, capture_events=False):
         assert all(0 <= f <= PORTS for f in free)
         assert len(cycle_reads) <= SLOTS * 2
         issued_now = 0
+        completed_banks = []
         for q in queues:
             if q and all(q[0]["done"]):
                 h = q.popleft()
                 assert max(h["ready"]) <= t
                 issued_now += 1
+                completed_banks.append(tuple(h["banks"]))
                 if t >= WARMUP:
                     stats["issued"] += 1
                     latencies.append(t - h["born"] + 1)
@@ -103,7 +105,7 @@ def simulate(stream, policy, capture_events=False):
                 stats["stalled_heads"] += 1
         assert issued_now <= SLOTS
         if capture_events and t >= WARMUP:
-            events.append((t, cycle_reads, issued_now))
+            events.append((t, cycle_reads, completed_banks))
     stats["throughput"] = stats["issued"] / MEASURE
     stats["mean_latency"] = sum(latencies) / len(latencies) if latencies else 0
     stats["p99_latency"] = sorted(latencies)[min(len(latencies)-1, int(.99*len(latencies)))] if latencies else 0
