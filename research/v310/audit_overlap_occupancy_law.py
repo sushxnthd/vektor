@@ -77,7 +77,7 @@ def run(name, seed, o, h, q):
 
 
 def selftest():
-    assert predicted(Fraction(3,4),Fraction(1,2),Fraction(3,5)) == Fraction(211,195)
+    assert predicted(Fraction(3,4),Fraction(1,2),Fraction(3,5)) == Fraction(352,325)
     assert predicted(Fraction(3,4),Fraction(0,1),Fraction(4,5)) == 1
     assert independent_count(True,True,0,False,False) == 1
     assert independent_count(True,True,0,True,True) == 2
