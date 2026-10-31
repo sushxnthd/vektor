@@ -50,6 +50,8 @@ class Parsed:
 
 def split_operands(text: str) -> tuple[str, ...]:
     """Split commas outside bracketed address expressions."""
+    if not text.strip():
+        return ()
     chunks: list[str] = []
     start = 0
     stack: list[str] = []
