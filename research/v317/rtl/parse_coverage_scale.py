@@ -9,11 +9,13 @@ import sys
 from research.v317.rtl.parse_stateful_scale import parse as parse_base
 
 
-def parse_wrapper(folder, lanes, bits):
+def parse_wrapper(folder, lanes, bits, naive=False):
     tag = f"{lanes}x{bits}"
-    netlist = json.loads((folder / f"coverage_{tag}.json").read_text())
-    log = (folder / f"coverage_{tag}.log").read_text()
-    mod = netlist["modules"]["vektor_v317_coverage_forwarding"]
+    prefix = "coverage_naive" if naive else "coverage"
+    module = "vektor_v317_coverage_forwarding_naive" if naive else "vektor_v317_coverage_forwarding"
+    netlist = json.loads((folder / f"{prefix}_{tag}.json").read_text())
+    log = (folder / f"{prefix}_{tag}.log").read_text()
+    mod = netlist["modules"][module]
     cells = mod["cells"]
     flops = sum(1 for cell in cells.values()
                 if cell["type"].startswith(("$_DFF", "$_SDFF", "$_DFFE")))
@@ -42,11 +44,16 @@ def main(folder):
     for lanes, bits in ((4, 8), (8, 16), (32, 32)):
         base = parse_base(folder, lanes, bits)
         wrapped = parse_wrapper(folder, lanes, bits)
+        naive = parse_wrapper(folder, lanes, bits, naive=True)
+        if lanes == 32 and wrapped["generic_cells_total"] >= naive["generic_cells_total"]:
+            raise ValueError("single-mask factorization did not reduce 32x32 generic cells")
         if wrapped["generic_flop_cells"] < base["generic_flop_cells"] + 1:
             raise ValueError(f"missing coverage fault state {lanes}x{bits}")
         cases.append({
             "lanes": lanes, "bits_per_lane": bits,
-            "base_stateful": base, "coverage_wrapped": wrapped,
+            "base_stateful": base, "naive_double_mask": naive,
+            "coverage_wrapped": wrapped,
+            "optimized_vs_naive_cell_delta": wrapped["generic_cells_total"] - naive["generic_cells_total"],
             "generic_cell_delta": wrapped["generic_cells_total"] - base["generic_cells_total"],
             "generic_flop_delta": wrapped["generic_flop_cells"] - base["generic_flop_cells"],
         })
