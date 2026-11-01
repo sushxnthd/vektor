@@ -105,6 +105,7 @@ jobs:
         run: |
           python -m research.v317.rtl.parse_dual_write_scale build/v317 > build/v317/dual_write_scale_summary.json
           python -m json.tool build/v317/dual_write_scale_summary.json > /dev/null
+          cat build/v317/dual_write_scale_summary.json
       - name: Source pin
         if: always()
         run: |
