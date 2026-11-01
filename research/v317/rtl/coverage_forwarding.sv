@@ -41,9 +41,11 @@ module vektor_v317_coverage_forwarding #(
     wire [LANES*DATA_BITS-1:0] underlying_data;
     vektor_v317_stateful_forwarding #(
         .WARP_BITS(WARP_BITS), .REG_BITS(REG_BITS),
-        .BANK_BITS(BANK_BITS), .LANES(LANES), .DATA_BITS(DATA_BITS)
+        .BANK_BITS(BANK_BITS), .LANES(LANES), .DATA_BITS(DATA_BITS),
+        .COVERAGE_GUARD(1)
     ) snapshot (
         .clk(clk), .rst_n(rst_n),
+        .coverage_ok(coverage_ok), .coverage_fault(coverage_fault_q),
         .capture_en(capture_en), .capture_warp(capture_warp),
         .capture_reg(capture_reg), .capture_bank(capture_bank),
         .capture_lanes(capture_lanes), .capture_data(capture_data),
@@ -54,7 +56,7 @@ module vektor_v317_coverage_forwarding #(
         .requested_bank(requested_bank), .requested_lanes(requested_lanes),
         .forward_grant(underlying_grant), .forwarded_data(underlying_data)
     );
-    assign forward_grant = underlying_grant && coverage_ok && !coverage_fault_q;
-    assign forwarded_data = forward_grant
-        ? underlying_data : {(LANES*DATA_BITS){1'b0}};
+    // One output mask, inside stateful_forwarding; no second data-wide gate.
+    assign forward_grant = underlying_grant;
+    assign forwarded_data = underlying_data;
 endmodule
