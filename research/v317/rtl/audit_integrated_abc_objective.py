@@ -45,10 +45,10 @@ def inspect(archive_path, objective):
             route = read(log + '5_2_route.log')
             extraction = read(log + '6_report.log')
             assert 'RCX-0045' in extraction
-            drcs = re.findall(r'Number of violations\\s*=\\s*(\\d+)', route)
+            drcs = re.findall(r'Number of violations\s*=\s*(\d+)', route)
             assert drcs and int(drcs[-1]) == 0
             assert 'Found 0 net violations' in route and 'Found 0 pin violations' in route
-            wires = re.findall(r'Total wire length\\s*=\\s*(\\d+)\\s*um', route)
+            wires = re.findall(r'Total wire length\s*=\s*(\d+)\s*um', route)
             assert wires
 
             def val(key):
