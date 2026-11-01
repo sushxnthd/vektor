@@ -31,5 +31,5 @@ report_checks -to [all_outputs] -path_delay max
 puts "STA_PATH_END"
 
 puts "STA_ELECTRICAL_BEGIN"
-report_check_types -max_slew -violators
+report_check_types
 puts "STA_ELECTRICAL_END"
