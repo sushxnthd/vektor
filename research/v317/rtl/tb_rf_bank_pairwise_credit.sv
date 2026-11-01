@@ -87,6 +87,12 @@ module tb_v317_rf_pairwise_credit;
         #2;
         reset = 0;
         #1;
+        // Prime the source always @* block: an all-zero first vector
+        // can otherwise leave an untriggered combinational output at X.
+        request_valid = 4'b1111;
+        src0_bank_flat = 16'hffff;
+        src1_bank_flat = 16'h0123;
+        #1;
         for (phase_idx = 0; phase_idx < 4; phase_idx = phase_idx + 1) begin
             phase_expected = phase_idx;
             for (mask_idx = 0; mask_idx < 16; mask_idx = mask_idx + 1) begin
