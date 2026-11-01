@@ -19,3 +19,6 @@ Use the same registered 36-bit input/4-bit output wrapper around each original/p
 
 ## Limits
 This small registered arbiter wrapper is a physical *control-block* experiment, not a GPU tile, register-file SRAM, full issue pipeline, power signoff or 5090-equivalent design. No extrapolation to GPU IPC or wattage is authorized. Actual routed RC must replace the previous uniform-wire proxy before electrical claims.
+
+## Pre-result floorplan control amendment (before inspecting routed results)
+To eliminate the most serious fairness confound in automatic ORFS sizing, both variants at the 35% *nominal* condition must use the same fixed die `0 0 60 60` um and core `4 4 56 56` um (52 x 52 um). Both variants at the 65% *nominal* condition must use die `0 0 44 44` um and core `4 4 40 40` um (36 x 36 um). These are **nominal stress labels**, not claims of measured utilization. Report each actual placed utilization, and do not compare the 35 and 65 settings as matched utilization between designs: the equal-footprint, not equal-utilization, comparison is primary. If either design cannot route in the smaller footprint, record a failure. The baseline area numbers informed these pre-result footprints; they were not tuned on routing outcomes. This amendment supersedes any earlier implication that automatically sized die/core can support equal-footprint claims.
