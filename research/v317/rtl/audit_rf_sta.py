@@ -34,10 +34,38 @@ def parse_report(report):
     }
 
 
+def parse_electrical(report):
+    """Parse legacy OpenSTA 2.0.17 default max-transition report.
+
+    This tool does not support max-capacitance reporting. No max-cap signoff.
+    """
+    text = Path(report).read_text()
+    if 'STA_ELECTRICAL_BEGIN' not in text or 'STA_ELECTRICAL_END' not in text:
+        raise AssertionError('Missing electrical report: ' + str(report))
+    block = text.split('STA_ELECTRICAL_BEGIN', 1)[1].split('STA_ELECTRICAL_END', 1)[0]
+    if 'max_transition' not in block:
+        raise AssertionError('No max-transition constraint: ' + str(report))
+    section = block.split('max_transition', 1)[1]
+    rows = re.findall(r'(?m)^\s*([^\s]+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(-?\d+\.\d+)\s+\((MET|VIOLATED)\)', section)
+    if not rows:
+        raise AssertionError('No concrete max-transition result: ' + str(report))
+    worst = min(rows, key=lambda x: float(x[3]))
+    return {
+        'worst_pin': worst[0],
+        'limit_ns': float(worst[1]),
+        'transition_ns': float(worst[2]),
+        'slack_ns': float(worst[3]),
+        'max_transition_violated': worst[4] == 'VIOLATED',
+        'max_capacitance_checked': False,
+    }
+
 def audit(directory):
     out = {}
     for load in LOADS:
         out[load] = {label: parse_report(directory / f'{label}_{load}.log') for label in LABELS}
+    electrical = {load: {
+        label: parse_electrical(directory / f'{label}_{load}.log')
+        for label in LABELS} for load in LOADS}
     ratios = {}
     for load, row in out.items():
         ratios[load] = {
@@ -59,6 +87,9 @@ def audit(directory):
                  abs(observed) <= 0.20),
         }
     return {
+        'max_transition_checks': electrical,
+        'electrically_legal_under_max_transition_only': {load: {label: not electrical[load][label]['max_transition_violated'] for label in LABELS} for load in LOADS},
+        'max_capacitance_signoff': False,
         'frozen_holdout_predictions': holdouts,
         'frozen_qualitative_boundary_survives': all(
             x['frozen_qualitative_prediction_survives'] for x in holdouts.values()),
