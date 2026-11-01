@@ -80,6 +80,27 @@ jobs:
           CASES
           python -m research.v317.rtl.parse_coverage_scale build/v317 > build/v317/coverage_scale_summary.json
           python -m json.tool build/v317/coverage_scale_summary.json > /dev/null
+      - name: Independent two-write-port completeness audit
+        run: |
+          python -m unittest research.v317.test_dual_write_audit -v
+          python -m research.v317.dual_write_audit > build/v317/dual_write_audit.json
+          python -m json.tool build/v317/dual_write_audit.json > /dev/null
+      - name: Exhaustive dual-write-port RTL and stale one-port witness
+        run: |
+          iverilog -g2012 -s tb_v317_dual_write_forwarding -o build/v317/tb_dual_write research/v317/rtl/forwarding_gate.sv research/v317/rtl/stateful_forwarding.sv research/v317/rtl/coverage_forwarding.sv research/v317/rtl/dual_write_forwarding.sv research/v317/rtl/tb_dual_write_forwarding.sv
+          vvp build/v317/tb_dual_write | tee build/v317/dual_write_sim.log
+      - name: Matched one-port versus dual-port generic synthesis sensitivity
+        run: |
+          set -o pipefail
+          while read -r lanes data_bits warp_bits reg_bits bank_bits; do
+            tag="${lanes}x${data_bits}"
+            yosys -p "read_verilog -sv research/v317/rtl/forwarding_gate.sv research/v317/rtl/stateful_forwarding.sv research/v317/rtl/coverage_forwarding.sv; chparam -set LANES ${lanes} -set DATA_BITS ${data_bits} -set WARP_BITS ${warp_bits} -set REG_BITS ${reg_bits} -set BANK_BITS ${bank_bits} vektor_v317_coverage_forwarding; synth -flatten -top vektor_v317_coverage_forwarding; stat; ltp -noff; write_json build/v317/oneport_${tag}.json" 2>&1 | tee "build/v317/oneport_${tag}.log"
+            yosys -p "read_verilog -sv research/v317/rtl/forwarding_gate.sv research/v317/rtl/dual_write_forwarding.sv; chparam -set LANES ${lanes} -set DATA_BITS ${data_bits} -set WARP_BITS ${warp_bits} -set REG_BITS ${reg_bits} -set BANK_BITS ${bank_bits} vektor_v317_dual_write_forwarding; synth -flatten -top vektor_v317_dual_write_forwarding; stat; ltp -noff; write_json build/v317/twoport_${tag}.json" 2>&1 | tee "build/v317/twoport_${tag}.log"
+          done <<'CASES'
+          4 8 2 4 2
+          8 16 3 6 3
+          32 32 5 8 4
+          CASES
       - name: Source pin
         if: always()
         run: |
