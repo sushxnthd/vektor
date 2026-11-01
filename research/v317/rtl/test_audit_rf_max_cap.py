@@ -69,6 +69,13 @@ class TestMaxCap(unittest.TestCase):
         from research.v317.rtl.audit_rf_max_cap import bits
         self.assertEqual(bits("a[15:12]", {}), ["a[12]", "a[13]", "a[14]", "a[15]"])
 
+    def test_yosys_escaped_vector_whole_bus(self):
+        from research.v317.rtl.audit_rf_max_cap import bits, widths
+        src = "wire [3:0] \\bank0[0] ;\nassign \\bank0[0]  = src0_bank_flat[3:0];\n"
+        w = widths(src)
+        self.assertEqual(len(bits("\\bank0[0]", w)), 4)
+        self.assertEqual(bits("\\bank0[0] [2]", w), ["\\bank0[0] [2]"])
+
     def test_missing_cell_fails_closed(self):
         lib = liberty_pins(LIB)
         with self.assertRaisesRegex(ValueError, "unknown mapped cell"):
