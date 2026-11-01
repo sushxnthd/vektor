@@ -4,8 +4,8 @@ module tb_v317_coverage_forwarding;
     reg [1:0] cw, cb, ww, wb, rw, rb;
     reg [3:0] cr, wr, rr, captured, written, requested;
     reg [31:0] data;
-    wire grant;
-    wire [31:0] forwarded;
+    wire grant, naive_grant;
+    wire [31:0] forwarded, naive_forwarded;
     integer c, r, d, lane, checks;
     reg expected;
     reg [31:0] expected_data;
@@ -22,6 +22,18 @@ module tb_v317_coverage_forwarding;
         .forward_grant(grant), .forwarded_data(forwarded)
     );
 
+    vektor_v317_coverage_forwarding_naive naive_dut (
+        .clk(clk), .rst_n(rst_n), .coverage_ok(coverage_ok),
+        .capture_en(capture_en), .capture_warp(cw),
+        .capture_reg(cr), .capture_bank(cb),
+        .capture_lanes(captured), .capture_data(data),
+        .write_en(write_en), .write_warp(ww),
+        .write_reg(wr), .write_bank(wb), .write_lanes(written),
+        .requested_warp(rw), .requested_reg(rr),
+        .requested_bank(rb), .requested_lanes(requested),
+        .forward_grant(naive_grant), .forwarded_data(naive_forwarded)
+    );
+
     task tick;
         begin
             #1 clk = 1;
@@ -36,7 +48,8 @@ module tb_v317_coverage_forwarding;
             for (lane = 0; lane < 4; lane = lane + 1)
                 if (want && requested[lane])
                     expected_data[lane*8 +: 8] = data[lane*8 +: 8];
-            if (grant !== want || forwarded !== expected_data)
+            if (grant !== want || forwarded !== expected_data ||
+                naive_grant !== want || naive_forwarded !== expected_data)
                 $fatal(1, "coverage mismatch c=%0d r=%0d d=%0d grant=%b want=%b data=%h expected=%h",
                        c, r, d, grant, want, forwarded, expected_data);
             checks = checks + 1;
