@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 
 LABELS = ('source_fixed', 'pairwise_fixed', 'source_rotating', 'pairwise_rotating')
-LOADS = ('0.002', '0.02', '0.1')
+LOADS = ('2', '20', '100')  # Nangate45 capacitive_load_unit (1, ff)
 
 
 def parse_report(report):
@@ -24,7 +24,7 @@ def parse_report(report):
     arrivals = re.findall(r'(?im)^\s*([+-]?[0-9]+(?:\.[0-9]+)?)\s+data arrival time\s*$', block)
     if not arrivals:
         raise AssertionError('Missing data arrival time: ' + str(report))
-    arrival = float(arrivals[-1])
+    arrival = float(arrivals[0])  # first is forward arrival; later negative value is slack subtraction
     if not 0 < arrival < 1000:
         raise AssertionError('Invalid arrival time: ' + str(report))
     return {
@@ -48,7 +48,7 @@ def audit(directory):
     return {
         'evidence_tier': 'NANGATE45_PRE_ROUTE_CELL_TIMING_WITH_EXTERNAL_OUTPUT_CAP',
         'input_transition_ns': 0.02,
-        'output_load_pf': list(LOADS),
+        'output_load_ff': list(LOADS),
         'timed_paths': out,
         'delay_ratios': ratios,
         'clock_frequency_validated': False,
