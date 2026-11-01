@@ -1,0 +1,54 @@
+name: v317 exact RF arbiter physicality challenger
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+  pull_request:
+    paths:
+      - 'research/v317/rtl/rf_bank_exact_challenger.sv'
+      - 'research/v317/rtl/tb_rf_bank_exact.sv'
+      - 'research/v317/rtl/parse_rf_exact_cost.py'
+      - '.github/workflows/v317-rf-exact.yml'
+jobs:
+  matched-rtl-and-generic-cost:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install no-cost open RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Exhaustive two-bank RTL simulation with independent oracle
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/rf_exact
+          iverilog -g2012 -s tb_v317_rf_bank_exact -o build/v317/rf_exact/tb \
+            rtl/vtile/rf_bank_arbiter.sv \
+            research/v317/rtl/rf_bank_exact_challenger.sv \
+            research/v317/rtl/tb_rf_bank_exact.sv
+          vvp build/v317/rf_exact/tb | tee build/v317/rf_exact/rtl_sim.log
+      - name: Matched generic synthesis baseline
+        run: |
+          set -euo pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/rf_bank_arbiter.sv; synth -flatten -top vektor_rf_bank_arbiter; stat; ltp -noff; write_json build/v317/rf_exact/priority.json' 2>&1 | tee build/v317/rf_exact/priority.log
+      - name: Matched generic synthesis exact challenger
+        run: |
+          set -euo pipefail
+          yosys -p 'read_verilog -sv research/v317/rtl/rf_bank_exact_challenger.sv; synth -flatten -top vektor_v317_rf_bank_exact; stat; ltp -noff; write_json build/v317/rf_exact/exact.json' 2>&1 | tee build/v317/rf_exact/exact.log
+      - name: Generic cell and fanout sensitivity (not routed electrical signoff)
+        run: |
+          set -euo pipefail
+          python research/v317/rtl/parse_rf_exact_cost.py \
+            build/v317/rf_exact/priority.json \
+            build/v317/rf_exact/exact.json | tee build/v317/rf_exact/matched_cost.json
+          python -m json.tool build/v317/rf_exact/matched_cost.json > /dev/null
+      - name: Source pin
+        if: always()
+        run: |
+          git rev-parse HEAD > build/v317/rf_exact/commit.txt
+      - name: Preserve all evidence including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-rf-exact-matched-rtl
+          path: build/v317/rf_exact/
