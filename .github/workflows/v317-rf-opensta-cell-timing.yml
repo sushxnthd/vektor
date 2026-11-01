@@ -44,11 +44,11 @@ jobs:
           source_rotating|vektor_v317_rf_rotating|rtl/vtile/rf_bank_arbiter.sv research/v317/rtl/rf_bank_rotating_control.sv
           pairwise_rotating|vektor_v317_rf_pairwise_rotating|research/v317/rtl/rf_bank_pairwise_credit.sv
           CONFIGS
-      - name: Three preregistered output loads, four mapped variants
+      - name: Original loads and three frozen unseen holdouts, four variants
         run: |
           set -euo pipefail
           lib=build/v317/rf_sta/NangateOpenCellLibrary_typical.lib
-          for load in 2 20 100; do
+          for load in 2 20 40 60 80 100; do
             for label in source_fixed pairwise_fixed source_rotating pairwise_rotating; do
               case "$label" in
                 source_fixed) top=vektor_rf_bank_arbiter ;;
