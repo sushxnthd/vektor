@@ -92,9 +92,7 @@ def audit(z, label):
 def evaluate(path):
     with zipfile.ZipFile(path) as z:
         rows = {label: audit(z, label) for label in LABELS}
-        sim = member(z, "rtl_simulation.log" if False else "", "rtl_simulation.log") if False else [
-            n for n in z.namelist() if n == "rtl_simulation.log"
-        ]
+        sim = [n for n in z.namelist() if n == "rtl_simulation.log"]
         if len(sim) != 1 or "PASS: 4998" not in z.read(sim[0]).decode("utf-8"):
             raise ValueError("registered RTL comparison not independently confirmed")
     a, b = rows["source_35"], rows["pairwise_35"]
