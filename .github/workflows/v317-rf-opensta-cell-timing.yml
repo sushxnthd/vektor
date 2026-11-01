@@ -48,7 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           lib=build/v317/rf_sta/NangateOpenCellLibrary_typical.lib
-          for load in 0.002 0.02 0.1; do
+          for load in 2 20 100; do
             for label in source_fixed pairwise_fixed source_rotating pairwise_rotating; do
               case "$label" in
                 source_fixed) top=vektor_rf_bank_arbiter ;;
