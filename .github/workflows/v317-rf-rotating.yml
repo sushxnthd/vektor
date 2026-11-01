@@ -57,6 +57,12 @@ jobs:
                   assert result['offered'] >= result['completed_total']
                   print(' ', policy, 'completed', result['completed_after_warmup'], 'backlog', result['backlog_total'], 'p99', result['latency_p99_cycles'])
           PY
+      - name: Independent full-stream cross-check of all unseen results
+        run: |
+          set -euo pipefail
+          python -m research.v317.rf_rotating_independent_audit \\
+            build/v317/rf_rotating/unseen_transfer.json \\
+            | tee build/v317/rf_rotating/independent_audit.json
       - name: Source pin
         if: always()
         run: |
