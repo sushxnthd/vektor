@@ -74,7 +74,7 @@ def audit(z, label):
     for key in ("max slew", "max fanout", "max cap", "setup", "hold"):
         suffix = key.replace(" ", "_") + "_violation_count"
         block = section(finish, suffix)
-        checks[key] = int(number(block, re.escape(key) + r" violation count (\\d+)", label))
+        checks[key] = int(number(block, re.escape(key) + r" violation count (\d+)", label))
     p = section(finish, "report_power")
     powers = re.findall(r"^Total\s+([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)", p, re.M)
     if len(powers) != 1:
