@@ -184,7 +184,9 @@ def audit_core(netlist, lib, drive, external_ff, grant_width=4):
     for bit in range(grant_width):
         grant = aliases.root(f"grant[{bit}]")
         if grant not in drivers:
-            raise ValueError(f"no mapped driver for grant[{bit}] (alias={grant}, mapped_driver_count={len(drivers)}, assignments={[m.group(0) for m in re.finditer(r\'\\bassign\\s+[^;]+;\', netlist) if \'grant\' in m.group(0)][:8]})")
+            assignments = [m.group(0) for m in re.finditer(r"\bassign\s+[^;]+;", netlist)
+                           if "grant" in m.group(0)][:8]
+            raise ValueError(f"no mapped driver for grant[{bit}] (alias={grant}, drivers={len(drivers)}, assignments={assignments})")
         sinks[grant] += buf_in
     rows = []
     for net, ds in drivers.items():
