@@ -6,6 +6,7 @@ This is accounting, not measured GPU IPC or novel scheduling.
 from __future__ import annotations
 import argparse
 import json
+import math
 from dataclasses import asdict, dataclass
 from fractions import Fraction
 
@@ -81,6 +82,11 @@ def frozen_regimes() -> list[Regime]:
         Regime("clock_critical_conditional", 24, 40000, 1.0),
     ]
 
+def json_regime(c: Regime) -> dict:
+    """Strict-JSON representation; infinity is a named unbounded assumption."""
+    return {key: ("unbounded" if isinstance(value, float) and not math.isfinite(value) else value)
+            for key, value in asdict(c).items()}
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--json", action="store_true")
@@ -90,11 +96,11 @@ def main() -> None:
         "provenance": "RF_REGISTERED_OPENROAD_ROUTED_RESULT_20261101.md",
         "inputs": {"source_area_um2": SOURCE_AREA, "pairwise_area_um2": PAIR_AREA,
                    "source_period_ns": SOURCE_PERIOD_NS, "pairwise_period_ns": PAIR_PERIOD_NS},
-        "regimes": [{"parameters": asdict(c), "result": exact_budget_phase_counts(c)}
+        "regimes": [{"parameters": json_regime(c), "result": exact_budget_phase_counts(c)}
                     for c in frozen_regimes()],
     }
     if args.json:
-        print(json.dumps(output, indent=2, sort_keys=True))
+        print(json.dumps(output, indent=2, sort_keys=True, allow_nan=False))
     else:
         for row in output["regimes"]:
             r = row["result"]
