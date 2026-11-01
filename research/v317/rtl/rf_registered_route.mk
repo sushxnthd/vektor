@@ -6,7 +6,6 @@ export VERILOG_FILES = $(VEKTOR_ROOT)/rtl/vtile/rf_bank_arbiter.sv $(VEKTOR_ROOT
 export SDC_FILE = $(VEKTOR_ROOT)/research/v317/rtl/rf_registered_route.sdc
 export ABC_AREA = 1
 export ADDER_MAP_FILE :=
-export CORE_UTILIZATION ?= 35
 export SYNTH_REPEATABLE_BUILD = 1
 export GPL_PLACE_IOS = 1
 export PLACE_DENSITY_LB_ADDON = 0.20
