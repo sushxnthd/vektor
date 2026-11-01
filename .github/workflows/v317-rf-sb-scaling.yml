@@ -1,0 +1,68 @@
+name: v317 bank-credit prospective S/B scaling
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - 'research/v317/rtl/rf_bank_sb_scaling.sv'
+      - 'research/v317/rtl/tb_rf_bank_sb_scaling.sv'
+      - 'research/v317/rtl/parse_rf_sb_scaling.py'
+      - '.github/workflows/v317-rf-sb-scaling.yml'
+  workflow_dispatch:
+jobs:
+  nine-point-functional-and-generic-cost:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free Verilog and synthesis tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Independent functional oracle for all nine configurations
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/rf_sb
+          for S in 2 4 8; do
+            for B in 4 16 64; do
+              prefix="S${S}_B${B}"
+              iverilog -g2012 -s tb_v317_sb_scaling \
+                -Ptb_v317_sb_scaling.S="$S" \
+                -Ptb_v317_sb_scaling.B="$B" \
+                -o "build/v317/rf_sb/${prefix}.vvp" \
+                research/v317/rtl/rf_bank_sb_scaling.sv \
+                research/v317/rtl/tb_rf_bank_sb_scaling.sv
+              vvp "build/v317/rf_sb/${prefix}.vvp" | tee "build/v317/rf_sb/${prefix}.rtl.log"
+            done
+          done
+      - name: Matched nine-point generic synthesis and logic-depth sweep
+        run: |
+          set -euo pipefail
+          for S in 2 4 8; do
+            for B in 4 16 64; do
+              prefix="S${S}_B${B}"
+              for kind in bankmask pairwise; do
+                yosys -p "read_verilog -sv research/v317/rtl/rf_bank_sb_scaling.sv; chparam -set S $S -set B $B v317_${kind}_param; synth -flatten -top v317_${kind}_param; stat; ltp -noff; write_json build/v317/rf_sb/${prefix}_${kind}.json" \
+                  2>&1 | tee "build/v317/rf_sb/${prefix}_${kind}.log"
+              done
+            done
+          done
+      - name: Evaluate frozen scaling predictions without tuning
+        run: |
+          set -euo pipefail
+          python -m research.v317.rtl.parse_rf_sb_scaling build/v317/rf_sb \
+            | tee build/v317/rf_sb/scaling.json
+          python -m json.tool build/v317/rf_sb/scaling.json >/dev/null
+      - name: Source pin and tool versions
+        if: always()
+        run: |
+          mkdir -p build/v317/rf_sb
+          git rev-parse HEAD > build/v317/rf_sb/commit.txt
+          yosys -V > build/v317/rf_sb/yosys_version.txt || true
+          iverilog -V > build/v317/rf_sb/iverilog_version.txt 2>&1 || true
+      - name: Preserve logs and negative results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-rf-sb-scaling
+          path: build/v317/rf_sb/
