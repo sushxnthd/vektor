@@ -56,6 +56,8 @@ def audit(z, label):
     finish = member(z, label, "6_finish.rpt")
     final_log = member(z, label, "6_report.log")
     route_log = member(z, label, "5_2_route.log")
+    if "[INFO RCX-0045] Extract" not in final_log:
+        raise ValueError(f"{label}: no extracted routed parasitics evidence")
     area = number(final_log, r"Design area ([0-9]+(?:\.[0-9]+)?) um\^2 \d+% utilization", label)
     util = number(final_log, r"Design area [0-9]+(?:\.[0-9]+)? um\^2 (\d+)% utilization", label)
     min_period = number(section(finish, "report_clock_min_period"),
@@ -68,6 +70,11 @@ def audit(z, label):
     lengths = re.findall(r"Total wire length = (\d+) um", route_log)
     if not drcs or not lengths:
         raise ValueError(f"{label}: missing detailed-route DRC or wirelength")
+    checks = {}
+    for key in ("max slew", "max fanout", "max cap", "setup", "hold"):
+        suffix = key.replace(" ", "_") + "_violation_count"
+        block = section(finish, suffix)
+        checks[key] = int(number(block, re.escape(key) + r" violation count (\\d+)", label))
     p = section(finish, "report_power")
     powers = re.findall(r"^Total\s+([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)", p, re.M)
     if len(powers) != 1:
@@ -84,7 +91,9 @@ def audit(z, label):
         "last_detailed_route_drc_count": int(drcs[-1]),
         "routed_wire_length_um": int(lengths[-1]),
         "default_activity_power_proxy_w": float(powers[0][3]),
-        "timing_and_drc_pass": setup >= 0 and hold >= 0 and int(drcs[-1]) == 0,
+        "reported_violation_counts": checks,
+        "timing_and_drc_pass": setup >= 0 and hold >= 0 and int(drcs[-1]) == 0 and all(v == 0 for v in checks.values()),
+        "routed_rc_extracted": True,
         "physical_signoff": False,
     }
 
@@ -114,8 +123,8 @@ def evaluate(path):
         "full_electrical_signoff": False,
         "integrated_gpu_throughput_measured": False,
         "unverified": [
-            "postroute maximum-capacitance and maximum-transition report",
-            "independent routed parasitic audit and input-driver equivalence",
+            "multi-corner PVT, OCV, coupling and signoff-grade extracted RC verification",
+            "independent routed parasitic audit and tile input-driver equivalence",
             "tile-level register-file SRAM, bandwidth, clock and workload model",
             "silicon power and process-corner variation",
         ],
