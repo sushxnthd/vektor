@@ -1,0 +1,35 @@
+name: v317 tile consequence falsification
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - '.github/workflows/v317-tile-consequence.yml'
+      - 'research/v317/rtl/tile_consequence.py'
+      - 'research/v317/rtl/test_tile_consequence.py'
+      - 'research/v317/FROZEN_TILE_CONSEQUENCE_BOUNDARY_20261101.md'
+  workflow_dispatch:
+jobs:
+  conditional-tile-boundary:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify frozen regimes and 64 unseen synthetic workload conditions
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/tile_consequence
+          python3 -m unittest research.v317.rtl.test_tile_consequence -v 2>&1 | tee build/v317/tile_consequence/tests.log
+          python3 -m research.v317.rtl.tile_consequence --json | tee build/v317/tile_consequence/frozen_results.json
+      - name: Preserve source provenance
+        if: always()
+        run: |
+          mkdir -p build/v317/tile_consequence
+          git rev-parse HEAD > build/v317/tile_consequence/source_sha.txt
+          git status --short > build/v317/tile_consequence/source_status.txt
+      - name: Upload independently reproducible results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-conditional-tile-consequence
+          path: build/v317/tile_consequence/
