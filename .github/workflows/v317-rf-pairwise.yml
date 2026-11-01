@@ -28,6 +28,10 @@ jobs:
             research/v317/rtl/rf_bank_pairwise_credit.sv \
             research/v317/rtl/tb_rf_bank_pairwise_credit.sv
           vvp build/v317/rf_pairwise/tb | tee build/v317/rf_pairwise/rtl.log
+      - name: Full-width combinational equivalence proof (all 16-bank inputs)
+        run: |
+          set -euo pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/rf_bank_arbiter.sv research/v317/rtl/rf_bank_pairwise_credit.sv; proc; opt; equiv_make vektor_rf_bank_arbiter vektor_v317_rf_pairwise v317_pairwise_equiv; hierarchy -top v317_pairwise_equiv; equiv_simple; equiv_status -assert' 2>&1 | tee build/v317/rf_pairwise/formal_equiv.log
       - name: Four-way matched generic Yosys synthesis
         run: |
           set -euo pipefail
