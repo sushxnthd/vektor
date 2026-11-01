@@ -12,6 +12,11 @@ set top $::env(STA_TOP)
 set output_load $::env(STA_LOAD)
 read_liberty $liberty
 read_verilog $netlist
+# Optional explicit Nangate45 output buffer wrapper. Existing unwrapped flows
+# remain unchanged when STA_WRAPPER is absent or empty.
+if {[info exists ::env(STA_WRAPPER)] && $::env(STA_WRAPPER) ne ""} {
+    read_verilog $::env(STA_WRAPPER)
+}
 link_design $top
 set_input_transition 0.02 [all_inputs]
 set_load $output_load [all_outputs]
