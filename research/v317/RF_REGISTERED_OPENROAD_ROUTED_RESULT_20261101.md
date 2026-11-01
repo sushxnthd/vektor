@@ -5,7 +5,11 @@
 
 **Workflow overall FAILED**, correctly preserving the `source_65` high-density floorplan failure. **Three of four physical implementations completed** the entire ORFS flow through detailed routing, extracted parasitics, reports and final GDS. RTL simulation passed 4,998 post-fill registered grant comparisons. Earlier failed attempts from missing ORFS output directories and conflicting floorplan modes remain visible in GitHub Actions; they are tooling failures, not scientific negative results.
 
-## Independent reproduction status\n\nThe independent raw ZIP audit [#41336377514](https://github.com/sushxnthd/vektor/actions/runs/41336377514) **PASSED** on the committed checker. It reproduced the 55.6991% area reduction, 63.7348% wire-length reduction, 2.6897x rounded isolated minimum-period ratio, three legal routed configurations and one preserved source high-density failure. It does not establish multi-corner signoff or GPU throughput.\n\n## Frozen equal-footprint results
+## Independent reproduction status
+
+The independent raw ZIP audit [#41336377514](https://github.com/sushxnthd/vektor/actions/runs/41336377514) **PASSED** on the committed checker. It reproduced the 55.6991% area reduction, 63.7348% wire-length reduction, 2.6897x rounded isolated minimum-period ratio, three legal routed configurations and one preserved source high-density failure. It does not establish multi-corner signoff or GPU throughput.
+
+## Frozen equal-footprint results
 
 The two 35-labeled variants have the **same** 60 x 60 um die, 52 x 52 um core, 2.0 ns clock target, input/output register boundary, input drive BUF_X2 and 10-fF output loads. The 65-labeled variants have the **same** 44 x 44 um die and 36 x 36 um core. Labels are nominal stress settings, **not matched actual utilization**.
 
