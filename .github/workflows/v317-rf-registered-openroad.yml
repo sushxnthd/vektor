@@ -38,6 +38,7 @@ jobs:
           git rev-parse HEAD > build/v317/orfs_route/source_sha.txt
       - name: Route both equivalent designs at two frozen utilization levels
         run: |
+          set +e
           set -uo pipefail
           image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
           failed=0
@@ -50,13 +51,15 @@ jobs:
             for variant in source pairwise; do
               name="vektor_v317_rf_physical_top_${variant}"
               label="${variant}_${util}"
-              mkdir -p "build/v317/orfs_route/${label}"
+              for dir in results logs reports objects; do
+                mkdir -p "build/v317/orfs_route/${label}/${dir}/nangate45/${name}/base"
+              done
               echo "ROUTE START ${label}" | tee "build/v317/orfs_route/${label}/status.txt"
               docker run --rm \
                 -v "$PWD:/work/vektor" \
                 -e VEKTOR_ROOT=/work/vektor \
                 -w /OpenROAD-flow-scripts/flow \
-                "$image" bash -lc "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_registered_route.mk DESIGN_NAME=${name} DIE_AREA='${die}' CORE_AREA='${core}' FLOW_VARIANT=base WORK_HOME=/work/vektor/build/v317/orfs_route/${label} -j2" \
+                "$image" bash -lc "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_registered_route.mk DESIGN_NAME=${name} DIE_AREA='${die}' CORE_AREA='${core}' FLOW_VARIANT=base WORK_HOME=/work/vektor/build/v317/orfs_route/${label} -j1" \
                 > "build/v317/orfs_route/${label}/make.log" 2>&1
               rc=$?
               echo "exit_code=${rc}" | tee -a "build/v317/orfs_route/${label}/status.txt"
