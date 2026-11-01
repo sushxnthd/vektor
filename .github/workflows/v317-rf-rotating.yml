@@ -60,9 +60,7 @@ jobs:
       - name: Independent full-stream cross-check of all unseen results
         run: |
           set -euo pipefail
-          python -m research.v317.rf_rotating_independent_audit \\
-            build/v317/rf_rotating/unseen_transfer.json \\
-            | tee build/v317/rf_rotating/independent_audit.json
+          python -m research.v317.rf_rotating_independent_audit build/v317/rf_rotating/unseen_transfer.json | tee build/v317/rf_rotating/independent_audit.json
       - name: Source pin
         if: always()
         run: |
