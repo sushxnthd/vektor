@@ -92,6 +92,10 @@ def bits(expr, width_map):
         return [None] * size
     if re.fullmatch(r"1'[bB][01xXzZ]", expr):
         return [None]
+    slice_match = re.fullmatch("(" + IDENT + r")\[(\d+):(\d+)\]", expr)
+    if slice_match:
+        name, hi, lo = slice_match.groups()
+        return [f"{name}[{i}]" for i in range(min(int(hi), int(lo)), max(int(hi), int(lo)) + 1)]
     if re.fullmatch(IDENT + r"\[\d+\]", expr):
         return [expr.replace(" ", "")]
     if re.fullmatch(IDENT, expr):
