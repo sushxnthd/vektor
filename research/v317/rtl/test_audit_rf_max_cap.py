@@ -76,7 +76,7 @@ class TestMaxCap(unittest.TestCase):
 
     def test_missing_driver_fails_closed(self):
         lib = liberty_pins(LIB)
-        with self.assertRaisesRegex(ValueError, "no mapped driver"):
+        with self.assertRaisesRegex(ValueError, "no mapped or primary-input driver"):
             audit_core(NET.replace("assign grant = { _n_ };", "assign grant = { undriven };"),
                        lib, "BUF_X1", 24, 1)
 
