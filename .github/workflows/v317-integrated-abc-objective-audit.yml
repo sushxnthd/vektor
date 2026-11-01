@@ -1,0 +1,61 @@
+name: V317 matched ABC objective independent evidence audit
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - '.github/workflows/v317-integrated-abc-objective-audit.yml'
+      - 'research/v317/rtl/audit_integrated_abc_objective.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit-immutable-route-artifacts:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download both immutable physical archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/abc_objective_audit
+          for item in '13101813367 area' '13103687465 speed'; do
+            read -r id name <<< "$item"
+            curl --fail --show-error --silent --location --retry 3 \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H 'Accept: application/vnd.github+json' \
+              "https://api.github.com/repos/sushxnthd/vektor/actions/artifacts/${id}/zip" \
+              --output "build/v317/abc_objective_audit/${name}.zip"
+            unzip -tqq "build/v317/abc_objective_audit/${name}.zip"
+          done
+      - name: Independent falsification from raw mapped and routed reports
+        run: |
+          set -euo pipefail
+          python3 research/v317/rtl/audit_integrated_abc_objective.py \
+            build/v317/abc_objective_audit/area.zip \
+            build/v317/abc_objective_audit/speed.zip \
+            | tee build/v317/abc_objective_audit/audit.json
+          python3 - <<'PY'
+          import json
+          p = json.load(open('build/v317/abc_objective_audit/audit.json'))
+          f = p['frozen_prediction_adjudication']
+          assert f['P1_source_timing_improves'] is False
+          assert f['P2_pairwise_area_smaller_under_speed'] is True
+          assert f['P3_speed_pairwise_closes_2ns'] is False
+          assert f['P3_speed_source_closes_2ns'] is False
+          s = p['speed_objective']
+          assert s['source']['hold_violations'] == 22
+          assert s['source']['max_cap_violations'] == 2
+          assert s['pairwise']['setup_violations'] == 12
+          print('PASS: preregistered negative results reproduced without suppressing violations')
+          PY
+      - name: Preserve independent audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-integrated-abc-objective-independent-audit
+          path: build/v317/abc_objective_audit/audit.json
+          retention-days: 30
+          if-no-files-found: warn
