@@ -1,7 +1,7 @@
 """Frozen and independent port-oracle regression for Vektor RF arbiter."""
 import unittest
 
-from .rf_arbiter_port_audit import (
+from research.v317.rf_arbiter_port_audit import (
     audit_case, bank_demands, legal, optimal_grant, rtl_priority_model,
     safe_priority_model, sweep,
 )
