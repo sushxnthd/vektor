@@ -29,3 +29,7 @@ if {[string match "*rotating" $top]} {
 puts "STA_PATH_BEGIN"
 report_checks -to [all_outputs] -path_delay max
 puts "STA_PATH_END"
+
+puts "STA_ELECTRICAL_BEGIN"
+report_check_types -max_capacitance -max_slew -max_fanout -violators
+puts "STA_ELECTRICAL_END"
