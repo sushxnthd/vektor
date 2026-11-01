@@ -56,7 +56,7 @@ jobs:
                 -v "$PWD:/work/vektor" \
                 -e VEKTOR_ROOT=/work/vektor \
                 -w /OpenROAD-flow-scripts/flow \
-                "$image" bash -lc "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_registered_route.mk DESIGN_NAME=${name} CORE_UTILIZATION=${util} DIE_AREA='${die}' CORE_AREA='${core}' FLOW_VARIANT=base WORK_HOME=/work/vektor/build/v317/orfs_route/${label} -j2" \
+                "$image" bash -lc "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_registered_route.mk DESIGN_NAME=${name} DIE_AREA='${die}' CORE_AREA='${core}' FLOW_VARIANT=base WORK_HOME=/work/vektor/build/v317/orfs_route/${label} -j2" \
                 > "build/v317/orfs_route/${label}/make.log" 2>&1
               rc=$?
               echo "exit_code=${rc}" | tee -a "build/v317/orfs_route/${label}/status.txt"
