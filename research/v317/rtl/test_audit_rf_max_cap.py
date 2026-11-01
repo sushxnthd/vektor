@@ -58,6 +58,17 @@ class TestMaxCap(unittest.TestCase):
         self.assertFalse(result["all_max_cap_legal"])
         self.assertEqual(len(result["internal_violations"]), 1)
 
+    def test_direct_primary_input_grant_is_flagged_unverified(self):
+        lib = liberty_pins(LIB)
+        direct = NET.replace("assign grant = { _n_ };", "assign grant = { req };")
+        result = audit_core(direct, lib, "BUF_X1", 24, 1)
+        self.assertEqual(result["uncharacterized_primary_input_drivers"][0]["input_alias"], "req")
+        self.assertFalse(result["full_electrical_signoff"])
+
+    def test_vector_slice_alias(self):
+        from research.v317.rtl.audit_rf_max_cap import bits
+        self.assertEqual(bits("a[15:12]", {}), ["a[12]", "a[13]", "a[14]", "a[15]"])
+
     def test_missing_cell_fails_closed(self):
         lib = liberty_pins(LIB)
         with self.assertRaisesRegex(ValueError, "unknown mapped cell"):
