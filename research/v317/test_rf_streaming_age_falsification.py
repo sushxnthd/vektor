@@ -8,6 +8,9 @@ from research.v317.rf_streaming_age_falsification import (
 from research.v317.rf_streaming_strong_controls import (
     oldest_greedy, RotatingPriority,
 )
+from research.v317.rf_arbiter_port_audit import (
+    rtl_priority_model, optimal_grant,
+)
 
 
 class TestV317StreamingAge(unittest.TestCase):
@@ -27,6 +30,8 @@ class TestV317StreamingAge(unittest.TestCase):
                 self.assertTrue(legal(p, pairs))
                 self.assertTrue(legal(e, pairs))
                 self.assertLessEqual(p.bit_count(), e.bit_count())
+                self.assertEqual(p, rtl_priority_model(valid, pairs))
+                self.assertEqual(e, optimal_grant(valid, pairs))
 
     def test_long_two_bank_closed_form(self):
         self.assertEqual(
