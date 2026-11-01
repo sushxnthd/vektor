@@ -17,7 +17,7 @@ set_input_transition 0.02 [all_inputs]
 set_load $output_load [all_outputs]
 if {[string match "*rotating" $top]} {
     create_clock -name clk -period 10.0 [get_ports clk]
-    set data_inputs [remove_from_collection [all_inputs] [get_ports {clk reset}]]
+    set data_inputs [get_ports {request_valid src0_bank_flat src1_bank_flat}]
     set_input_delay 0.0 -clock clk $data_inputs
     set_output_delay 0.0 -clock clk [all_outputs]
     set_false_path -from [get_ports reset]
@@ -27,8 +27,5 @@ if {[string match "*rotating" $top]} {
     set_output_delay 0.0 -clock virtual [all_outputs]
 }
 puts "STA_PATH_BEGIN"
-report_checks -to [all_outputs] -path_delay max -group_path_count 1
+report_checks -to [all_outputs] -path_delay max
 puts "STA_PATH_END"
-puts "STA_CONTEXT_BEGIN"
-report_design_area
-puts "STA_CONTEXT_END"
