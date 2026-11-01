@@ -1,0 +1,18 @@
+# V317 frozen matched output-buffer electrical repair gate (2026-11-01)
+
+## Research question
+Can the grant-equivalent pairwise fixed-priority RF arbiter retain a mapped-area and **electrically legal** cell-delay advantage after both it and the source fixed-priority arbiter receive the *same* output-drive repair? This is an implementation-level experiment, not a new scheduler or GPU-throughput claim. Existing unbuffered source/pairwise mapped areas: 798.798/259.616 um^2. The 24-fF pairwise failure and 30-fF dual failure are opened calibration observations.
+
+## Locked design and controls
+Keep the exact original 4-slot/16-bank RTL, Yosys Nangate45 mapping recipe, and pinned Nangate45 Liberty (OpenROAD-flow-scripts commit 202c7fccbce32e86db899c54b0a0f0484f869cc3, git blob 90e4afb274cfc6514c587c434c77903d554117d1). Reuse the existing run_rf_sta.tcl, with 0.02-ns input slew, virtual 10-ns clock, 0 input/output delays, and equal fF output loads. Synthesize both source designs **once** with the same Yosys flow; preserve those mapped netlists unchanged. For repair, wrap *each* mapped design in an identical, four-output Nangate45 BUF_Xn stage (n=1,2,4,8,16), and compare the original unbuffered variant. This is an isolated matched output-drive repair, not an unconstrained remapping or place/route experiment. The added buffers must be counted for area. Do not selectively choose only the pairwise winner's drive.
+
+## Frozen hypotheses and prospective regime
+- **Predicted repaired-win:** At **24 fF**, at least one of BUF_X2/X4/X8/X16 yields a pairwise design that passes *every reported max-transition check*, and the identically buffered source also passes. At that matched drive, pairwise worst grant-output cell arrival is lower than source. Require a strictly positive area margin after including 4 buffers per variant.
+- **Predicted no-win / control:** At **10 fF**, BUF_X16 has strictly greater pairwise grant-output delay than the unbuffered pairwise implementation. A larger output driver must not be assumed universally faster. If this does not hold, record falsification.
+- **Stress transfer (not used to tune choices):** Report all combinations of 10,24,30,60,100 fF and BUF_X1/X2/X4/X8/X16 plus unbuffered; do not claim holdout for loads already explored unbuffered. The 24-fF repaired comparison is a new implementation, not a new workload.
+
+## Gate, interpretation and kill conditions
+Require independently parsed STA startpoint/endpoint/arrival and all max-transition rows, with no missing/error logs; check both designs at the *same* drive/load. Record the minimum drive strength that meets max-transition for each design, rather than only cherry-picking fastest buffers. Report legal delay only where both pass; if no common legal point at 24 fF, reject the predicted repair win. If repaired pairwise area >= repaired source, reject the area claim. Treat any max-capacitance result as **unverified** unless a real report is generated. Do not treat timing without extracted wire RC, setup closure, placement, or a measured tile critical path as physical signoff. Same grants and RF ports imply 1.000x intrinsic completed-service gain at matched clock. Retain rotating-priority/oldest-first as stronger fairness controls, not as claimed new mechanisms. Never claim RTX 5090 equivalence.
+
+## Reproducibility and preservation
+Source-pinned GitHub Actions must preserve Yosys logs, raw mapped netlists, wrapper RTL, STA logs, JSON audit, pinned Liberty hash, and source SHA even on failure. Keep this same V317 research branch and draft PR #34. Kernellum PR #119 remains untouched. This frozen protocol is committed **before** the wrapper sweep.
