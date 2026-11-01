@@ -7,6 +7,7 @@ on:
       - 'research/v317/rtl/rf_bank_sb_scaling.sv'
       - 'research/v317/rtl/tb_rf_bank_sb_scaling.sv'
       - 'research/v317/rtl/parse_rf_sb_scaling.py'
+      - 'research/v317/rtl/check_rf_sb_scaling.py'
       - '.github/workflows/v317-rf-sb-scaling.yml'
   workflow_dispatch:
 jobs:
@@ -19,6 +20,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y iverilog yosys
+      - name: Independent software semantics and prospective holdout
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/rf_sb
+          python -m research.v317.rtl.check_rf_sb_scaling | tee build/v317/rf_sb/semantic_oracle.json
       - name: Independent functional oracle for all nine configurations
         run: |
           set -euo pipefail
