@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 
 LABELS = ('source_fixed', 'pairwise_fixed', 'source_rotating', 'pairwise_rotating')
-LOADS = ('2', '20', '100')  # Nangate45 capacitive_load_unit (1, ff)
+LOADS = ('2', '20', '40', '60', '80', '100')  # Nangate45 capacitive_load_unit (1, ff)
 
 
 def parse_report(report):
@@ -45,7 +45,26 @@ def audit(directory):
             'pairwise_rotating_vs_source_rotating_delay_ratio': round(row['pairwise_rotating']['arrival_ns'] / row['source_rotating']['arrival_ns'], 6),
             'pairwise_rotating_vs_pairwise_fixed_delay_ratio': round(row['pairwise_rotating']['arrival_ns'] / row['pairwise_fixed']['arrival_ns'], 6),
         }
+    holdouts = {}
+    for load in ('40', '60', '80'):
+        observed = out[load]['pairwise_fixed']['arrival_ns'] - out[load]['source_fixed']['arrival_ns']
+        predicted = -0.58 + (float(load) - 20.0) * (1.19 / 80.0)
+        holdouts[load] = {
+            'predicted_pairwise_minus_source_ns': round(predicted, 6),
+            'observed_pairwise_minus_source_ns': round(observed, 6),
+            'prediction_residual_ns': round(observed - predicted, 6),
+            'frozen_qualitative_prediction_survives':
+                (observed < 0 if load == '40' else
+                 observed > 0 if load == '80' else
+                 abs(observed) <= 0.20),
+        }
     return {
+        'frozen_holdout_predictions': holdouts,
+        'frozen_qualitative_boundary_survives': all(
+            x['frozen_qualitative_prediction_survives'] for x in holdouts.values()),
+        'max_abs_holdout_interpolation_error_ns': round(max(
+            abs(x['prediction_residual_ns']) for x in holdouts.values()), 6),
+        'frozen_predicted_crossover_ff': round(20 + 80 * (0.58 / 1.19), 3),
         'evidence_tier': 'NANGATE45_PRE_ROUTE_CELL_TIMING_WITH_EXTERNAL_OUTPUT_CAP',
         'input_transition_ns': 0.02,
         'output_load_ff': list(LOADS),
