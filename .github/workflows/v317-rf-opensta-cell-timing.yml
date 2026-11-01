@@ -56,7 +56,7 @@ jobs:
                 source_rotating) top=vektor_v317_rf_rotating ;;
                 pairwise_rotating) top=vektor_v317_rf_pairwise_rotating ;;
               esac
-              sta -exit research/v317/rtl/run_rf_sta.tcl "$lib" "build/v317/rf_sta/$label.v" "$top" "$load" 2>&1 | tee "build/v317/rf_sta/${label}_${load}.log"
+              STA_LIBERTY="$lib" STA_NETLIST="build/v317/rf_sta/$label.v" STA_TOP="$top" STA_LOAD="$load" sta -exit research/v317/rtl/run_rf_sta.tcl 2>&1 | tee "build/v317/rf_sta/${label}_${load}.log"
             done
           done
       - name: Independent evidence checker
