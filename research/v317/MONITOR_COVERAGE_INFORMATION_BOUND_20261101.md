@@ -16,7 +16,19 @@ The new parameterized SystemVerilog wrapper adds a sticky coverage-fault bit to 
 
 ## Physical evidence tier and matched control
 
-The same hosted CI workflow is configured to synthesize both the existing stateful design and the coverage-wrapped version at 4x8, 8x16 and 32x32 using identical Yosys settings, with generic cell, flop, fanout and logic-depth comparisons. This report does not claim synthesis success until source-pinned hosted results are verified. Even if successful, Yosys generic synthesis does not establish routed timing, electrical safety, SRAM macro cost, power or GPU throughput. The independent coverage detector and its physical write-event network remain **unimplemented and uncosted**.
+**Hosted source-pinned result:** [V317 forwarding RTL workflow #41256988174](https://github.com/sushxnthd/vektor/actions/runs/41256988174) passed on code commit b05d4f4, including five independent Python tests, **24,583** Icarus checks comparing the optimized and naive wrappers, and three matched Yosys width points. The earlier naive wrapper also passed [workflow #41256822023](https://github.com/sushxnthd/vektor/actions/runs/41256822023). Both preserve a zero-on-reject output contract.
+
+A separately preregistered [single-mask factorization control](FROZEN_COVERAGE_SINGLE_MASK_CONTROL_20261101.md) tested whether a second full-width output mask, rather than fundamental coverage state, explained the naive cell increase:
+
+| Lanes x bits | Existing stateful cells | Naive double-mask cells | Optimized single-mask cells | Base / naive / optimized generic depth |
+|---|---:|---:|---:|---|
+| 4 x 8 | 214 | 251 | **219** | 11 / 13 / 12 |
+| 8 x 16 | 586 | 719 | **591** | 12 / 14 / 13 |
+| 32 x 32 | 3,645 | 4,674 | **3,650** | 13 / 15 / 14 |
+
+At 32x32, moving the guard inside the existing data mask eliminates **1,024** avoidable generic cells (one per data bit), leaving **five** extra generic cells and **one** extra flop (1,107 versus 1,106). The optimized path still adds one level to the generic logic-depth proxy. The result falsifies any claim that the naive 1,029-cell increase was an intrinsic cost of fail-closed coverage. It also demonstrates why implementation factorization and a same-function control are essential before interpreting PPA proxies.
+
+These are **unplaced Yosys generic** cells and graph depths, not silicon area, frequency, extracted RC, dynamic power or electrical signoff. The independent coverage detector, its physical write-event distribution, CDC handling, buffering and the actual GPU register-file interface remain **unimplemented and uncosted**.
 
 A reuse-aware baseline given the same coherent snapshot, write-event stream and coverage signal can make all the same safe forwarding decisions. Its incremental transaction disadvantage is exactly zero in this restricted model. This invalidates any proposed positive GPU throughput law for V317 forwarding; earlier synthetic 1.5x/2x results remain falsified by stronger controls.
 
