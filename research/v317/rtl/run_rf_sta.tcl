@@ -1,13 +1,15 @@
 # Pre-route Nangate45 cell-delay analysis, not extracted wire RC.
-# sta -exit run_rf_sta.tcl liberty mapped_verilog top output_load_pf
-if {[llength $argv] != 4} {
-    puts stderr "Usage: run_rf_sta.tcl liberty netlist top output_load_pf"
-    exit 2
+# STA_LIBERTY=... STA_NETLIST=... STA_TOP=... STA_LOAD=... sta -exit run_rf_sta.tcl
+foreach name {STA_LIBERTY STA_NETLIST STA_TOP STA_LOAD} {
+    if {![info exists ::env($name)]} {
+        puts stderr "Missing required environment variable $name"
+        exit 2
+    }
 }
-set liberty [lindex $argv 0]
-set netlist [lindex $argv 1]
-set top [lindex $argv 2]
-set output_load [lindex $argv 3]
+set liberty $::env(STA_LIBERTY)
+set netlist $::env(STA_NETLIST)
+set top $::env(STA_TOP)
+set output_load $::env(STA_LOAD)
 read_liberty $liberty
 read_verilog $netlist
 link_design $top
