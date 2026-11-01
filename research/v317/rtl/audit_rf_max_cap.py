@@ -73,7 +73,7 @@ def widths(netlist):
         indices = [None] if hi is None else list(range(min(int(hi), int(lo)), max(int(hi), int(lo)) + 1))
         for name in names.split(","):
             name = name.strip()
-            if re.fullmatch(IDENT, name):
+            if re.fullmatch(IDENT, name) or re.fullmatch(r"\\\S+", name):
                 out[name] = indices
     return out
 
@@ -96,6 +96,12 @@ def bits(expr, width_map):
     if slice_match:
         name, hi, lo = slice_match.groups()
         return [f"{name}[{i}]" for i in range(min(int(hi), int(lo)), max(int(hi), int(lo)) + 1)]
+    if expr in width_map:
+        idx = width_map[expr]
+        return [expr] if idx == [None] else [f"{expr} [{i}]" if expr.startswith("\\") else f"{expr}[{i}]" for i in idx]
+    escaped_bit = re.fullmatch(r"(\\\S+)\s+\[(\d+)\]", expr)
+    if escaped_bit:
+        return [f"{escaped_bit.group(1)} [{escaped_bit.group(2)}]"]
     if re.fullmatch(IDENT + r"\[\d+\]", expr):
         return [expr.replace(" ", "")]
     if re.fullmatch(IDENT, expr):
