@@ -18,3 +18,25 @@ The frozen hypotheses are: pairwise has fewer generic cells at S=4,B=16; at fixe
 
 ## Research decision
 Retain pairwise bank credit solely as a lower-cost, source-equivalent implementation baseline pending the hosted sweep. V317 forwarding and exact-cardinality scheduling remain rejected. Neither standard-cell mapped timing, routed electrical checks, real register-bank workload traces, power, nor integrated tile area is established. Do not claim GPU IPC gain, novel scheduling, or RTX 5090 equivalence. Kernellum PR #119 was inspected read-only and not modified.
+
+
+## Hosted nine-point result (subsequent source-pinned update)
+[GitHub Actions run #41288324467](https://github.com/sushxnthd/vektor/actions/runs/41288324467) at `0d3933bfaee8e511d3b6282c8afd3ab9fca08c93` **passed** all steps: independent software checker, nine RTL oracle configurations, nine matched bank-mask/pairwise generic synthesis pairs, cost parser and evidence upload ([artifact #13076271732](https://github.com/sushxnthd/vektor/actions/runs/41288324467/artifacts/13076271732)). The Verilog oracle ran **19,474** directed, exhaustive and seeded cases across nine configurations (9*2,050 + 1,024). All passed.
+
+| Slots S | Banks B | Bank-mask cells | Pairwise cells | Pairwise/mask | Mask levels | Pairwise levels |
+|---:|---:|---:|---:|---:|---:|---:|
+| 2 | 4 | 47 | 24 | 0.5106 | 9 | 7 |
+| 2 | 16 | 260 | 44 | 0.1692 | 16 | 8 |
+| 2 | 64 | 957 | 64 | 0.0669 | 21 | 9 |
+| 4 | 4 | 297 | 158 | 0.5320 | 47 | 15 |
+| 4 | 16 | 1,353 | 266 | 0.1966 | 71 | 16 |
+| 4 | 64 | 5,179 | 374 | 0.0722 | 92 | 17 |
+| 8 | 4 | 797 | 762 | 0.9561 | 123 | 31 |
+| 8 | 16 | 3,535 | 1,238 | 0.3502 | 179 | 32 |
+| 8 | 64 | 13,621 | 1,714 | 0.1258 | 232 | 33 |
+
+**Frozen prediction scoring:** P1 passed in hosted RTL simulation; P2 (S=4,B=16 pairwise fewer cells and monotonically improving relative ratio with B) passed; P3 (S=8,B=4 pairwise crossover to more cells) **falsified**: pairwise was 762 vs 797, a 4.39% saving. P4 identical service follows the proven algorithmic invariant and the sampled RTL oracle, not real GPU workload measurements. P5 physical signoff remains unmet.
+
+**Important scope:** This is a newly parameterized bank-mask RTL comparator, not exactly the old fixed-priority RTL (at S=4,B=16 the old source measured 1,321 generic cells, this bank-mask comparator 1,353). Both new implementations use identical inputs, slots and bank ports, but no mapped area/clock claim follows. The new pairwise RTL has not yet received a complete all-input SAT equivalence proof at every parameter point; the existing fixed S=4,B=16 pairwise module has a separate earlier full proof.
+
+**Observed scaling hypothesis for a prospective holdout:** At S={2,4,8}, pairwise cells increase linearly with W=log2(B): per added bank-index bit, +10, +54, +238 cells respectively. Those three slopes fit `4*S*S - 2*S - 2`; the W=2 intercepts fit `14*S*S - 17*S + 2`. The compact **descriptive** synthesis law is therefore `C_pair(S,W)=(14*S*S-17*S+2)+(4*S*S-2*S-2)*(W-2)`. It is not yet a validated predictive law for unseen S or W and is not a physical area model. Prospective holdouts must be frozen and tested separately.
