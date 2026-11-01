@@ -42,6 +42,11 @@ jobs:
           image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
           failed=0
           for util in 35 65; do
+            if [ "$util" -eq 35 ]; then
+              die="0 0 60 60"; core="4 4 56 56"
+            else
+              die="0 0 44 44"; core="4 4 40 40"
+            fi
             for variant in source pairwise; do
               name="vektor_v317_rf_physical_top_${variant}"
               label="${variant}_${util}"
@@ -51,7 +56,7 @@ jobs:
                 -v "$PWD:/work/vektor" \
                 -e VEKTOR_ROOT=/work/vektor \
                 -w /OpenROAD-flow-scripts/flow \
-                "$image" bash -lc "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_registered_route.mk DESIGN_NAME=${name} CORE_UTILIZATION=${util} FLOW_VARIANT=base WORK_HOME=/work/vektor/build/v317/orfs_route/${label} -j2" \
+                "$image" bash -lc "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_registered_route.mk DESIGN_NAME=${name} CORE_UTILIZATION=${util} DIE_AREA='${die}' CORE_AREA='${core}' FLOW_VARIANT=base WORK_HOME=/work/vektor/build/v317/orfs_route/${label} -j2" \
                 > "build/v317/orfs_route/${label}/make.log" 2>&1
               rc=$?
               echo "exit_code=${rc}" | tee -a "build/v317/orfs_route/${label}/status.txt"
