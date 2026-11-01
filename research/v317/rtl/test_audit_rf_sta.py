@@ -13,7 +13,7 @@ class TestStaAudit(unittest.TestCase):
         return p
 
     def test_valid(self):
-        p = self.write('STA_PATH_BEGIN\nStartpoint: a\nEndpoint: b\n  0.314 data arrival time\nSTA_PATH_END\n')
+        p = self.write('STA_PATH_BEGIN\nStartpoint: a\nEndpoint: b\n  0.314 data arrival time\n -0.314 data arrival time\nSTA_PATH_END\n')
         self.assertEqual(parse_report(p)['arrival_ns'], .314)
 
     def test_missing_path(self):
