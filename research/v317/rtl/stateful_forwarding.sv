@@ -8,10 +8,13 @@ module vektor_v317_stateful_forwarding #(
     parameter integer REG_BITS = 4,
     parameter integer BANK_BITS = 2,
     parameter integer LANES = 4,
-    parameter integer DATA_BITS = 8
+    parameter integer DATA_BITS = 8,
+    parameter integer COVERAGE_GUARD = 0
 ) (
     input wire clk,
     input wire rst_n,
+    input wire coverage_ok,
+    input wire coverage_fault,
     input wire capture_en,
     input wire [WARP_BITS-1:0] capture_warp,
     input wire [REG_BITS-1:0] capture_reg,
@@ -89,7 +92,8 @@ module vektor_v317_stateful_forwarding #(
     wire live_write_hazard = write_hits_old
         && (|(requested_lanes & write_lanes));
     assign forward_grant = rst_n && !capture_en
-        && raw_grant && !live_write_hazard;
+        && raw_grant && !live_write_hazard
+        && (!COVERAGE_GUARD || (coverage_ok && !coverage_fault));
     assign forwarded_data = forward_grant
         ? raw_data : {(LANES*DATA_BITS){1'b0}};
 endmodule
