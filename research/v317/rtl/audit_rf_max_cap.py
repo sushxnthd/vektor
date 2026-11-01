@@ -50,7 +50,10 @@ def liberty_pins(text):
             pb = block(body, pm.end())
             dm = DIR.search(pb)
             if not dm:
-                raise ValueError(f"{cm.group(1)}/{pm.group(1)} missing direction")
+                # Liberty also describes internal state pins (e.g. IQ) with no
+                # physical input/output direction. They cannot be cell ports.
+                # If a mapped netlist references one, strict pin-set validation fails.
+                continue
             pins[pm.group(1)] = {
                 "direction": dm.group(1),
                 "cap_ff": attr(pb, "capacitance"),
