@@ -181,12 +181,23 @@ def audit_core(netlist, lib, drive, external_ff, grant_width=4):
     if buf_in is None or buf_max is None:
         raise ValueError("buffer Liberty pin capacitance/max_capacitance missing")
     w, aliases, sinks, drivers, count = parse_netlist(netlist, lib)
+    primary_inputs = set()
+    for m in re.finditer(r"(?m)^\s*input\s+(?:wire\s+)?(?:\[\d+\s*:\s*\d+\]\s+)?([^;]+);", netlist):
+        for name in m.group(1).split(","):
+            for net in bits(name.strip(), w):
+                if net is not None:
+                    primary_inputs.add(aliases.root(net))
+    uncharacterized_input_drivers = []
     for bit in range(grant_width):
         grant = aliases.root(f"grant[{bit}]")
         if grant not in drivers:
-            assignments = [m.group(0) for m in re.finditer(r"\bassign\s+[^;]+;", netlist)
-                           if "grant" in m.group(0)][:8]
-            raise ValueError(f"no mapped driver for grant[{bit}] (alias={grant}, drivers={len(drivers)}, assignments={assignments})")
+            if grant in primary_inputs:
+                uncharacterized_input_drivers.append({"grant_bit": bit, "input_alias": grant,
+                                                      "added_buffer_input_load_ff": buf_in})
+            else:
+                assignments = [m.group(0) for m in re.finditer(r"\bassign\s+[^;]+;", netlist)
+                               if "grant" in m.group(0)][:8]
+                raise ValueError(f"no mapped or primary-input driver for grant[{bit}] (alias={grant}, assignments={assignments})")
         sinks[grant] += buf_in
     rows = []
     for net, ds in drivers.items():
@@ -204,9 +215,11 @@ def audit_core(netlist, lib, drive, external_ff, grant_width=4):
                 "legal": external_ff <= buf_max + 1e-9}
     return {"mapped_instances": count, "mapped_output_nets": len(rows),
             "internal_violations": [r for r in rows if not r["legal"]],
+            "uncharacterized_primary_input_drivers": uncharacterized_input_drivers,
             "worst_internal": rows[:10], "output_buffer": external,
             "all_max_cap_legal": external["legal"] and all(r["legal"] for r in rows),
-            "evidence_tier": "pre-route cell-pin capacitance only, no wire parasitics"}
+            "full_electrical_signoff": False,
+            "evidence_tier": "pre-route characterized cell-pin capacitance only; primary input drive and wire RC unverified"}
 
 
 def main():
