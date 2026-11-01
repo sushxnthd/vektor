@@ -2,7 +2,7 @@
 import tempfile
 import unittest
 from pathlib import Path
-from research.v317.rtl.audit_rf_sta import parse_report
+from research.v317.rtl.audit_rf_sta import parse_report, parse_electrical
 
 class TestStaAudit(unittest.TestCase):
     def write(self, text):
@@ -31,6 +31,18 @@ class TestStaAudit(unittest.TestCase):
     def test_zero_delay(self):
         p = self.write('STA_PATH_BEGIN\nStartpoint: a\nEndpoint: b\n  0.0 data arrival time\nSTA_PATH_END\n')
         with self.assertRaises(AssertionError): parse_report(p)
+
+    def test_electrical_violation(self):
+        p = self.write('STA_ELECTRICAL_BEGIN\\nmax_transition\\nPin Limit Trans Slack\\n----------------\\ncell/ZN 0.20 0.75 -0.55 (VIOLATED)\\nSTA_ELECTRICAL_END\\n')
+        self.assertTrue(parse_electrical(p)['max_transition_violated'])
+
+    def test_electrical_pass(self):
+        p = self.write('STA_ELECTRICAL_BEGIN\\nmax_transition\\nPin Limit Trans Slack\\n----------------\\ncell/ZN 0.20 0.10 0.10 (MET)\\nSTA_ELECTRICAL_END\\n')
+        self.assertFalse(parse_electrical(p)['max_transition_violated'])
+
+    def test_electrical_missing(self):
+        p = self.write('STA_PATH_BEGIN\\nStartpoint: a\\nEndpoint: b\\nSTA_PATH_END\\n')
+        with self.assertRaises(AssertionError): parse_electrical(p)
 
 if __name__ == '__main__':
     unittest.main()
