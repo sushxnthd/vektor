@@ -22,7 +22,10 @@ library (synthetic) {
 }
 """
 NET = """
-module example(input req, input req2, output [0:0] grant);
+module example(req, req2, grant);
+  input req;
+  input req2;
+  output [0:0] grant;
   wire _n_;
   NAND2_X1 _0_ (
     .A(req),
