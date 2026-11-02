@@ -5,6 +5,7 @@ on:
     paths:
       - 'research/v317/rtl/bank_service_oracle.py'
       - 'research/v317/rtl/audit_bank_service_oracle.py'
+      - 'research/v317/rtl/exact_uniform_b4.py'
       - 'research/v317/FROZEN_FOUR_SLOT_BANK_SERVICE_HEADROOM_20261102.md'
       - '.github/workflows/v317-bank-service-oracle.yml'
   workflow_dispatch:
@@ -18,6 +19,8 @@ jobs:
         run: python3 research/v317/rtl/bank_service_oracle.py > bank_service_oracle_results.json
       - name: Independent recursive audit
         run: python3 research/v317/rtl/audit_bank_service_oracle.py bank_service_oracle_results.json > bank_service_oracle_audit.json
+      - name: Post-freeze exhaustive four-bank independent distribution check
+        run: python3 research/v317/rtl/exact_uniform_b4.py > bank_service_exact_b4.json
       - name: Assert frozen uniform16 negative gate and hot-bank contrast
         run: |
           python3 - <<'PY'
@@ -35,3 +38,4 @@ jobs:
           path: |
             bank_service_oracle_results.json
             bank_service_oracle_audit.json
+            bank_service_exact_b4.json
