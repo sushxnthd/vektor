@@ -1,0 +1,37 @@
+name: V317 bank-service oracle negative-gate reproduction
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - 'research/v317/rtl/bank_service_oracle.py'
+      - 'research/v317/rtl/audit_bank_service_oracle.py'
+      - 'research/v317/FROZEN_FOUR_SLOT_BANK_SERVICE_HEADROOM_20261102.md'
+      - '.github/workflows/v317-bank-service-oracle.yml'
+  workflow_dispatch:
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run frozen evaluator
+        run: python3 research/v317/rtl/bank_service_oracle.py > bank_service_oracle_results.json
+      - name: Independent recursive audit
+        run: python3 research/v317/rtl/audit_bank_service_oracle.py bank_service_oracle_results.json > bank_service_oracle_audit.json
+      - name: Assert frozen uniform16 negative gate and hot-bank contrast
+        run: |
+          python3 - <<'PY'
+          import json
+          x=json.load(open('bank_service_oracle_results.json'))
+          assert x['regimes']['uniform16']['oracle_over_greedy'] < 1.02
+          assert x['regimes']['hot65_16']['oracle_over_greedy'] > 1.02
+          assert x['frozen']['win']['gain'] == 1.5
+          assert x['frozen']['cap2']['gain'] == 1.0
+          print('Frozen decisions reproduced; no hardware or GPU IPC claims')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v317-bank-service-oracle
+          path: |
+            bank_service_oracle_results.json
+            bank_service_oracle_audit.json
