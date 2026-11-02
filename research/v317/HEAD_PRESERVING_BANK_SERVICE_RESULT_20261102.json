@@ -1,0 +1,103 @@
+{
+  "batches_per_seed": 10000,
+  "controls": {
+    "head_blocker": {
+      "greedy": 2,
+      "head_preserving": 2,
+      "unrestricted": 3
+    },
+    "disjoint": {
+      "greedy": 4,
+      "head_preserving": 4,
+      "unrestricted": 4
+    }
+  },
+  "evidence_tier": "synthetic age-head-preserving combinational oracle, not starvation-free RTL or GPU IPC",
+  "exhaustive": {
+    "B2": {
+      "batches": 256,
+      "greedy_grants": 442,
+      "head_preserving_grants": 442,
+      "unrestricted_grants": 494,
+      "head_gain_probability": 0,
+      "unrestricted_head_bypass_probability": 0.203125,
+      "head_over_greedy": 1,
+      "unrestricted_over_greedy": 1.1176470588235294,
+      "exact_head_gain_identity": 1
+    },
+    "B4": {
+      "batches": 65536,
+      "greedy_grants": 171076,
+      "head_preserving_grants": 173572,
+      "unrestricted_grants": 178972,
+      "head_gain_probability": 0.0380859375,
+      "unrestricted_head_bypass_probability": 0.0823974609375,
+      "head_over_greedy": 1.0145900067806122,
+      "unrestricted_over_greedy": 1.0461549252963596,
+      "exact_head_gain_identity": 1.0145900067806122
+    }
+  },
+  "protocol": "FROZEN_HEAD_PRESERVING_BANK_SERVICE_20261102.md",
+  "seeds": [
+    4127,
+    6151,
+    8111
+  ],
+  "regimes": {
+    "uniform16": {
+      "batches": 30000,
+      "greedy_grants": 114787,
+      "head_preserving_grants": 114829,
+      "unrestricted_grants": 114915,
+      "head_over_greedy": 1.00036589509265,
+      "unrestricted_over_greedy": 1.00111510885379,
+      "head_gain_probability": 0.0014,
+      "unrestricted_head_bypass_probability": 0.0028666666666666667,
+      "exact_head_gain_identity": 1.00036589509265
+    },
+    "uniform4": {
+      "batches": 30000,
+      "greedy_grants": 78167,
+      "head_preserving_grants": 79310,
+      "unrestricted_grants": 81709,
+      "head_over_greedy": 1.014622538923075,
+      "unrestricted_over_greedy": 1.0453132396023899,
+      "head_gain_probability": 0.0381,
+      "unrestricted_head_bypass_probability": 0.07996666666666667,
+      "exact_head_gain_identity": 1.014622538923075
+    },
+    "hot65_16": {
+      "batches": 30000,
+      "greedy_grants": 57413,
+      "head_preserving_grants": 57706,
+      "unrestricted_grants": 63206,
+      "head_over_greedy": 1.0051033738003587,
+      "unrestricted_over_greedy": 1.100900492919722,
+      "head_gain_probability": 0.009766666666666667,
+      "unrestricted_head_bypass_probability": 0.18333333333333332,
+      "exact_head_gain_identity": 1.0051033738003587
+    },
+    "hot65_16_cap2": {
+      "batches": 30000,
+      "greedy_grants": 50262,
+      "head_preserving_grants": 50262,
+      "unrestricted_grants": 54887,
+      "head_over_greedy": 1,
+      "unrestricted_over_greedy": 1.0920178265886753,
+      "head_gain_probability": 0,
+      "unrestricted_head_bypass_probability": 0.15416666666666667,
+      "exact_head_gain_identity": 1
+    },
+    "samebank70_16": {
+      "batches": 30000,
+      "greedy_grants": 106093,
+      "head_preserving_grants": 106142,
+      "unrestricted_grants": 106311,
+      "head_over_greedy": 1.0004618589350853,
+      "unrestricted_over_greedy": 1.0020548009765018,
+      "head_gain_probability": 0.0016333333333333334,
+      "unrestricted_head_bypass_probability": 0.005633333333333333,
+      "exact_head_gain_identity": 1.0004618589350853
+    }
+  }
+}
