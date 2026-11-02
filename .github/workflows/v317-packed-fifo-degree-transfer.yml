@@ -1,0 +1,42 @@
+name: v317-packed-fifo-degree-transfer
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - research/v317/rtl/packed_fifo_degree_transfer.py
+      - research/v317/rtl/audit_packed_fifo_degree_transfer.py
+      - research/v317/FROZEN_PACKED_FIFO_DEGREE_TRANSFER_20261103.md
+      - research/v317/PACKED_FIFO_DEGREE_TRANSFER_RESULT_20261103.md
+      - .github/workflows/v317-packed-fifo-degree-transfer.yml
+  workflow_dispatch:
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Evaluate frozen B3 exhaustive and B4 holdout
+        run: |
+          python3 research/v317/rtl/packed_fifo_degree_transfer.py > v317-packed-fifo-results.json
+      - name: Independently audit full holdout and exact no-win boundary
+        run: |
+          python3 research/v317/rtl/audit_packed_fifo_degree_transfer.py v317-packed-fifo-results.json > v317-packed-fifo-audit.json
+          cat v317-packed-fifo-audit.json
+      - name: Enforce frozen prediction thresholds
+        run: |
+          python3 - <<'PY'
+          import json
+          r=json.load(open('v317-packed-fifo-results.json'))
+          assert all(r['prospective_prediction'].values()),r['prospective_prediction']
+          assert r['b3_exhaustive']['packed_cap2']['greedy']==r['b3_exhaustive']['packed_cap2']['degree']
+          print('PASS: frozen K2 theorem and K3/K4 B4 small-headroom predictions')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v317-packed-fifo-degree-transfer
+          path: |
+            v317-packed-fifo-results.json
+            v317-packed-fifo-audit.json
+          if-no-files-found: ignore
