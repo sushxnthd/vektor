@@ -33,3 +33,17 @@ iverilog -g2012 -s tb_v317_degree_head -o /tmp/v317-degree-tb \
 vvp /tmp/v317-degree-tb
 ```
 Hosted workflow: `.github/workflows/v317-degree-simple-control.yml`. All negative counterexamples must be preserved even if RTL/synthesis later passes.
+
+
+## Hosted RTL and generic synthesis outcome (verified 2026-11-03)
+
+The first hosted run [#41509456281](https://github.com/sushxnthd/vektor/actions/runs/41509456281) **failed**: Icarus exposed stale bank-tag sensitivity caused by helper functions reading module-global inputs, and Yosys rejected a nonconstant expression in a constant function. This failure was preserved. Commit `e613dd0` repaired both by making bank buses explicit pure-function inputs.
+
+The repaired [GitHub Actions run #41509686509](https://github.com/sushxnthd/vektor/actions/runs/41509686509) **passed** independent Python enumeration, Icarus RTL simulation, both frozen witnesses and identical generic Yosys synthesis. The 4,096 two-bank RTL cases passed, matching 5,226 degree grants and 5,210 compact greedy grants.
+
+Generic Yosys synthesis (same `read_verilog -sv; synth -top ...; stat` flow):
+- Compact V309 greedy: **260** generic cells.
+- Degree-head challenger: **734** total generic cells, including the compact admission submodule and sorting/permutation logic.
+- Relative generic-cell cost: **2.823x** compact greedy, or **+182.3%**, for just **+0.0758%** aggregate three-bank snapshot grants in the independent enumeration.
+
+These are generic technology-independent cells, **not** matched standard-cell area, physical timing, electrical signoff, power or sustained GPU throughput. The evidence is strongly unfavorable to the degree-control hardware case, but it is not a substitute for a legal matched physical comparison. No positive architecture promotion is justified. Preserve the negative result rather than tuning the snapshot distribution post hoc.
