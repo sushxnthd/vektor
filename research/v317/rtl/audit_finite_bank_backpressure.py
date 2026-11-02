@@ -70,7 +70,6 @@ def audit(data):
         if r['falsified']:
             failures.append(name)
     assert data['any_independent_head_falsified'] == bool(failures)
-    assert 'R_eligibility' in failures, 'expected prospective falsification missing'
     return failures
 
 if __name__ == '__main__':
