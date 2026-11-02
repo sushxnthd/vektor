@@ -9,19 +9,21 @@ module vektor_v317_degree_head_arbiter (
     input wire [15:0] src1_bank_flat,
     output reg [3:0] grant
 );
-    function automatic [3:0] a;
+    // Pure functions: explicit operands are required by Yosys and ensure @*
+    // reevaluates on bank-tag changes, not only on validity/order changes.
+    function automatic [3:0] bank_at;
+        input [15:0] flat;
         input [1:0] idx;
-        begin a = src0_bank_flat >> (idx * 4); end
-    endfunction
-    function automatic [3:0] b;
-        input [1:0] idx;
-        begin b = src1_bank_flat >> (idx * 4); end
+        begin bank_at = flat >> (idx * 4); end
     endfunction
     function automatic overlap;
+        input [15:0] a_flat, b_flat;
         input [1:0] x, y;
+        reg [3:0] ax, bx, ay, by;
         begin
-            overlap = (a(x)==a(y)) || (a(x)==b(y)) ||
-                      (b(x)==a(y)) || (b(x)==b(y));
+            ax=bank_at(a_flat,x); bx=bank_at(b_flat,x);
+            ay=bank_at(a_flat,y); by=bank_at(b_flat,y);
+            overlap=(ax==ay) || (ax==by) || (bx==ay) || (bx==by);
         end
     endfunction
 
@@ -32,7 +34,8 @@ module vektor_v317_degree_head_arbiter (
         for (i=0; i<4; i=i+1) begin
             degree[i]=0;
             for (j=0; j<4; j=j+1)
-                if ((i!=j) && request_valid[j] && overlap(i[1:0],j[1:0]))
+                if ((i!=j) && request_valid[j] &&
+                    overlap(src0_bank_flat,src1_bank_flat,i[1:0],j[1:0]))
                     degree[i]=degree[i]+1'b1;
         end
         o1=2'd1; o2=2'd2; o3=2'd3;
@@ -52,8 +55,10 @@ module vektor_v317_degree_head_arbiter (
 
     wire [3:0] pv = {request_valid[o3],request_valid[o2],
                      request_valid[o1],request_valid[0]};
-    wire [15:0] pa = {a(o3),a(o2),a(o1),a(2'd0)};
-    wire [15:0] pb = {b(o3),b(o2),b(o1),b(2'd0)};
+    wire [15:0] pa = {bank_at(src0_bank_flat,o3),bank_at(src0_bank_flat,o2),
+                      bank_at(src0_bank_flat,o1),bank_at(src0_bank_flat,2'd0)};
+    wire [15:0] pb = {bank_at(src1_bank_flat,o3),bank_at(src1_bank_flat,o2),
+                      bank_at(src1_bank_flat,o1),bank_at(src1_bank_flat,2'd0)};
     wire [3:0] pg;
     vektor_v309_compact_greedy_arbiter admit (
         .request_valid(pv),.src0_bank_flat(pa),.src1_bank_flat(pb),.grant(pg)
