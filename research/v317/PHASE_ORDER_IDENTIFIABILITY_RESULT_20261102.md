@@ -20,6 +20,10 @@ The cheap heuristic serves the oldest request, then sorts the other three by inc
 
 The two pre-outcome descriptive features in the frozen protocol, lag-1 phase persistence and canonical row-order fraction, are not validated positive boundary laws. In particular, the degree heuristic eliminates exact's benefit on the clean and 1%-flip traces despite their different phase persistence. The correct claim is a **synthetic negative control**, not a new GPU mechanism.
 
+
+## Generalization caveat from exhaustive snapshots
+The degree heuristic is **not** universally cardinality-optimal. In the independent exhaustive 3-bank, four-request space (6,561 operand assignments), degree matches exact on all cap-2 snapshots but loses one grant in **264/6,561 = 4.024%** of cap-4 snapshots. This prevents mistaking its equality on selected temporal streams for a theorem or a physically proven replacement. The check is combinational and does not predict sustained throughput.
+
 ## Physicality decision
 **Kill the selected periodic trace as evidence that a costly exact scheduler has a material advantage over strong simple controls.** Retain the prior physical V317 falsification, where compact greedy physically dominated pairwise and all RF-proxy routes were electrically illegal. Do not restart V287 or promote a second active architecture mechanism. No same-resource routed clock, SRAM macro, real GPU IPC, calibrated power or RTX 5090 equivalence is established.
 
