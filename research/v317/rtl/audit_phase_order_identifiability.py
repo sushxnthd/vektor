@@ -76,16 +76,18 @@ def check(path):
         total={p:sum(row['policies'][p]['completed'] for row in r['rows']) for p in POLICIES}
         assert total==r['totals']
         assert abs(r['ratio']-total['exact_head']/max(total[p] for p in POLICIES[:-1]))<1e-12
-    count=0
+    count=0; degree_counterexamples=0
     for flat in itertools.product(range(3),repeat=8):
         pairs=tuple((flat[i],flat[i+1]) for i in range(0,8,2))
         for cap in (2,4):
             oracle=independent_pick(pairs,cap,'exact_head')
             assert 0 in oracle and feasible(pairs,oracle)
+            if cap==4 and len(independent_pick(pairs,cap,'degree'))<len(oracle):degree_counterexamples+=1
             for policy in POLICIES[:-1]:
                 control=independent_pick(pairs,cap,policy)
                 assert 0 in control and feasible(pairs,control)
                 assert len(oracle)>=len(control)
         count+=1
-    print(json.dumps({'audit':'PASS','independent_trace_replays':60,'exhaustive_3bank_snapshots':count,'no_gpu_ipc_claim':True}))
+    assert degree_counterexamples==264,degree_counterexamples
+    print(json.dumps({'audit':'PASS','independent_trace_replays':60,'exhaustive_3bank_snapshots':count,'degree_counterexamples_cap4':degree_counterexamples,'no_gpu_ipc_claim':True}))
 if __name__=='__main__':check(sys.argv[1] if len(sys.argv)>1 else 'research/v317/PHASE_ORDER_IDENTIFIABILITY_RESULTS_20261102.json')
