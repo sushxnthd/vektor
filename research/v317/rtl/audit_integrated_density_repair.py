@@ -60,8 +60,8 @@ def inspect(root, addon, variant):
     route = read(logs / "5_2_route.log")
     extract = read(logs / "6_report.log")
     assert "RCX-0045" in extract, "Missing extracted-RC evidence: " + label
-    drc = re.findall(r"Number of violations\\s*=\\s*(\\d+)", route)
-    wire = re.findall(r"Total wire length\\s*=\\s*(\\d+)\\s*um", route)
+    drc = re.findall(r"Number of violations\s*=\s*(\d+)", route)
+    wire = re.findall(r"Total wire length\s*=\s*(\d+)\s*um", route)
     assert drc and wire, "Missing final route DRC/wire: " + label
     assert "Found 0 net violations" in route and "Found 0 pin violations" in route, label
     assert metric(report, "design__instance__count__class:sequential_cell") == 356, label
