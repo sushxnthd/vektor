@@ -31,18 +31,19 @@ def metric(report, name):
     return val
 
 
-def density_observations(folder):
-    """Extract exact target-density log lines without guessing a value."""
-    found = []
-    for path in sorted(folder.rglob("*place*log")):
-        if path.name == "make.log":
-            continue
-        for line in read(path).splitlines():
-            if re.search(r"(target|initial|place).*densit|densit.*(target|place)", line, re.I):
-                if len(found) < 35:
-                    found.append({"file": str(path.relative_to(folder)), "line": line.strip()[:260]})
-    return found
-
+def density_observations(folder, expected_addon):
+    """Verify the intervention was applied in OpenROAD, not just named in config."""
+    logs = list(folder.rglob("3_3_place_gp.log"))
+    assert len(logs) == 1, "Missing/ambiguous global-placement log: " + str(folder)
+    text = read(logs[0])
+    pattern = r"Placement density is ([0-9.]+), computed from PLACE_DENSITY_LB_ADDON\s+([0-9.]+) and lower bound ([0-9.]+)"
+    matches = re.findall(pattern, text)
+    assert len(matches) == 1, "Missing actual target-density provenance: " + str(folder)
+    density, applied_addon, lower_bound = map(float, matches[0])
+    assert abs(applied_addon - float(expected_addon)) < 1e-8, "Intervention mismatch: " + str(folder)
+    assert 0 < lower_bound < density < 1, "Invalid actual placement density: " + str(folder)
+    assert re.search(r"global_placement -density\s+" + re.escape(matches[0][0]), text), "Global placer did not receive density"
+    return {"actual_placement_density": density, "applied_addon": applied_addon, "lower_bound": lower_bound}
 
 def inspect(root, addon, variant):
     label = "addon" + addon + "_" + variant
@@ -80,7 +81,7 @@ def inspect(root, addon, variant):
         "max_fanout_violations": metric(report, "timing__drv__max_fanout"),
         "power_proxy_mw": metric(report, "power__total") * 1000,
         "route_drc_violations": int(drc[-1]),
-        "density_log_observations": density_observations(folder),
+        "density_intervention": density_observations(folder, addon),
     }
     out["legal_at_2ns"] = (
         out["setup_slack_ps"] >= 0 and out["setup_violations"] == 0
@@ -97,6 +98,10 @@ def audit(root):
     assert IMAGE in read(root / "container_digests.json")
     assert "PASS V317 integrated issue-control equivalence cycles=4096 accepted=13153" in read(root / "rtl_simulation.log")
     rows = [inspect(root, a, v) for a in ADDONS for v in VARIANTS]
+    for variant in VARIANTS:
+        lo = next(r for r in rows if r["addon"] == 0.05 and r["variant"] == variant)
+        hi = next(r for r in rows if r["addon"] == 0.35 and r["variant"] == variant)
+        assert hi["density_intervention"]["actual_placement_density"] > lo["density_intervention"]["actual_placement_density"] + 0.08, "Density intervention did not materially change placement"
     paired = []
     for addon in ADDONS:
         source, pair = [next(r for r in rows if r["addon"] == float(addon) and r["variant"] == v)
