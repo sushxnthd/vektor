@@ -1,0 +1,37 @@
+name: V317 independent density-repair physicality audit
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - 'research/v317/rtl/audit_integrated_density_repair.py'
+      - '.github/workflows/v317-integrated-density-raw-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit-immutable-density-sweep:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download original density-sweep artifact without regenerating
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 41372770907
+          name: v317-integrated-density-repair-source-pairwise
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: build/v317/integrated_density_repair
+      - name: Independently parse extracted-RC timing, electrical checks and area
+        run: |
+          set -euo pipefail
+          python3 research/v317/rtl/audit_integrated_density_repair.py \
+            build/v317/integrated_density_repair \
+            --output build/v317/density_repair_audit.json
+      - name: Preserve all independent results, including falsification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-integrated-density-independent-audit
+          path: build/v317/density_repair_audit.json
+          retention-days: 30
