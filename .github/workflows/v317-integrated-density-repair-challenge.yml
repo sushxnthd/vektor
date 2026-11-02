@@ -1,0 +1,75 @@
+name: V317 matched legal-source placement-density repair challenge
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - '.github/workflows/v317-integrated-density-repair-challenge.yml'
+      - 'research/v317/FROZEN_INTEGRATED_DENSITY_REPAIR_CHALLENGE_20261102.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  density-repair:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record source and confirm RTL equivalence
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog
+          mkdir -p build/v317/integrated_density_repair
+          git rev-parse HEAD | tee build/v317/integrated_density_repair/source_sha.txt
+          iverilog -g2012 -s tb_rf_integrated_issue -o build/v317/integrated_density_repair/issue_tb \
+            rtl/vtile/steal_warp_scheduler.sv \
+            rtl/vtile/issue_control.sv \
+            rtl/vtile/rf_bank_arbiter.sv \
+            research/v317/rtl/rf_bank_pairwise_credit.sv \
+            research/v317/rtl/rf_integrated_issue_top.sv \
+            research/v317/rtl/tb_rf_integrated_issue.sv
+          vvp build/v317/integrated_density_repair/issue_tb | tee build/v317/integrated_density_repair/rtl_simulation.log
+      - name: Pull pinned ORFS container
+        run: |
+          set -euo pipefail
+          image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
+          docker pull "$image"
+          docker image inspect "$image" --format '{{json .RepoDigests}}' | tee build/v317/integrated_density_repair/container_digests.json
+          printf '%s\n' "$image" > build/v317/integrated_density_repair/pinned_image.txt
+      - name: Four matched routes at density add-ons 0.05 and 0.35
+        run: |
+          set +e
+          set -uo pipefail
+          image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
+          failed=0
+          for addon in 0.05 0.35; do
+            for variant in source pairwise; do
+              name="vektor_v317_issue_integrated_top_${variant}"
+              label="addon${addon}_${variant}"
+              home="build/v317/integrated_density_repair/${label}"
+              for dir in results logs reports objects; do
+                mkdir -p "${home}/${dir}/nangate45/${name}/base"
+              done
+              printf 'addon=%s\nvariant=%s\nseed=7\nABC_AREA=1\nGPL_TIMING_DRIVEN=1\n' "$addon" "$variant" > "${home}/config.txt"
+              docker run --rm \
+                -v "$PWD:/work/vektor" \
+                -e VEKTOR_ROOT=/work/vektor \
+                -w /OpenROAD-flow-scripts/flow \
+                "$image" bash -lc "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_integrated_issue.mk DESIGN_NAME=${name} ABC_AREA=1 GPL_TIMING_DRIVEN=1 GPL_RANDOM_SEED=7 PLACE_DENSITY_LB_ADDON=${addon} DIE_AREA='0 0 120 120' CORE_AREA='4 4 116 116' FLOW_VARIANT=base WORK_HOME=/work/vektor/${home} -j1" \
+                > "${home}/make.log" 2>&1
+              rc=$?
+              echo "exit_code=${rc}" | tee "${home}/status.txt"
+              if [ "$rc" -ne 0 ]; then
+                failed=1
+                tail -n 60 "${home}/make.log" || true
+              fi
+            done
+          done
+          exit "$failed"
+      - name: Preserve all physical results, including failed routes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-integrated-density-repair-source-pairwise
+          path: build/v317/integrated_density_repair/
+          retention-days: 30
