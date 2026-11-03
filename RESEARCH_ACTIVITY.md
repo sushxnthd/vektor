@@ -1,13 +1,9 @@
 # Research Activity
 
-Updated: 2026-11-03
-
-This default-branch ledger records durable research activity while experimental work remains isolated on review branches.
+Updated: 2026-11-04 (UTC)
 
 - Active research branch: `research/v317-sass-provenance-gate`
 - Active draft PR: #34
-- Latest observed research head: `d47b57b2a3695fb8a59ce6d4b849b660ac764298`
-- Policy: experimental results stay off `main` until reviewed; substantive runs must persist to GitHub.
-- Checkpoint rule: update this ledger at most once per calendar day, and only after substantive work or a meaningful persistence repair.
-
-This file is an activity ledger, not a scientific result or validation claim.
+- Latest durable research commit: `dd0b2885b7c1e51215bfccbb7a8f7ea759f0fbde`
+- Evidence: bounded-credit/output-FIFO backpressure falsification checker committed and retrieved; execution not independently verified. No RTL, synthesis, or physical performance claim.
+- Experimental code remains on the research branch; this default-branch entry is an activity ledger, not validation or release approval.
