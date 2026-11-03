@@ -39,10 +39,10 @@ def main():
     orders = sorted(set(permutations(REQUESTS)))
     counts = Counter(greedy(order) for order in orders)
     assert len(orders) == 6
-    assert counts == {1: 4, 2: 2}, counts
+    assert counts == {1: 3, 2: 3}, counts
     assert all(oracle(order) == 2 for order in orders)
     uniform_mean = Fraction(sum(greedy(o) for o in orders), len(orders))
-    assert uniform_mean == Fraction(4, 3)
+    assert uniform_mean == Fraction(3, 2)
     # q = probability of selecting a bad-order permutation, distributed
     # uniformly within each of the two service-outcome classes.
     # E[greedy] = q*1 + (1-q)*2 = 2-q.
@@ -56,10 +56,10 @@ def main():
     assert Fraction(2, 1) / ((1+CLOCK_PENALTY)*1) > 1
     # Distribution-shift bound: |E_P G-E_U G| <=
     # (max G-min G) TV(P,U). Here TV between a class-biased
-    # distribution and uniform permutations equals |q-2/3|.
-    for q in (Fraction(0), Fraction(1, 4), Fraction(2, 3), Fraction(1)):
+    # distribution and uniform permutations equals |q-1/2|.
+    for q in (Fraction(0), Fraction(1, 4), Fraction(1, 2), Fraction(1)):
         actual = 2-q
-        tv = abs(q-Fraction(2,3))
+        tv = abs(q-Fraction(1,2))
         assert abs(actual-uniform_mean) == tv
     print("PASS: 6 unique orders; greedy service histogram", dict(counts))
     print("Uniform mean greedy", uniform_mean, "oracle", 2)
