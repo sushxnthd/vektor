@@ -28,7 +28,7 @@ def fluid_upper_ratio(arrival, base_bank, candidate_bank, shared_output, clock_p
     r,b,c,o,d = map(Fraction,(arrival,base_bank,candidate_bank,shared_output,clock_penalty))
     assert r >= 0 and min(b,c,o) > 0 and d >= 0
     baseline = min(r,b,o)
-    candidate = min(r,c,o)/(1+d)
+    candidate = min(r,c/(1+d),o)
     return None if baseline == 0 else candidate/baseline
 
 def test():
@@ -44,7 +44,7 @@ def test():
     assert fluid_upper_ratio(3,1,2,1) == 1
     assert fluid_upper_ratio(3,1,2,2) == 2
     assert fluid_upper_ratio(1,1,2,2) == 1
-    assert fluid_upper_ratio(3,1,2,1,Fraction(1,100)) == Fraction(100,101)
+    assert fluid_upper_ratio(3,1,2,1,Fraction(1,100)) == 1
     # Conservation and common-output cap, including burst and alternating demand.
     for arrivals in ([3]*n, [3 if i%2 else 0 for i in range(n)],
                      [0]*500+[4]*500):
@@ -56,7 +56,7 @@ def test():
     print("PASS: shared-output bottleneck falsifies bank-only oracle throughput gain")
     print("Saturated, output=1: baseline/candidate=1000/1000")
     print("Saturated, output=2: baseline/candidate=1000/2000")
-    print("Common output=1 with 1% candidate clock penalty: asymptotic ratio=100/101")
+    print("Common output=1 with 1% candidate clock penalty: asymptotic ratio=1")
 
 if __name__ == "__main__":
     test()
