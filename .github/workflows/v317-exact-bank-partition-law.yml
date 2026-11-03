@@ -1,0 +1,36 @@
+name: V317 exact bank-partition law transfer
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - 'research/v317/rtl/exact_bank_opportunity_polynomial.py'
+      - 'research/v317/rtl/exact_bank_partition_transfer.py'
+      - 'research/v317/rtl/audit_exact_bank_partition_transfer.py'
+      - '.github/workflows/v317-exact-bank-partition-law.yml'
+  workflow_dispatch:
+jobs:
+  exact-law:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Derive exact coefficients and evaluate frozen holdouts
+        run: |
+          python -m research.v317.rtl.exact_bank_opportunity_polynomial > /tmp/v317-exact-polynomial.json
+          python -m research.v317.rtl.exact_bank_partition_transfer > /tmp/v317-exact-transfer.json
+          python research/v317/rtl/audit_exact_bank_partition_transfer.py /tmp/v317-exact-transfer.json > /tmp/v317-exact-audit.json
+          python - <<'PY'
+          import json
+          a=json.load(open('/tmp/v317-exact-audit.json'))
+          assert a['status']=='PASS'
+          assert all(a['predictions'].values()), a
+          p=json.load(open('/tmp/v317-exact-polynomial.json'))
+          assert p['leading_event_coefficient_b_inverse_square']==4
+          print(a)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v317-exact-bank-partition-law
+          path: /tmp/v317-exact-*.json
