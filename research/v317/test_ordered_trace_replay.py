@@ -52,6 +52,25 @@ class ReplayRegression(unittest.TestCase):
         with self.assertRaises(ValueError):
             mod.replay(rows([req("a",0)]),1,0,1,1,"fifo")
 
+    def test_greedy_is_not_an_upper_bound(self):
+        # Same bank ports, slots, and output capacity for both policies.
+        # Greedy takes (0,1) first and completes one; optimal packing
+        # chooses (0) and (1), completing two. This is a falsification
+        # of the earlier claim that greedy is a throughput upper bound.
+        from itertools import combinations
+        trace = rows([req("a",0,1),req("b",0),req("c",1)])
+        greedy = mod.replay(trace,2,1,2,2,"greedy")["completed"]
+        requests = trace[0]["requests"]
+        optimum = max(
+            (len(choice) for k in range(3)
+             for choice in combinations(requests,k)
+             if all(sum(r["banks"].count(b) for r in choice)<=1
+                    for b in (0,1))),
+            default=0)
+        self.assertEqual(greedy,1)
+        self.assertEqual(optimum,2)
+        self.assertLess(greedy,optimum)
+
     def test_conservation_exhaustive(self):
         from itertools import product
         for n in range(5):
