@@ -2,7 +2,8 @@
 """Fail-closed ordered bank-demand replay for V317; not a GPU throughput claim.
 
 Strict FIFO stops at the first bank-blocked head. Greedy may bypass blocked
-requests but is neither an optimal throughput upper bound nor an equal-resource RTL.\nGreedy can be suboptimal even for one cycle (requests [0,1], [0], [1]).
+requests but is neither an optimal throughput upper bound nor an equal-resource RTL.
+Greedy can be suboptimal even for one cycle (requests [0,1], [0], [1]).
 
 
 Input JSONL: first record {"kind":"provenance","source_sha256":"<64 hex>",
