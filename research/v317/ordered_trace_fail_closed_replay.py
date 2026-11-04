@@ -48,6 +48,11 @@ def load(path, banks):
 def replay(rows, banks, ports, slots, output, policy):
     if min(banks, ports, slots, output) < 1:
         raise ValueError("resource counts must be positive")
+    for row in rows:
+        for req in row["requests"]:
+            for bank in set(req["banks"]):
+                if req["banks"].count(bank) > ports:
+                    raise ValueError("unschedulable request: bank operand multiplicity exceeds ports")
     queue = deque()
     completed = 0
     busy = 0
