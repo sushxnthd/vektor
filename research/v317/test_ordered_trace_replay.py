@@ -35,6 +35,14 @@ class ReplayRegression(unittest.TestCase):
         trace = rows([req("a",0,0),req("b",0)])
         self.assertEqual(mod.replay(trace,1,2,2,2,"greedy")["completed"],1)
 
+    def test_unschedulable_duplicate_operand_fails_closed(self):
+        trace = rows([req("impossible",0,0),req("valid",1)])
+        for policy in ("fifo","greedy"):
+            with self.assertRaisesRegex(ValueError, "unschedulable request"):
+                mod.replay(trace,2,1,2,2,policy)
+        # Two physical ports permit the duplicate operand.
+        self.assertEqual(mod.replay(trace,2,2,2,2,"fifo")["completed"],2)
+
     def test_shared_output_cap(self):
         trace = rows([req("a",0),req("b",1)])
         for policy in ("fifo","greedy"):
