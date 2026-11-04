@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Fail-closed ordered bank-demand replay for V317; not a GPU throughput claim.
 
+Strict FIFO stops at the first bank-blocked head. Greedy may bypass blocked
+requests and is therefore a policy upper bound, NOT an equal-resource RTL.
+
+
 Input JSONL: first record {"kind":"provenance","source_sha256":"<64 hex>",
 "generator_commit":"<40 hex>","kernel":"...","capture_method":"...",
 "ordering":"observed","units":"requests_per_cycle"}.
@@ -42,6 +46,8 @@ def load(path, banks):
     return p, rows
 
 def replay(rows, banks, ports, slots, output, policy):
+    if min(banks, ports, slots, output) < 1:
+        raise ValueError("resource counts must be positive")
     queue = deque()
     completed = 0
     busy = 0
@@ -64,6 +70,9 @@ def replay(rows, banks, ports, slots, output, policy):
             if all(usage[b] + need[b] <= ports for b in range(banks)):
                 selected.append(req["id"])
                 usage = [usage[b] + need[b] for b in range(banks)]
+            elif policy == "fifo":
+                # Head-of-line blocking: later requests cannot bypass the head.
+                break
         done = set(selected)
         queue = deque(r for r in queue if r["id"] not in done)
         completed += len(done)
