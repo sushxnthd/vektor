@@ -20,7 +20,12 @@ def exact(rows, banks, ports, slots, output, max_live=16):
             key = (type(req["id"]).__name__, req["id"])
             if key in requests:
                 raise ValueError("duplicate request identity")
-            need = tuple(req["banks"].count(b) for b in range(banks))
+            operands = req["banks"]
+            if not isinstance(operands, list) or not operands or any(
+                type(b) is not int or b < 0 or b >= banks for b in operands
+            ):
+                raise ValueError("invalid bank operand: out of range, empty, or noninteger")
+            need = tuple(operands.count(b) for b in range(banks))
             if max(need) > ports:
                 raise ValueError("unschedulable request")
             requests[key] = need
@@ -65,7 +70,15 @@ def selftest():
             assert observed == brute, (operands, observed, brute)
             cases += 1
     assert cases == 364
-    print("PASS: counterexample and 364 independent single-cycle enumerations")
+    for bad in ([-1], [2], [], [0, 2], [True], [0.0], ["0"]):
+        invalid = [{"cycle":0,"requests":[{"id":"bad","banks":bad}]}]
+        try:
+            exact(invalid,2,1,2,2)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(("invalid operand accepted", bad))
+    print("PASS: counterexample, 364 independent single-cycle enumerations, 7 invalid-bank rejections")
 
 def main():
     p = argparse.ArgumentParser()
