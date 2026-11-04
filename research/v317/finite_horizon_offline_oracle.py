@@ -14,7 +14,11 @@ def exact(rows, banks, ports, slots, output, max_live=16):
         raise ValueError("positive resources required")
     requests = {}
     arrivals = []
-    for row in rows:
+    for expected_cycle, row in enumerate(rows):
+        if type(row.get("cycle")) is not int or row["cycle"] != expected_cycle:
+            raise ValueError("trace cycles must be contiguous zero-based integers; gaps cannot be compressed")
+        if not isinstance(row.get("requests"), list):
+            raise ValueError("requests must be a list")
         ids = []
         for req in row["requests"]:
             key = (type(req["id"]).__name__, req["id"])
@@ -70,6 +74,18 @@ def selftest():
             assert observed == brute, (operands, observed, brute)
             cases += 1
     assert cases == 364
+    # A missing idle cycle must not silently become a shorter scheduling horizon.
+    gap = [{"cycle":0,"requests":[{"id":"a","banks":[0]}]},
+           {"cycle":2,"requests":[{"id":"b","banks":[0]}]}]
+    for invalid_rows in (gap, [{"cycle":1,"requests":[]}],
+                         [{"cycle":True,"requests":[]}],
+                         [{"cycle":0,"requests":{} }]):
+        try:
+            exact(invalid_rows,2,1,2,2)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(("malformed trace accepted", invalid_rows))
     for bad in ([-1], [2], [], [0, 2], [True], [0.0], ["0"]):
         invalid = [{"cycle":0,"requests":[{"id":"bad","banks":bad}]}]
         try:
@@ -78,7 +94,7 @@ def selftest():
             pass
         else:
             raise AssertionError(("invalid operand accepted", bad))
-    print("PASS: counterexample, 364 independent single-cycle enumerations, 7 invalid-bank rejections")
+    print("PASS: counterexample, 364 independent single-cycle enumerations, 7 invalid-bank rejections, 4 malformed-timeline rejections")
 
 def main():
     p = argparse.ArgumentParser()
