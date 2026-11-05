@@ -1,0 +1,40 @@
+name: V309 exact SASS-format RF identifiability falsification
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - 'research/v309/sass_identifiability.py'
+      - 'research/v309/SASS_IDENTIFIABILITY_NEGATIVE_20261030.md'
+      - '.github/workflows/v309-sass-identifiability.yml'
+  workflow_dispatch:
+jobs:
+  exact-oracle:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent analytical extremes and 7 fail-closed mutants
+        run: python3 research/v309/sass_identifiability.py --selftest > /tmp/v309-sass-oracle.json
+      - name: Verify qualitative counterexample and sensitivity
+        run: |
+          python3 - <<'PY'
+          import json
+          with open('/tmp/v309-sass-oracle.json') as f:
+              test = json.loads(f.readline())
+              x = json.load(f)
+          assert test['exhaustive_reg_assignments'] == 1536
+          assert test['mutation_tests'] == 7
+          rows = {(r['banks'],r['ports_per_bank'],r['collectors'],r['pairing']):r['exact_read_service_cycles'] for r in x['rows']}
+          assert rows[2,1,1,'grouped'] == 4 and rows[2,1,1,'crossed'] == 2
+          for b,p,c in ((2,1,2),(2,2,1),(2,2,2),(4,1,1),(4,1,2),(4,2,1),(4,2,2)):
+              assert rows[b,p,c,'grouped'] == rows[b,p,c,'crossed']
+          print('PASS: same aggregate source multiset; only one-collector two-bank one-port case distinguishes pairings')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v309-sass-identifiability-exact-oracle
+          path: /tmp/v309-sass-oracle.json

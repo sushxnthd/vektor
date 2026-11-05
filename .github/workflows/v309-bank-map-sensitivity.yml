@@ -1,0 +1,60 @@
+name: V309 authenticated V100 bank-map sensitivity and independent falsification
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/bank_map_sensitivity.py
+      - research/v309/audit_bank_map_sensitivity.py
+      - research/v309/BANK_MAP_SENSITIVITY_PROTOCOL_20261030.md
+      - .github/workflows/v309-bank-map-sensitivity.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sensitivity:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Local model fixture and independent six-mutant audit
+        run: |
+          python3 research/v309/bank_map_sensitivity.py --selftest
+          python3 research/v309/audit_bank_map_sensitivity.py --selftest
+      - name: Download pinned authentic V100 Rodinia SASS traces
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Full-corpus hypothetical bank-map sensitivity and independent audit
+        run: |
+          python3 research/v309/bank_map_sensitivity.py /tmp/v309-v100-rodinia.tgz > v309-bank-map-sensitivity.json
+          python3 research/v309/audit_bank_map_sensitivity.py v309-bank-map-sensitivity.json > v309-bank-map-audit.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('v309-bank-map-sensitivity.json'))
+          a=json.load(open('v309-bank-map-audit.json'))
+          print(json.dumps(a,indent=2))
+          for app,x in d['applications'].items():
+              n=x['active']
+              print(app,n,'mod2_p1_per_1000',round(1000*x['map']['mod2']['isolated_extra_cycles_p1']/n,4),
+                    'xor2_p1_per_1000',round(1000*x['map']['xor2']['isolated_extra_cycles_p1']/n,4),
+                    'mod2_p2_per_1000',round(1000*x['map']['mod2']['isolated_extra_cycles_p2']/n,4))
+          PY
+      - name: Preserve raw trace-derived model sensitivity and audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-v100-bank-map-sensitivity
+          path: |
+            v309-bank-map-sensitivity.json
+            v309-bank-map-audit.json
+          if-no-files-found: warn

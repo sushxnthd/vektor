@@ -1,0 +1,51 @@
+name: V309 independent GV100 profiler counter audit
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/external_profiler_counter_audit.py
+      - research/v309/EXTERNAL_PROFILER_COUNTER_AUDIT_PROTOCOL_20261030.md
+      - .github/workflows/v309-external-profiler-counters.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  external-counter-falsification:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Parser mutants and independent arithmetic oracle
+        run: |
+          set -euo pipefail
+          python3 research/v309/external_profiler_counter_audit.py --selftest
+      - name: Fetch immutable upstream sample, verify Git blob, audit all rows
+        run: |
+          set -euo pipefail
+          python3 research/v309/external_profiler_counter_audit.py > v309-external-profiler-counter-audit.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('v309-external-profiler-counter-audit.json'))
+          assert d['status']=='PASS'
+          assert d['rows']==25
+          assert d['positive_dram_with_zero_l1_read_misses']==5
+          assert d['positive_dram_with_zero_l2_read_misses']==3
+          assert d['universal_zero_intercept_l1_proxy_falsified'] is True
+          assert d['universal_zero_intercept_l2_proxy_falsified'] is True
+          assert d['matched_to_v309_rodinia_2_0_ft_traces'] is False
+          assert d['no_hardware_mechanism_promoted'] is True
+          print('PASS: independent published counter sample falsifies zero-intercept L1/L2-only DRAM proxies; unmatched workload provenance')
+          PY
+      - name: Preserve audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-external-profiler-counter-audit
+          path: v309-external-profiler-counter-audit.json
+          if-no-files-found: warn

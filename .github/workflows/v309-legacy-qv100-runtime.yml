@@ -1,0 +1,265 @@
+name: V309 source-pinned legacy QV100-SASS runtime gate
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/legacy_qv100_runtime.py
+      - research/v309/qv100_runtime_counter_audit.py
+      - research/v309/qv100_dram_latency_sweep.py
+      - research/v309/qv100_dram_buswidth_sweep.py
+      - research/v309/qv100_second_workload.py
+      - research/v309/qv100_cross_workload_counter_falsification.py
+      - research/v309/qv100_buswidth_transfer.py
+      - research/v309/qv100_width_boundary_falsification.py
+      - research/v309/QV100_LUD_BUSWIDTH_TRANSFER_PREREG_20261031.md
+      - research/v309/QV100_SECOND_WORKLOAD_PROTOCOL_20261031.md
+      - research/v309/QV100_DRAM_BUSWIDTH_PROTOCOL_20261030.md
+      - research/v309/QV100_LEGACY_RUNTIME_PROTOCOL_20261030.md
+      - .github/workflows/v309-legacy-qv100-runtime.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  legacy-runtime:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 58
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent deterministic selection and malformed-source refusal tests
+        run: |
+          set -euo pipefail
+          mkdir -p v309-legacy/evidence
+          python3 research/v309/legacy_qv100_runtime.py --selftest | tee v309-legacy/evidence/selftest.json
+          python3 research/v309/qv100_dram_latency_sweep.py --selftest | tee v309-legacy/evidence/latency-selftest.json
+          python3 research/v309/qv100_dram_buswidth_sweep.py --selftest | tee v309-legacy/evidence/buswidth-selftest.json
+          python3 research/v309/qv100_second_workload.py --selftest | tee v309-legacy/evidence/second-workload-selftest.json
+          python3 research/v309/qv100_buswidth_transfer.py --selftest | tee v309-legacy/evidence/transfer-selftest.json
+          python3 research/v309/qv100_width_boundary_falsification.py --selftest | tee v309-legacy/evidence/width-boundary-selftest.json
+      - name: Authenticate historical original trace archive
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-original-v100.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-original-v100.tgz' | sha256sum -c
+      - name: Freeze smallest complete original workload and preserve all memory copies
+        run: |
+          set -euo pipefail
+          python3 research/v309/legacy_qv100_runtime.py \
+            --select /tmp/v309-original-v100.tgz --destination v309-legacy/traces \
+            | tee v309-legacy/evidence/selection-stdout.json
+          python3 - <<'PY'
+          import json
+          m=json.load(open('v309-legacy/selection.json'))
+          assert m['kernel_launches']>0 and m['selected_bytes']<=96*1024*1024
+          assert m['hardware_validated'] is False
+          print('Frozen selection:',m['selected_list'],'kernels:',m['kernel_launches'])
+          PY
+      - name: Freeze rank-two original workload before simulator outcomes
+        run: |
+          set -euo pipefail
+          python3 research/v309/qv100_second_workload.py \
+            --archive /tmp/v309-original-v100.tgz \
+            --destination v309-second/traces \
+            | tee v309-legacy/evidence/second-selection-stdout.json
+          python3 - <<'PY'
+          import json
+          first=json.load(open('v309-legacy/selection.json'))
+          second=json.load(open('v309-second/selection.json'))
+          assert second['selection_rank_one_based']==2
+          assert first['selected_list']==second['first_workload_list']
+          assert first['selected_list']!=second['selected_list']
+          assert second['kernel_launches']>0 and second['selected_bytes']<=96*1024*1024
+          assert not second['hardware_validated'] and not second['architecture_speedup_permitted']
+          print('Frozen second workload:',second['selected_list'],'kernels:',second['kernel_launches'])
+          PY
+      - name: Build source-pinned Accel-Sim and attempt two complete QV100-SASS replays
+        run: |
+          set -euo pipefail
+          docker pull accelsim/ubuntu-18.04_cuda-11@sha256:d963b1a0bccdb9ade23d19f184a17724c9adf2c8ec580fcbff76c3a9a2bad02a
+          docker image inspect --format '{{json .RepoDigests}}' accelsim/ubuntu-18.04_cuda-11@sha256:d963b1a0bccdb9ade23d19f184a17724c9adf2c8ec580fcbff76c3a9a2bad02a > v309-legacy/evidence/container-digest.json
+          docker run --rm --cpus=2 --memory=6g \
+            -v "$GITHUB_WORKSPACE:/work" -w /work \
+            -e CUDA_INSTALL_PATH=/usr/local/cuda-11.0 \
+            accelsim/ubuntu-18.04_cuda-11@sha256:d963b1a0bccdb9ade23d19f184a17724c9adf2c8ec580fcbff76c3a9a2bad02a bash -lc '
+              set -euo pipefail
+              test -x "$CUDA_INSTALL_PATH/bin/nvcc" || { echo "BUILD_PREFLIGHT_FAIL: nvcc missing at pinned CUDA_INSTALL_PATH" >&2; exit 127; }
+              export PATH="$CUDA_INSTALL_PATH/bin:$PATH"
+              "$CUDA_INSTALL_PATH/bin/nvcc" --version > /work/v309-legacy/evidence/nvcc-version.txt
+              # Pinned upstream tracez reader includes zstd.h even for legacy traceg workloads.
+              timeout 240 apt-get update -qq
+              DEBIAN_FRONTEND=noninteractive timeout 180 apt-get install -y -qq libzstd-dev
+              dpkg-query -W libzstd-dev > /work/v309-legacy/evidence/libzstd-package.txt
+              test -f /usr/include/zstd.h || { echo "BUILD_DEPENDENCY_FAIL: zstd.h missing after package install" >&2; exit 1; }
+              git clone https://github.com/accel-sim/accel-sim-framework.git /tmp/accel
+              git -C /tmp/accel checkout 7ba54ded60c4ba0083410c37d22d719166acd6dc
+              git clone https://github.com/accel-sim/gpgpu-sim_distribution.git /tmp/accel/gpu-simulator/gpgpu-sim
+              git -C /tmp/accel/gpu-simulator/gpgpu-sim checkout 4195dd4f229cbf03f4f38c49139ae94d01d23f03
+              git clone https://github.com/pybind/pybind11.git /tmp/accel/gpu-simulator/extern/pybind11
+              git -C /tmp/accel/gpu-simulator/extern/pybind11 checkout 18bbe9d7c9b0009b992e812e1b59e7a0d4474dbd
+              {
+                git -C /tmp/accel rev-parse HEAD
+                git -C /tmp/accel/gpu-simulator/gpgpu-sim rev-parse HEAD
+                git -C /tmp/accel/gpu-simulator/extern/pybind11 rev-parse HEAD
+                gcc --version | head -1
+                python3 --version
+                nvcc --version | tail -4
+              } > /work/v309-legacy/evidence/build-provenance.txt
+              cd /tmp/accel
+              # The pinned source includes tracez_format.h under the tracer tree, not the simulator include tree.
+              test -f /tmp/accel/util/tracer_nvbit/tracer_tool/tracez_format.h
+              export CPLUS_INCLUDE_PATH="/tmp/accel/util/tracer_nvbit/tracer_tool${CPLUS_INCLUDE_PATH:+:$CPLUS_INCLUDE_PATH}"
+              # Upstream setup script expands optional environment variables without nounset guards.
+              set +u
+              source gpu-simulator/setup_environment.sh
+              set -u
+              # Pinned GPGPU-Sim dev sources use C++17 traits and unordered_map in intersim2.
+              # Command-line CXX overrides the upstream intersim2 Makefile CXX=g++ assignment.
+              echo "CXX=g++ -std=c++17 -include unordered_map -Wl,--no-as-needed" > /work/v309-legacy/evidence/compiler-override.txt
+              timeout 1500 make -j2 -C gpu-simulator CXX="g++ -std=c++17 -include unordered_map -Wl,--no-as-needed"
+              python3 /work/research/v309/legacy_qv100_runtime.py --simulate \
+                --binary /tmp/accel/gpu-simulator/bin/release/accel-sim.out \
+                --trace /work/v309-legacy/traces/kernelslist.g \
+                --gpgpu /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --trace-config /tmp/accel/gpu-simulator/configs/tested-cfgs/SM7_QV100/trace.config \
+                --manifest /work/v309-legacy/selection.json \
+                --evidence /work/v309-legacy/evidence
+              # Independent rank-two original workload, no parameter or hardware change.
+              python3 /work/research/v309/legacy_qv100_runtime.py --simulate \
+                --binary /tmp/accel/gpu-simulator/bin/release/accel-sim.out \
+                --trace /work/v309-second/traces/kernelslist.g \
+                --gpgpu /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --trace-config /tmp/accel/gpu-simulator/configs/tested-cfgs/SM7_QV100/trace.config \
+                --manifest /work/v309-second/selection.json \
+                --evidence /work/v309-second/evidence
+              # Freeze the sole -dram_latency mutation BEFORE running any variant.
+              python3 /work/research/v309/qv100_dram_latency_sweep.py --prepare \
+                /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --folder /work/v309-legacy/latency-configs
+              python3 /work/research/v309/qv100_dram_latency_sweep.py --run \
+                --binary /tmp/accel/gpu-simulator/bin/release/accel-sim.out \
+                --trace /work/v309-legacy/traces/kernelslist.g \
+                --gpgpu /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --trace-config /tmp/accel/gpu-simulator/configs/tested-cfgs/SM7_QV100/trace.config \
+                --selection /work/v309-legacy/selection.json \
+                --folder /work/v309-legacy/latency-configs \
+                --evidence /work/v309-legacy/evidence
+              # Frozen bus-width sensitivity: only -gpgpu_dram_buswidth 16 -> 8/32.
+              python3 /work/research/v309/qv100_dram_buswidth_sweep.py --prepare \
+                /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --folder /work/v309-legacy/buswidth-configs
+              python3 /work/research/v309/qv100_dram_buswidth_sweep.py --run \
+                --binary /tmp/accel/gpu-simulator/bin/release/accel-sim.out \
+                --trace /work/v309-legacy/traces/kernelslist.g \
+                --gpgpu /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --trace-config /tmp/accel/gpu-simulator/configs/tested-cfgs/SM7_QV100/trace.config \
+                --selection /work/v309-legacy/selection.json \
+                --folder /work/v309-legacy/buswidth-configs \
+                --evidence /work/v309-legacy/evidence
+              # Frozen prospective rank-two LUD width sensitivity, same pinned binary/config.
+              python3 /work/research/v309/qv100_dram_buswidth_sweep.py --prepare \
+                /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --folder /work/v309-second/buswidth-configs
+              python3 /work/research/v309/qv100_dram_buswidth_sweep.py --run \
+                --binary /tmp/accel/gpu-simulator/bin/release/accel-sim.out \
+                --trace /work/v309-second/traces/kernelslist.g \
+                --gpgpu /tmp/accel/gpu-simulator/gpgpu-sim/configs/tested-cfgs/SM7_QV100/gpgpusim.config \
+                --trace-config /tmp/accel/gpu-simulator/configs/tested-cfgs/SM7_QV100/trace.config \
+                --selection /work/v309-second/selection.json \
+                --folder /work/v309-second/buswidth-configs \
+                --evidence /work/v309-second/evidence
+            ' 2>&1 | tee v309-legacy/evidence/build-and-runtime.log
+      - name: Restore runner ownership of simulator-generated evidence
+        run: |
+          set -euo pipefail
+          # Docker writes the rank-two logs as root; the host-side independent auditor
+          # must be able to write its own result beside those immutable raw logs.
+          sudo chown -R "$(id -u):$(id -g)" \
+            v309-second/evidence v309-legacy/evidence \
+            v309-legacy/latency-configs v309-legacy/buswidth-configs \
+            v309-second/buswidth-configs
+      - name: Independent per-kernel replay audit and adversarial controls
+        run: |
+          set -euo pipefail
+          python3 research/v309/qv100_runtime_counter_audit.py --selftest | tee v309-legacy/evidence/independent-selftest.json
+          python3 research/v309/qv100_runtime_counter_audit.py \
+            --repeat1 v309-legacy/evidence/repeat-1.log \
+            --repeat2 v309-legacy/evidence/repeat-2.log \
+            --selection v309-legacy/selection.json \
+            --out v309-legacy/evidence/independent-counter-audit.json \
+            | tee v309-legacy/evidence/independent-audit-stdout.json
+          python3 research/v309/qv100_runtime_counter_audit.py \
+            --repeat1 v309-second/evidence/repeat-1.log \
+            --repeat2 v309-second/evidence/repeat-2.log \
+            --selection v309-second/selection.json \
+            --out v309-second/evidence/independent-counter-audit.json \
+            | tee v309-legacy/evidence/second-audit-stdout.json
+          python3 research/v309/qv100_dram_latency_sweep.py --audit \
+            --folder v309-legacy/latency-configs \
+            --evidence v309-legacy/evidence \
+            --selection v309-legacy/selection.json \
+            --out v309-legacy/evidence/independent-latency-sweep.json \
+            | tee v309-legacy/evidence/latency-sweep-stdout.json
+          python3 research/v309/qv100_dram_buswidth_sweep.py --audit \
+            --folder v309-legacy/buswidth-configs \
+            --evidence v309-legacy/evidence \
+            --selection v309-legacy/selection.json \
+            --out v309-legacy/evidence/independent-buswidth-sweep.json \
+            | tee v309-legacy/evidence/buswidth-sweep-stdout.json
+          python3 research/v309/qv100_dram_buswidth_sweep.py --audit \
+            --folder v309-second/buswidth-configs \
+            --evidence v309-second/evidence \
+            --selection v309-second/selection.json \
+            --out v309-second/evidence/independent-buswidth-sweep.json \
+            | tee v309-legacy/evidence/second-buswidth-sweep-stdout.json
+      - name: Independent cross-workload counter-proxy falsification
+        run: |
+          set -euo pipefail
+          python3 research/v309/qv100_cross_workload_counter_falsification.py --selftest \
+            | tee v309-legacy/evidence/cross-workload-selftest.json
+          python3 research/v309/qv100_cross_workload_counter_falsification.py \
+            --first v309-legacy/evidence/independent-counter-audit.json \
+            --second v309-second/evidence/independent-counter-audit.json \
+            --out v309-legacy/evidence/cross-workload-counter-falsification.json \
+            | tee v309-legacy/evidence/cross-workload-counter-stdout.json
+      - name: Independent frozen two-workload bus-width transfer test
+        run: |
+          set -euo pipefail
+          python3 research/v309/qv100_buswidth_transfer.py \
+            --first-selection v309-legacy/selection.json \
+            --second-selection v309-second/selection.json \
+            --first-audit v309-legacy/evidence/independent-counter-audit.json \
+            --second-audit v309-second/evidence/independent-counter-audit.json \
+            --first-sweep v309-legacy/evidence/independent-buswidth-sweep.json \
+            --second-sweep v309-second/evidence/independent-buswidth-sweep.json \
+            --out v309-legacy/evidence/buswidth-transfer.json \
+            | tee v309-legacy/evidence/buswidth-transfer-stdout.json
+      - name: Falsify conditional smooth width-service law on independently accepted cycles
+        run: |
+          set -euo pipefail
+          python3 research/v309/qv100_width_boundary_falsification.py \
+            --transfer v309-legacy/evidence/buswidth-transfer.json \
+            --out v309-legacy/evidence/width-boundary-falsification.json \
+            | tee v309-legacy/evidence/width-boundary-stdout.json
+      - name: Preserve positive or negative evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-qv100-source-pinned-runtime-attempt
+          path: |
+            v309-legacy/selection.json
+            v309-second/selection.json
+            v309-second/evidence/
+            v309-second/buswidth-configs/
+            v309-legacy/latency-configs/
+            v309-legacy/buswidth-configs/
+            v309-legacy/evidence/
+          if-no-files-found: warn
+          retention-days: 30

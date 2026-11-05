@@ -1,0 +1,66 @@
+name: V309 format0 source-conditional full-sector-envelope audit
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/format0_sector_envelope.py
+      - research/v309/FORMAT0_SECTOR_ENVELOPE_PROTOCOL_20261030.md
+      - .github/workflows/v309-format0-sector-envelope.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  format0-envelope:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent exhaustive and forced-conservative oracles
+        run: |
+          set -euo pipefail
+          python3 research/v309/format0_sector_envelope.py --selftest
+      - name: Acquire authenticated bounded V100 archive
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Full-corpus source-conditional sector envelopes
+        run: |
+          set -euo pipefail
+          python3 research/v309/format0_sector_envelope.py /tmp/v309-v100-rodinia.tgz > v309-format0-sector-envelope.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('v309-format0-sector-envelope.json'))
+          g=p['global']
+          assert p['producer_identity_verified'] is False
+          assert g['global_proxy']==240465
+          assert g['format0_rows']==106728 and g['format1_rows']==133737
+          assert g['format0_predicate_hidden']==22504 and g['format0_old_exact']==84224
+          assert g['format0_hidden_exact_sector32']+g['format0_hidden_ambiguous_sector32']==22504
+          assert g['format0_sector_lower32']<=g['format0_sector_upper32']
+          assert g['sector_lower32']<=g['sector_upper32']
+          assert g['sector_lower32']==g['format0_sector_lower32']+g['format1_sector_lower32']
+          assert g['sector_upper32']==g['format0_sector_upper32']+g['format1_sector_upper32']
+          assert g['format0_enumerated_masks']<=2000000
+          print('SOURCE-CONDITIONAL GLOBAL',g)
+          for app,a in p['applications'].items():
+              print('APP',app,'FORMAT0_HIDDEN',a.get('format0_predicate_hidden',0),
+                    'FORMAT0_IDENTIFIED',a.get('format0_hidden_exact_sector32',0),
+                    'FULL_SECTOR_INTERVAL',a['sector_lower32'],a['sector_upper32'])
+          PY
+      - name: Preserve source-conditional evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-format0-sector-envelope
+          path: v309-format0-sector-envelope.json
+          if-no-files-found: warn

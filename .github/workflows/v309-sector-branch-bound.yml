@@ -1,0 +1,58 @@
+name: V309 independent branch-bound single-cap falsification
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/sector_branch_bound.py
+      - research/v309/sector_branch_bound_targeted_audit.py
+      - research/v309/BRANCH_BOUND_SINGLE_CAP_PROTOCOL_20261030.md
+      - .github/workflows/v309-sector-branch-bound.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  branch-bound:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent exhaustive and 32-lane oracle
+        run: |
+          set -euo pipefail
+          python3 research/v309/sector_branch_bound.py
+      - name: SHA-pinned bounded authentic V100 trace acquisition
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Replay prior corpus unchanged and attempt independent capped-row solve
+        run: |
+          set -euo pipefail
+          python3 research/v309/sector_branch_bound_targeted_audit.py /tmp/v309-v100-rodinia.tgz > v309-single-cap-evidence.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('v309-single-cap-evidence.json'))
+          assert r['status']=='PASS' and r['producer_identity_verified'] is False
+          assert r['trace_files']==210 and r['global_proxy_rows']==240465
+          assert r['baseline_conditional_interval']==[1586186,1595385]
+          assert len(r['cap_cases'])==1
+          a,b=r['alternative_conditional_interval']
+          assert 1586186<=a<=b<=1595385
+          print('SINGLE-CAP SOURCE-CONDITIONAL RESULT',r)
+          PY
+      - name: Preserve evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-branch-bound-single-cap-evidence
+          path: v309-single-cap-evidence.json
+          if-no-files-found: warn

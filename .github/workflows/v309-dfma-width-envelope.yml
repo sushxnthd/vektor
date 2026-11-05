@@ -1,0 +1,68 @@
+name: V309 DFMA 64-bit width and bank mapping falsification
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/dfma_width_envelope.py
+      - research/v309/audit_dfma_width_envelope.py
+      - research/v309/DFMA_WIDTH_MAPPING_PROTOCOL_20261030.md
+      - .github/workflows/v309-dfma-width-envelope.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dfma-width:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent selftests and adversarial mutations
+        run: |
+          set -euo pipefail
+          python3 research/v309/dfma_width_envelope.py --selftest
+          python3 research/v309/audit_dfma_width_envelope.py --selftest
+      - name: Retrieve authenticated V100 Rodinia SASS
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Complete opcode-width profile and independent redecoder
+        run: |
+          set -euo pipefail
+          python3 research/v309/dfma_width_envelope.py /tmp/v309-v100-rodinia.tgz > v309-dfma-width-profile.json
+          python3 research/v309/audit_dfma_width_envelope.py /tmp/v309-v100-rodinia.tgz v309-dfma-width-profile.json > v309-dfma-width-audit.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('v309-dfma-width-profile.json'))
+          a=json.load(open('v309-dfma-width-audit.json'))
+          g=d['global']
+          assert a['audit']=='PASS'
+          print('AUDIT',a)
+          print('GATE',d['gate'])
+          print('ACTIVE',g['active'],'DFMA',g['dfma'],'ODD_BASE',g['dfma_odd_base'])
+          print('PAIR_P1',g['dfma_paired_p1'],'RAW_P1',g['dfma_raw_p1'])
+          print('PAIR_P2',g['dfma_paired_p2'],'RAW_P2',g['dfma_raw_p2'])
+          print('MAP_DISAGREEMENT_P1',g['dfma_pair_mapping_disagreement'])
+          print('MAP_DISAGREEMENT_P2',g['dfma_raw_mapping_disagreement'])
+          for app,x in d['applications'].items():
+              print('APP',app,'ACTIVE',x['active'],'DFMA',x['dfma'],
+                    'PAIR_P1',x['dfma_paired_p1'],'RAW_P1',x['dfma_raw_p1'])
+          PY
+      - name: Preserve primary and independent evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-dfma-width-envelope
+          path: |
+            v309-dfma-width-profile.json
+            v309-dfma-width-audit.json
+          if-no-files-found: warn

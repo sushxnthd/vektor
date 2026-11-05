@@ -1,0 +1,31 @@
+name: V309 external PTX evidence gate
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - 'research/v309/**'
+      - '.github/workflows/v309-external-ptx.yml'
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent parser selftest and fail-closed mutants
+        run: python3 research/v309/ptx_operand_audit.py --selftest
+      - name: Pinned external compiler-generated PTX
+        run: python3 research/v309/ptx_operand_audit.py --selftest --external --output research/v309/ptx_external_results.json
+      - name: Independent provenance and arithmetic mutation audit
+        run: python3 research/v309/audit_results.py research/v309/ptx_external_results.json
+      - name: Preserve raw static evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-static-ptx-evidence
+          path: research/v309/ptx_external_results.json
+          if-no-files-found: warn

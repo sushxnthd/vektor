@@ -1,0 +1,63 @@
+name: V309 per-application pressure-transfer falsification
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/per_app_pressure_transfer.py
+      - research/v309/PER_APP_PRESSURE_TRANSFER_PROTOCOL_20261030.md
+      - .github/workflows/v309-per-app-pressure-transfer.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  per-app:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent synthetic time oracle and sign law
+        run: |
+          set -euo pipefail
+          python3 research/v309/per_app_pressure_transfer.py --selftest
+      - name: SHA-pinned authentic V100 Rodinia trace acquisition
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Per-app pressure-transfer and conservation experiment
+        run: |
+          set -euo pipefail
+          python3 research/v309/per_app_pressure_transfer.py /tmp/v309-v100-rodinia.tgz > v309-per-app-pressure-evidence.json
+          python3 - <<'PY'
+          import json
+          from fractions import Fraction as F
+          r=json.load(open('v309-per-app-pressure-evidence.json'))
+          assert r['status']=='PASS' and r['producer_identity_verified'] is False
+          assert r['hardware_mechanism_promoted'] is False
+          assert r['selftest']['independent_time_oracle_cases']==972
+          assert len(r['applications'])==11
+          assert sum(x['active_instructions'] for x in r['applications'].values())==3937565
+          assert r['source_conditional_global_sector_interval']==[1586186,1595385]
+          assert all(sum(c['per_app_counts'].values())==11 for c in r['contrasts'].values())
+          assert all(F(v['gain_interval'][0])<=F(v['gain_interval'][1])
+                     for a in r['applications'].values() for v in a['scenarios'].values())
+          print('PASS: 11-app conditional pressure model; no hardware mechanism promoted')
+          for key,v in r['contrasts'].items():
+              print(key,v)
+          PY
+      - name: Preserve full evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-per-app-pressure-transfer-evidence
+          path: v309-per-app-pressure-evidence.json
+          if-no-files-found: warn
