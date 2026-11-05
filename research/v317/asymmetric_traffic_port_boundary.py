@@ -61,8 +61,8 @@ def test():
     occupancy = regime("occupancy_erases_win", occupancy=Q(4,5))
     assert measure(win)["ratio"] == Q(975,900) > 1
     assert measure(no_win)["ratio"] == 1
-    assert measure(traffic)["ratio"] == 1
-    assert measure(port)["ratio"] == 1
+    assert measure(traffic)["ratio"] == Q(4,5)
+    assert measure(port)["ratio"] == Q(3,4)
     assert measure(control)["ratio"] < 1
     assert measure(occupancy)["ratio"] < 1
     # Monotonicity under candidate-only traffic, pressure, control and occupancy.
