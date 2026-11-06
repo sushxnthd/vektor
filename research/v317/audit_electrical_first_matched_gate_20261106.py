@@ -53,8 +53,11 @@ def compare(data):
     result["conditional_service_ratio"] = (
         cand["workload_service_per_cycle"] * cand["frequency_mhz"] /
         (base["workload_service_per_cycle"] * base["frequency_mhz"]))
+    if result["conditional_service_ratio"] <= 1.0:
+        result["reason"] = "no positive matched workload service advantage even under legal electrical assumptions"
+        return result
     result["status"] = "ELIGIBLE_FOR_FURTHER_AUDIT"
-    result["reason"] = "requires matched bandwidth, power, area, and wire/load checks"
+    result["reason"] = "conditional only: requires matched bandwidth, power, area, and wire/load checks"
     return result
 
 def selftest():
@@ -77,6 +80,15 @@ def selftest():
     assert compare(dict(baseline=b2, candidate=c2))["status"] == "NO_POSITIVE_PHYSICAL_CLAIM"
     b2["workload_service_per_cycle"] = c2["workload_service_per_cycle"] = 1
     assert compare(dict(baseline=b2, candidate=c2))["status"] == "ELIGIBLE_FOR_FURTHER_AUDIT"
+    # Falsification: a slower electrically legal candidate must not be eligible.
+    c3 = {**c2, "workload_service_per_cycle": 0.5}
+    slower = compare(dict(baseline=b2, candidate=c3))
+    assert slower["conditional_service_ratio"] < 1
+    assert slower["status"] == "NO_POSITIVE_PHYSICAL_CLAIM"
+    equal = compare(dict(baseline=b2, candidate={**c2, "workload_service_per_cycle": b2["frequency_mhz"] / c2["frequency_mhz"]}))
+    assert abs(equal["conditional_service_ratio"] - 1) < 1e-12
+    # Floating-point rounding at exact parity cannot be accepted as a physical win.
+    assert equal["conditional_service_ratio"] <= 1 + 1e-12
     try:
         compare(dict(baseline={**b2, "area_um2": float("nan")}, candidate=c2))
     except ValueError:
