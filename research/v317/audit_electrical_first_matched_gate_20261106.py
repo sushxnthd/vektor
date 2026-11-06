@@ -53,7 +53,7 @@ def compare(data):
     result["conditional_service_ratio"] = (
         cand["workload_service_per_cycle"] * cand["frequency_mhz"] /
         (base["workload_service_per_cycle"] * base["frequency_mhz"]))
-    if result["conditional_service_ratio"] <= 1.0:
+    if result["conditional_service_ratio"] <= 1.0 + 1e-12:
         result["reason"] = "no positive matched workload service advantage even under legal electrical assumptions"
         return result
     result["status"] = "ELIGIBLE_FOR_FURTHER_AUDIT"
@@ -88,7 +88,10 @@ def selftest():
     equal = compare(dict(baseline=b2, candidate={**c2, "workload_service_per_cycle": b2["frequency_mhz"] / c2["frequency_mhz"]}))
     assert abs(equal["conditional_service_ratio"] - 1) < 1e-12
     # Floating-point rounding at exact parity cannot be accepted as a physical win.
-    assert equal["conditional_service_ratio"] <= 1 + 1e-12
+    assert equal["status"] == "NO_POSITIVE_PHYSICAL_CLAIM"
+    # A sub-picopercent numerical advantage is not a defensible performance win.
+    near = compare(dict(baseline=b2, candidate={**c2, "workload_service_per_cycle": (b2["frequency_mhz"] / c2["frequency_mhz"]) * (1 + 5e-13)}))
+    assert near["status"] == "NO_POSITIVE_PHYSICAL_CLAIM"
     try:
         compare(dict(baseline={**b2, "area_um2": float("nan")}, candidate=c2))
     except ValueError:
