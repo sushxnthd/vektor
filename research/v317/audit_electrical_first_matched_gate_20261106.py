@@ -74,7 +74,8 @@ def selftest():
     c = dict(area_um2=21533.0, frequency_mhz=454.59,
              setup_wns_ns=.8002, hold_wns_ns=-.00419,
              hold_violations=12, max_cap_violations=13,
-             max_slew_violations=0, max_fanout_violations=0)
+             max_slew_violations=0, max_fanout_violations=0,
+             drc_violations=0, route_completed=True, extracted_rc_completed=True)
     x = compare(dict(baseline=b, candidate=c))
     assert not x["baseline_electrically_legal"] and not x["candidate_electrically_legal"]
     assert x["status"] == "NO_POSITIVE_PHYSICAL_CLAIM"
