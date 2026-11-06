@@ -4,7 +4,7 @@
 Input is a JSON object with 'baseline' and 'candidate' records, each with:
 area_um2, frequency_mhz, setup_wns_ns, hold_wns_ns,
 hold_violations, max_cap_violations, max_slew_violations,
-max_fanout_violations, and optionally workload_service_per_cycle.
+max_fanout_violations, drc_violations, route_completed, extracted_rc_completed,\nand optionally workload_service_per_cycle.
 The gate refuses to convert illegal physical estimates into a positive win.
 No GPU IPC or signoff is implied by the archived examples.
 """
@@ -15,7 +15,7 @@ from pathlib import Path
 
 REQUIRED = ("area_um2", "frequency_mhz", "setup_wns_ns",
             "hold_wns_ns", "hold_violations", "max_cap_violations",
-            "max_slew_violations", "max_fanout_violations")
+            "max_slew_violations", "max_fanout_violations", "drc_violations")
 
 def validate(record):
     for key in REQUIRED:
@@ -29,7 +29,7 @@ def validate(record):
     for key in REQUIRED[4:]:
         if int(record[key]) != record[key] or record[key] < 0:
             raise ValueError("invalid violation count: " + key)
-    return (record["setup_wns_ns"] >= 0 and record["hold_wns_ns"] >= 0
+    for key in ("route_completed", "extracted_rc_completed"):\n        if type(record.get(key)) is not bool:\n            raise ValueError("missing or invalid route provenance: " + key)\n    return (record["route_completed"] and record["extracted_rc_completed"]\n            and record["setup_wns_ns"] >= 0 and record["hold_wns_ns"] >= 0
             and all(record[key] == 0 for key in REQUIRED[4:]))
 
 def compare(data):
@@ -64,7 +64,7 @@ def selftest():
     b = dict(area_um2=21389.1, frequency_mhz=446.10,
              setup_wns_ns=.7583, hold_wns_ns=.00245,
              hold_violations=0, max_cap_violations=10,
-             max_slew_violations=0, max_fanout_violations=0)
+             max_slew_violations=0, max_fanout_violations=0,\n             drc_violations=0, route_completed=True, extracted_rc_completed=True)
     c = dict(area_um2=21533.0, frequency_mhz=454.59,
              setup_wns_ns=.8002, hold_wns_ns=-.00419,
              hold_violations=12, max_cap_violations=13,
