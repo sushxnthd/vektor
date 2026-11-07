@@ -52,7 +52,7 @@ def assess(data):
     a, b = data["candidate"], data["baseline"]
     _validate("candidate", a)
     _validate("baseline", b)
-    mismatches = [k for k in MATCHED if a[k] != b[k]]
+    # Identical labels do not imply identical SDC files: require byte-identical\n    # constraints, otherwise period/area comparisons are not matched.\n    mismatches = [k for k in MATCHED if a[k] != b[k]]\n    if a["constraints_sha256"] != b["constraints_sha256"]:\n        mismatches.append("constraints_sha256")
     if mismatches:
         raise ValueError("unmatched physical comparison: " + ", ".join(mismatches))
     legal = all(d["setup_wns_ns"] >= 0 and d["hold_wns_ns"] >= 0
@@ -95,7 +95,7 @@ def self_test():
             pass
         else:
             raise AssertionError("missing evidence accepted: " + k)
-    bad = dict(candidate, corner="different")
+    bad = dict(candidate, constraints_sha256="b"*64)\n    try:\n        assess(dict(candidate=bad, baseline=base))\n    except ValueError:\n        pass\n    else:\n        raise AssertionError("different SDC digests accepted despite matching labels")\n    bad = dict(candidate, corner="different")
     try:
         assess(dict(candidate=bad, baseline=base))
     except ValueError:
