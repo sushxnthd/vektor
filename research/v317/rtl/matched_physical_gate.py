@@ -10,7 +10,7 @@ import math
 import sys
 
 POSITIVE = ("area_um2", "period_ns", "useful_service_per_cycle",
-            "useful_fraction", "dynamic_power_mw")
+            "useful_fraction", "dynamic_power_mw", "leakage_power_mw")
 NONNEGATIVE = ("setup_wns_ns", "hold_wns_ns")
 VIOLATIONS = ("setup_violations", "hold_violations", "max_cap_violations",
               "max_transition_violations")
@@ -64,18 +64,22 @@ def assess(data):
     throughput = lambda d: d["useful_service_per_cycle"] * d["useful_fraction"] / d["period_ns"]
     gain = throughput(a) / throughput(b) - 1
     area_ratio = a["area_um2"] / b["area_um2"]
-    energy_ratio = (a["dynamic_power_mw"] / throughput(a)) / (b["dynamic_power_mw"] / throughput(b))
+    # Dynamic-only energy can reverse after leakage is included. Require both.
+    total_power = lambda d: d["dynamic_power_mw"] + d["leakage_power_mw"]
+    energy_ratio = (total_power(a) / throughput(a)) / (total_power(b) / throughput(b))
+    dynamic_energy_ratio = (a["dynamic_power_mw"] / throughput(a)) / (b["dynamic_power_mw"] / throughput(b))
     min_gain = data.get("min_gain", 0)
     if isinstance(min_gain, bool) or not isinstance(min_gain, (int, float)) or not math.isfinite(min_gain) or min_gain < 0:
         raise ValueError("min_gain must be finite and nonnegative")
     return {"electrically_legal": legal, "throughput_gain": gain,
             "area_ratio": area_ratio, "energy_per_service_ratio": energy_ratio,
+            "dynamic_energy_per_service_ratio": dynamic_energy_ratio,
             "passes": bool(legal and gain > min_gain and area_ratio <= 1 and energy_ratio <= 1),
             "evidence_tier": "supplied_measurements_only"}
 
 def self_test():
     d = dict(area_um2=100, period_ns=3, useful_service_per_cycle=2,
-             useful_fraction=1, dynamic_power_mw=10,
+             useful_fraction=1, dynamic_power_mw=10, leakage_power_mw=1,
              setup_wns_ns=0.1, hold_wns_ns=0.1,
              setup_violations=0, hold_violations=0, max_cap_violations=0,
              max_transition_violations=0,
@@ -90,7 +94,13 @@ def self_test():
                  ("max_cap_violations", 1), ("max_transition_violations", 1)):
         bad = dict(candidate, **{k: v})
         assert not assess(dict(candidate=bad, baseline=base))["passes"], k
-    for k in ("setup_wns_ns", "parasitics_sha256", "workload_report_sha256"):
+    # Synthetic reversal: dynamic-only passes, but added candidate leakage fails.
+    leaky = dict(candidate, dynamic_power_mw=8, leakage_power_mw=8)
+    leak_result = assess(dict(candidate=leaky, baseline=base))
+    assert leak_result["dynamic_energy_per_service_ratio"] < 1
+    assert leak_result["energy_per_service_ratio"] > 1
+    assert not leak_result["passes"]
+    for k in ("setup_wns_ns", "parasitics_sha256", "workload_report_sha256", "leakage_power_mw"):
         bad = dict(candidate)
         bad.pop(k)
         try:
