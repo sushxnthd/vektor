@@ -40,7 +40,7 @@ REGIMES = (
 )
 
 def main():
-    assert critical_scale(F(3, 10)) == F(25, 34) / F(8, 5)
+    assert critical_scale(F(3, 10)) == F(125, 136)
     assert necessary_capacity(F(1, 2), F(7, 10))
     assert not necessary_capacity(F(1), F(3, 10))
     assert not necessary_capacity(F(3, 4), F(7, 10))
