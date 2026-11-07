@@ -1,0 +1,52 @@
+name: V317 independent routed-artifact reproduction
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - '.github/workflows/v317-rf-routed-artifact-audit.yml'
+      - 'research/v317/rtl/audit_registered_route_artifact.py'
+      - 'research/v317/RF_REGISTERED_OPENROAD_ROUTED_RESULT_20261101.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  independent-raw-zip-audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download exact source-pinned physical route artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/raw_route
+          gh run download 41335740201 -R sushxnthd/vektor -n v317-matched-registered-nangate45-route -D build/v317/raw_route
+          test -s build/v317/raw_route/source_35/reports/nangate45/vektor_v317_rf_physical_top_source/base/6_finish.rpt
+          test -s build/v317/raw_route/pairwise_35/reports/nangate45/vektor_v317_rf_physical_top_pairwise/base/6_finish.rpt
+          (cd build/v317/raw_route && zip -qr /tmp/v317-registered-route-raw.zip .)
+      - name: Independently audit electrical checks and frozen comparisons
+        run: |
+          set -euo pipefail
+          python3 research/v317/rtl/audit_registered_route_artifact.py /tmp/v317-registered-route-raw.zip | tee build/v317/independent_route_audit.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('build/v317/independent_route_audit.json'))
+          a,b=d['rows']['source_35'],d['rows']['pairwise_35']
+          assert d['matched_35_setup_hold_and_drc_pass']
+          assert d['frozen_35_pairwise_area_win']
+          assert a['cell_area_um2']==1316 and b['cell_area_um2']==583
+          assert a['last_detailed_route_drc_count']==b['last_detailed_route_drc_count']==0
+          assert d['rows']['source_65']['floorplan_density_error']
+          assert d['rows']['pairwise_65']['timing_and_drc_pass']
+          assert not d['full_electrical_signoff']
+          assert not d['integrated_gpu_throughput_measured']
+          print('PASS: independently reproduced frozen routed-area/electrical/negative-control evidence')
+          PY
+      - name: Preserve independent audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-independent-routed-physical-audit
+          path: build/v317/independent_route_audit.json

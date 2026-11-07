@@ -1,0 +1,90 @@
+name: v317 matched electrical output-buffer repair
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - '.github/workflows/v317-rf-buffer-repair.yml'
+      - 'research/v317/rtl/rf_buffer_repair.py'
+      - 'research/v317/rtl/test_rf_buffer_repair.py'
+      - 'research/v317/rtl/run_rf_sta.tcl'
+      - 'research/v317/rtl/audit_rf_sta.py'
+      - 'research/v317/rtl/rf_bank_pairwise_credit.sv'
+      - 'rtl/vtile/rf_bank_arbiter.sv'
+  workflow_dispatch:
+jobs:
+  matched-electrical-repair:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install no-cost Yosys and OpenSTA
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys opensta
+          yosys -V
+          sta -version || true
+      - name: Pin Nangate45 standard-cell Liberty
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/rf_buffer_repair
+          lib=build/v317/rf_buffer_repair/NangateOpenCellLibrary_typical.lib
+          curl -fL --retry 3 --retry-delay 2 --connect-timeout 20 -o "$lib" "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/202c7fccbce32e86db899c54b0a0f0484f869cc3/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib"
+          test "$(git hash-object "$lib")" = '90e4afb274cfc6514c587c434c77903d554117d1'
+      - name: Independent buffer generation and parser tests
+        run: |
+          python -m unittest research.v317.rtl.test_rf_buffer_repair research.v317.rtl.test_audit_rf_sta -v
+          python -m research.v317.rtl.rf_buffer_repair generate build/v317/rf_buffer_repair
+      - name: Synthesize both unchanged cores under matched conditions
+        run: |
+          set -euo pipefail
+          d=build/v317/rf_buffer_repair
+          lib="$d/NangateOpenCellLibrary_typical.lib"
+          while IFS='|' read -r label top sources; do
+            yosys -p "read_liberty -lib -ignore_miss_func $lib; read_verilog -sv $sources; synth -flatten -top $top -noabc; dfflibmap -liberty $lib; abc -liberty $lib; clean; stat -liberty $lib; write_verilog -noattr -noexpr $d/$label.v" > "$d/$label.yosys.log" 2>&1
+            test -s "$d/$label.v"
+          done <<'CONFIGS'
+          source_fixed|vektor_rf_bank_arbiter|rtl/vtile/rf_bank_arbiter.sv
+          pairwise_fixed|vektor_v317_rf_pairwise|research/v317/rtl/rf_bank_pairwise_credit.sv
+          CONFIGS
+      - name: Sweep equal buffer strengths and output loads
+        run: |
+          set -euo pipefail
+          d=build/v317/rf_buffer_repair
+          lib="$d/NangateOpenCellLibrary_typical.lib"
+          for load in 10 24 30 60 100; do
+            for drive in none x1 x2 x4 x8 x16; do
+              for label in source_fixed pairwise_fixed; do
+                case "$label" in
+                  source_fixed) original=vektor_rf_bank_arbiter ;;
+                  pairwise_fixed) original=vektor_v317_rf_pairwise ;;
+                esac
+                if [ "$drive" = none ]; then
+                  top="$original"
+                  wrapper=""
+                else
+                  top="v317_buf_${label}_${drive}"
+                  wrapper="$d/${label}_${drive}.sv"
+                fi
+                STA_LIBERTY="$lib" STA_NETLIST="$d/$label.v" STA_WRAPPER="$wrapper" STA_TOP="$top" STA_LOAD="$load" sta -exit research/v317/rtl/run_rf_sta.tcl > "$d/${label}_${drive}_${load}.log" 2>&1
+                test -s "$d/${label}_${drive}_${load}.log"
+              done
+            done
+          done
+      - name: Audit all 60 matched timing/electrical cases and score frozen predictions
+        run: |
+          set -euo pipefail
+          d=build/v317/rf_buffer_repair
+          python -m research.v317.rtl.rf_buffer_repair audit "$d" "$d/NangateOpenCellLibrary_typical.lib" | tee "$d/independent_audit.json"
+      - name: Preserve provenance even on failed hypothesis or CI
+        if: always()
+        run: |
+          mkdir -p build/v317/rf_buffer_repair
+          git rev-parse HEAD > build/v317/rf_buffer_repair/source_sha.txt
+          git status --short > build/v317/rf_buffer_repair/source_status.txt
+      - name: Upload complete mapped cores, wrappers, raw STA and JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-matched-buffer-repair
+          path: build/v317/rf_buffer_repair/

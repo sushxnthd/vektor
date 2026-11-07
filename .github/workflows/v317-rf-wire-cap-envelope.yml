@@ -1,0 +1,62 @@
+name: v317 prospective adversarial wire-capacitance boundary
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - '.github/workflows/v317-rf-wire-cap-envelope.yml'
+      - 'research/v317/rtl/rf_wire_cap_envelope.py'
+      - 'research/v317/rtl/test_rf_wire_cap_envelope.py'
+      - 'research/v317/rtl/audit_rf_max_cap.py'
+      - 'research/v317/FROZEN_RF_UNIFORM_WIRE_CAP_BOUNDARY_20261101.md'
+  workflow_dispatch:
+jobs:
+  wire-cap-envelope:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install matched Yosys
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys
+          yosys -V
+      - name: Pin characterized Nangate45 Liberty
+        run: |
+          set -euo pipefail
+          d=build/v317/rf_wire_cap
+          mkdir -p "$d"
+          curl -fL --retry 3 --retry-delay 2 --connect-timeout 20 -o "$d/NangateOpenCellLibrary_typical.lib" "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/202c7fccbce32e86db899c54b0a0f0484f869cc3/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib"
+          test "$(git hash-object "$d/NangateOpenCellLibrary_typical.lib")" = '90e4afb274cfc6514c587c434c77903d554117d1'
+      - name: Independent unit tests
+        run: |
+          python3 -m unittest research.v317.rtl.test_rf_wire_cap_envelope research.v317.rtl.test_audit_rf_max_cap -v
+      - name: Synthesize matched original and pairwise fixed priority
+        run: |
+          set -euo pipefail
+          d=build/v317/rf_wire_cap
+          lib="$d/NangateOpenCellLibrary_typical.lib"
+          while IFS='|' read -r label top sources; do
+            yosys -p "read_liberty -lib -ignore_miss_func $lib; read_verilog -sv $sources; synth -flatten -top $top -noabc; dfflibmap -liberty $lib; abc -liberty $lib; clean; stat -liberty $lib; write_verilog -noattr -noexpr $d/$label.v" > "$d/$label.yosys.log" 2>&1
+            test -s "$d/$label.v"
+          done <<'CONFIGS'
+          source_fixed|vektor_rf_bank_arbiter|rtl/vtile/rf_bank_arbiter.sv
+          pairwise_fixed|vektor_v317_rf_pairwise|research/v317/rtl/rf_bank_pairwise_credit.sv
+          CONFIGS
+      - name: Measure and enforce frozen win and no-win regimes
+        run: |
+          set -euo pipefail
+          d=build/v317/rf_wire_cap
+          python3 -m research.v317.rtl.rf_wire_cap_envelope "$d/NangateOpenCellLibrary_typical.lib" "$d/source_fixed.v" "$d/pairwise_fixed.v" | tee "$d/wire_cap_envelope.json"
+      - name: Preserve source SHA
+        if: always()
+        run: |
+          mkdir -p build/v317/rf_wire_cap
+          git rev-parse HEAD > build/v317/rf_wire_cap/source_sha.txt
+          git status --short > build/v317/rf_wire_cap/source_status.txt
+      - name: Preserve raw positive and negative evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-adversarial-wire-cap-envelope
+          path: build/v317/rf_wire_cap/

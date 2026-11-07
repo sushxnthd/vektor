@@ -1,0 +1,28 @@
+name: v317 mapped arbiter equal-resource frontier audit
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - '.github/workflows/v317-rf-mapped-frontier.yml'
+      - 'research/v317/rtl/audit_rf_mapped_frontier.py'
+      - 'research/v317/rtl/hosted_mapped_audit_snapshot_20261101.json'
+  workflow_dispatch:
+jobs:
+  independent-frontier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source-pinned mapped-area and clock boundary
+        run: |
+          set -euo pipefail
+          python -m py_compile research/v317/rtl/audit_rf_mapped_frontier.py
+          python research/v317/rtl/audit_rf_mapped_frontier.py research/v317/rtl/hosted_mapped_audit_snapshot_20261101.json --check | tee frontier_result.json
+          python -m json.tool frontier_result.json >/dev/null
+      - name: Preserve independent audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-mapped-frontier-independent
+          path: frontier_result.json
+          if-no-files-found: warn

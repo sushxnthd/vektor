@@ -1,0 +1,46 @@
+name: v317 two-cycle opportunity ceiling independent audit
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - 'research/v317/rtl/two_cycle_clairvoyant_ceiling.py'
+      - 'research/v317/rtl/audit_two_cycle_clairvoyant_ceiling.py'
+      - 'research/v317/FROZEN_TWO_CYCLE_CLAIRVOYANT_CEILING_20261103.md'
+      - 'research/v317/evidence/two_cycle_clairvoyant_ceiling_20261103.json'
+      - '.github/workflows/v317-two-cycle-ceiling.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate exhaustive and frozen holdout results
+        run: |
+          python3 research/v317/rtl/two_cycle_clairvoyant_ceiling.py > /tmp/v317-ceiling.json
+      - name: Independently replay all vectors
+        run: |
+          python3 research/v317/rtl/audit_two_cycle_clairvoyant_ceiling.py /tmp/v317-ceiling.json
+      - name: Compare exact frozen raw result
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          actual=json.loads(Path('/tmp/v317-ceiling.json').read_text())
+          frozen=json.loads(Path('research/v317/evidence/two_cycle_clairvoyant_ceiling_20261103.json').read_text())
+          assert actual == frozen, 'Frozen evidence drift'
+          assert all(actual['predictions'].values()), 'Prospective hypothesis failed'
+          print('PASS: independent checker, frozen evidence, prospective predictions')
+          PY
+      - name: Preserve reproducibility output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-two-cycle-ceiling
+          path: /tmp/v317-ceiling.json
+          if-no-files-found: warn

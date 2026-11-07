@@ -1,0 +1,23 @@
+{
+  "provenance": {
+    "workflow_run": 41296883857,
+    "source_sha": "0d62a15fd0c1046374f287a6c683333297e6139d",
+    "artifact_id": 13079606499,
+    "liberty": "NangateOpenCellLibrary_typical.lib",
+    "liberty_git_blob": "90e4afb274cfc6514c587c434c77903d554117d1"
+  },
+  "configurations": {
+    "source_fixed": {"mapped_cell_area_um2": 798.798, "flop_count": 0, "max_net_sink_fanout": 67, "fanout_weighted_logic_depth_proxy": {"0.0": 19.0, "0.05": 22.3, "0.2": 32.2, "0.5": 52.0}},
+    "pairwise_fixed": {"mapped_cell_area_um2": 259.616, "flop_count": 0, "max_net_sink_fanout": 12, "fanout_weighted_logic_depth_proxy": {"0.0": 9.0, "0.05": 9.75, "0.2": 12.0, "0.5": 16.5}},
+    "source_rotating": {"mapped_cell_area_um2": 997.234, "flop_count": 2, "max_net_sink_fanout": 49, "fanout_weighted_logic_depth_proxy": {"0.0": 22.0, "0.05": 29.0, "0.2": 50.0, "0.5": 92.0}},
+    "pairwise_rotating": {"mapped_cell_area_um2": 445.018, "flop_count": 2, "max_net_sink_fanout": 36, "fanout_weighted_logic_depth_proxy": {"0.0": 12.0, "0.05": 15.65, "0.2": 26.6, "0.5": 48.5}}
+  },
+  "workload": {
+    "regime": "stressed_synthetic_p060",
+    "fixed_completions": 60899,
+    "rotating_completions": 64784,
+    "oldest_first_completions": 64774,
+    "source": "research/v317/RF_ROTATING_HOSTED_GENERIC_PPA_AND_TRANSFER_20261101.md",
+    "note": "Prior synthetic queue-service experiment, not GPU IPC"
+  }
+}

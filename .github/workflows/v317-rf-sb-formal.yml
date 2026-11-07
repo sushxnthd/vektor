@@ -1,0 +1,62 @@
+name: v317 parameterized full-input bank-credit formal equivalence
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - '.github/workflows/v317-rf-sb-formal.yml'
+      - 'research/v317/rtl/rf_bank_sb_scaling.sv'
+  workflow_dispatch:
+jobs:
+  parameterized-formal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free formal RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys
+      - name: Prove frozen three-point full-input equivalence
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/rf_sb_formal
+          failures=0
+          for config in 2:8 3:8 4:16; do
+            S="${config%%:*}"
+            B="${config##*:}"
+            prefix="S${S}_B${B}"
+            cat > "build/v317/rf_sb_formal/${prefix}.ys" <<EOF
+          read_verilog -sv research/v317/rtl/rf_bank_sb_scaling.sv
+          chparam -set S ${S} -set B ${B} v317_bankmask_param
+          chparam -set S ${S} -set B ${B} v317_pairwise_param
+          proc
+          opt
+          equiv_make v317_bankmask_param v317_pairwise_param v317_sb_equiv
+          hierarchy -top v317_sb_equiv
+          equiv_simple
+          equiv_status -assert
+          EOF
+            echo "FROZEN_FORMAL_START S=${S} B=${B}"
+            if timeout 240s yosys -s "build/v317/rf_sb_formal/${prefix}.ys" 2>&1 | tee "build/v317/rf_sb_formal/${prefix}.log"; then
+              echo "PASS_FULL_INPUT_EQUIVALENCE S=${S} B=${B}" | tee "build/v317/rf_sb_formal/${prefix}.status"
+            else
+              code=${PIPESTATUS[0]}
+              echo "UNPROVEN_OR_FAILED S=${S} B=${B} exit=${code}" | tee "build/v317/rf_sb_formal/${prefix}.status"
+              failures=$((failures+1))
+            fi
+          done
+          echo "failed_configurations=${failures}" | tee build/v317/rf_sb_formal/summary.txt
+          test "${failures}" -eq 0
+      - name: Preserve source and tool version
+        if: always()
+        run: |
+          mkdir -p build/v317/rf_sb_formal
+          git rev-parse HEAD > build/v317/rf_sb_formal/commit.txt
+          yosys -V > build/v317/rf_sb_formal/yosys_version.txt || true
+      - name: Preserve positive and negative proof evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-rf-sb-parameterized-formal
+          path: build/v317/rf_sb_formal/

@@ -1,0 +1,66 @@
+name: V317 matched electrical headroom challenge
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - '.github/workflows/v317-electrical-headroom-challenge.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  matched-headroom:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install RTL simulator and check three-way equivalence
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog
+          mkdir -p build/v317/electrical_headroom
+          git rev-parse HEAD | tee build/v317/electrical_headroom/source_sha.txt
+          iverilog -g2012 -s tb_rf_proxy_compact_challenger -o build/v317/electrical_headroom/tb \
+            rtl/vtile/steal_warp_scheduler.sv rtl/vtile/issue_control.sv \
+            rtl/vtile/rf_bank_arbiter.sv research/v317/rtl/rf_bank_pairwise_credit.sv \
+            research/v317/rtl/rf_integrated_issue_top.sv \
+            research/v317/rtl/rf_proxy_banked_tile.sv \
+            research/v317/rtl/compact_greedy_equal_policy.sv \
+            research/v317/rtl/rf_proxy_compact_challenger.sv \
+            research/v317/rtl/tb_rf_proxy_compact_challenger.sv
+          vvp build/v317/electrical_headroom/tb | tee build/v317/electrical_headroom/rtl.log
+          grep -q 'PASS V317 compact challenger cycles=4096' build/v317/electrical_headroom/rtl.log
+      - name: Route equal-resource compact and pairwise with relaxed wire geometry
+        shell: bash
+        run: |
+          set +e
+          set -uo pipefail
+          image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
+          docker pull "$image" || exit 1
+          failed=0
+          for variant in compact pairwise; do
+            name="vektor_v317_rf_proxy_top_${variant}"
+            dest="build/v317/electrical_headroom/rf_proxy_${variant}"
+            for dir in results logs reports objects; do
+              mkdir -p "${dest}/${dir}/nangate45/${name}/base"
+            done
+            printf 'variant=%s die=300x300 core=10..290 density_addon=0.20\n' "$variant" > "${dest}/status.txt"
+            docker run --rm -v "$PWD:/work/vektor" -e VEKTOR_ROOT=/work/vektor \
+              -w /OpenROAD-flow-scripts/flow "$image" bash -lc \
+              "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_proxy_compact_challenger.mk DESIGN_NAME=${name} DIE_AREA='0 0 300 300' CORE_AREA='10 10 290 290' FLOW_VARIANT=base PLACE_DENSITY_LB_ADDON=0.20 WORK_HOME=/work/vektor/${dest} -j1" \
+              > "${dest}/make.log" 2>&1
+            rc=$?
+            printf 'exit_code=%s\n' "$rc" >> "${dest}/status.txt"
+            if [ "$rc" -ne 0 ]; then failed=1; tail -n 70 "${dest}/make.log" || true; fi
+          done
+          exit "$failed"
+      - name: Preserve full physical reports including negative results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-matched-electrical-headroom
+          path: build/v317/electrical_headroom/
+          retention-days: 30
+          if-no-files-found: warn

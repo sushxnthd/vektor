@@ -1,0 +1,39 @@
+name: v317 two-cycle queue identity independent audit
+on:
+  push:
+    paths:
+      - 'research/v317/FROZEN_TWO_CYCLE_QUEUE_IDENTITY_20261103.md'
+      - 'research/v317/TWO_CYCLE_QUEUE_IDENTITY_FALSIFICATION_20261103.md'
+      - 'research/v317/rtl/two_cycle_queue_identity.py'
+      - 'research/v317/rtl/audit_two_cycle_queue_identity.py'
+      - '.github/workflows/v317-two-cycle-queue-identity.yml'
+  workflow_dispatch:
+
+jobs:
+  two-cycle-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reproduce frozen prospective holdout
+        run: |
+          mkdir -p build/v317-two-cycle
+          python3 research/v317/rtl/two_cycle_queue_identity.py > build/v317-two-cycle/result.json
+      - name: Independently replay and check exact residual law
+        run: |
+          python3 research/v317/rtl/audit_two_cycle_queue_identity.py build/v317-two-cycle/result.json > build/v317-two-cycle/independent_audit.json
+          python3 - <<'PY'
+          import json
+          result=json.load(open('build/v317-two-cycle/result.json'))
+          audit=json.load(open('build/v317-two-cycle/independent_audit.json'))
+          assert all(result['frozen_predictions'].values())
+          assert audit['status']=='PASS'
+          assert audit['independent_replays']==126561
+          print('PASS', result['prospective_ratio'], audit['independent_replays'])
+          PY
+      - name: Preserve complete evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-two-cycle-queue-identity
+          path: build/v317-two-cycle/
