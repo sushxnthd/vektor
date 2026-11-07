@@ -76,7 +76,12 @@ def assess(data):
     # Dynamic-only energy can reverse after leakage is included. Require both.
     total_power = lambda d: d["dynamic_power_mw"] + d["leakage_power_mw"]
     energy_ratio = (total_power(a) / throughput(a)) / (total_power(b) / throughput(b))
-    dynamic_energy_ratio = (a["dynamic_power_mw"] / throughput(a)) / (b["dynamic_power_mw"] / throughput(b))
+    # A zero-dynamic-power baseline has no defined dynamic-energy ratio.
+    # Report null rather than crashing or treating zero/zero as evidence.
+    dynamic_energy_ratio = (
+        (a["dynamic_power_mw"] / throughput(a)) / (b["dynamic_power_mw"] / throughput(b))
+        if b["dynamic_power_mw"] > 0 else None
+    )
     min_gain = data.get("min_gain", 0)
     if isinstance(min_gain, bool) or not isinstance(min_gain, (int, float)) or not math.isfinite(min_gain) or min_gain < 0:
         raise ValueError("min_gain must be finite and nonnegative")
@@ -114,6 +119,12 @@ def self_test():
     assert assess(dict(candidate=zero_leak, baseline=base))["passes"]
     zero_dynamic = dict(candidate, dynamic_power_mw=0)
     assert assess(dict(candidate=zero_dynamic, baseline=base))["passes"]
+    # A zero-dynamic baseline must not cause division by zero or invent a ratio.
+    base_zero_dynamic = dict(base, dynamic_power_mw=0)
+    result_zero_baseline = assess(dict(candidate=zero_dynamic, baseline=base_zero_dynamic))
+    assert result_zero_baseline["dynamic_energy_per_service_ratio"] is None
+    assert result_zero_baseline["energy_per_service_ratio"] > 0
+    assert result_zero_baseline["passes"]
     for k in POWER:
         for v in (-0.01, float("nan"), float("inf"), True):
             try:
