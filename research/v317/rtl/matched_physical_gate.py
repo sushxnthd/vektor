@@ -107,8 +107,15 @@ def self_test():
              **{k: "a"*64 for k in PROVENANCE},
              **{k: "matched" for k in MATCHED})
     base = dict(d)
-    candidate = dict(d, period_ns=2.9, netlist_sha256="b"*64,\n                     parasitics_sha256="c"*64, sta_report_sha256="d"*64)
-    packet = dict(candidate=candidate, baseline=base)\n    try:\n        assess(dict(candidate=dict(d, period_ns=2.9), baseline=base))\n    except ValueError as exc:\n        assert "identical physical evidence" in str(exc)\n    else:\n        raise AssertionError("fabricated period improvement accepted")
+    candidate = dict(d, period_ns=2.9, netlist_sha256="b"*64,
+                     parasitics_sha256="c"*64, sta_report_sha256="d"*64)
+    packet = dict(candidate=candidate, baseline=base)
+    try:
+        assess(dict(candidate=dict(d, period_ns=2.9), baseline=base))
+    except ValueError as exc:
+        assert "identical physical evidence" in str(exc)
+    else:
+        raise AssertionError("fabricated period improvement accepted")
     assert assess(packet)["passes"]
     for k, v in (("setup_wns_ns", -0.01), ("hold_wns_ns", -0.01),
                  ("setup_violations", 1), ("hold_violations", 1),
