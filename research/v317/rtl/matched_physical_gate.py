@@ -68,6 +68,13 @@ def assess(data):
         mismatches.append("constraints_sha256")
     if mismatches:
         raise ValueError("unmatched physical comparison: " + ", ".join(mismatches))
+    # A changed clock period cannot be certified from byte-identical physical
+    # inputs and STA output. Reject the inconsistent measurement packet before
+    # computing any performance gain. Different digests remain unverified.
+    physical_keys = ("netlist_sha256", "constraints_sha256",
+                     "parasitics_sha256", "sta_report_sha256")
+    if a["period_ns"] != b["period_ns"] and all(a[k] == b[k] for k in physical_keys):
+        raise ValueError("clock period changed with identical physical evidence")
     legal = all(d["setup_wns_ns"] >= 0 and d["hold_wns_ns"] >= 0
                 and all(d[k] == 0 for k in VIOLATIONS) for d in (a, b))
     throughput = lambda d: d["useful_service_per_cycle"] * d["useful_fraction"] / d["period_ns"]
@@ -100,8 +107,8 @@ def self_test():
              **{k: "a"*64 for k in PROVENANCE},
              **{k: "matched" for k in MATCHED})
     base = dict(d)
-    candidate = dict(d, period_ns=2.9)
-    packet = dict(candidate=candidate, baseline=base)
+    candidate = dict(d, period_ns=2.9, netlist_sha256="b"*64,\n                     parasitics_sha256="c"*64, sta_report_sha256="d"*64)
+    packet = dict(candidate=candidate, baseline=base)\n    try:\n        assess(dict(candidate=dict(d, period_ns=2.9), baseline=base))\n    except ValueError as exc:\n        assert "identical physical evidence" in str(exc)\n    else:\n        raise AssertionError("fabricated period improvement accepted")
     assert assess(packet)["passes"]
     for k, v in (("setup_wns_ns", -0.01), ("hold_wns_ns", -0.01),
                  ("setup_violations", 1), ("hold_violations", 1),
