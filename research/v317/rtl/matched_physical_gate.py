@@ -10,7 +10,8 @@ import math
 import sys
 
 POSITIVE = ("area_um2", "period_ns", "useful_service_per_cycle",
-            "useful_fraction", "dynamic_power_mw", "leakage_power_mw")
+            "useful_fraction")
+POWER = ("dynamic_power_mw", "leakage_power_mw")
 NONNEGATIVE = ("setup_wns_ns", "hold_wns_ns")
 VIOLATIONS = ("setup_violations", "hold_violations", "max_cap_violations",
               "max_transition_violations")
@@ -30,6 +31,14 @@ def _validate(name, d):
             raise ValueError(f"{name}.{field} must be a numeric measurement")
         if not math.isfinite(v) or v <= 0:
             raise ValueError(f"{name}.{field} must be finite and positive")
+    # Power components may be zero (e.g. gated idle leakage or idealized
+    # zero-switching traces); total power must remain strictly positive.
+    for field in POWER:
+        v = d.get(field)
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0:
+            raise ValueError(f"{name}.{field} must be finite and nonnegative")
+    if d["dynamic_power_mw"] + d["leakage_power_mw"] <= 0:
+        raise ValueError(f"{name}.total_power must be positive")
     if d["useful_fraction"] > 1:
         raise ValueError(f"{name}.useful_fraction must be <= 1")
     for field in NONNEGATIVE:
@@ -100,6 +109,25 @@ def self_test():
     assert leak_result["dynamic_energy_per_service_ratio"] < 1
     assert leak_result["energy_per_service_ratio"] > 1
     assert not leak_result["passes"]
+    # Zero components are valid measurements, but zero total power is not.
+    zero_leak = dict(candidate, leakage_power_mw=0)
+    assert assess(dict(candidate=zero_leak, baseline=base))["passes"]
+    zero_dynamic = dict(candidate, dynamic_power_mw=0)
+    assert assess(dict(candidate=zero_dynamic, baseline=base))["passes"]
+    for k in POWER:
+        for v in (-0.01, float("nan"), float("inf"), True):
+            try:
+                assess(dict(candidate=dict(candidate, **{k: v}), baseline=base))
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(f"invalid power accepted: {k}={v}")
+    try:
+        assess(dict(candidate=dict(candidate, dynamic_power_mw=0, leakage_power_mw=0), baseline=base))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("zero total power accepted")
     for k in ("setup_wns_ns", "parasitics_sha256", "workload_report_sha256", "leakage_power_mw"):
         bad = dict(candidate)
         bad.pop(k)
