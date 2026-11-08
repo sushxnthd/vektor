@@ -109,20 +109,19 @@ def selftest():
         except ValueError: pass
         else: raise AssertionError('unmatched retention semantics accepted')
         assert compare(b,b)['ratio']==1.0
-        # A finite bank inventory is a physical resource, not an unbounded label.
-        p.write_text('cycle,request_id,bank,operand,complete,retained_words\n0,0,0,0,0,1\n1,0,2,1,1,0\n'.replace('\\n','\n'))
+        # Bank indices must fit the physically provisioned inventory.
+        p.write_text('cycle,request_id,bank,operand,complete,retained_words\n0,0,0,0,0,1\n1,0,2,1,1,0\n')
         try: audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=1,max_cycles=2,bank_count=2)
         except ValueError: pass
         else: raise AssertionError('out-of-range bank accepted')
         legal=audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=1,max_cycles=2,bank_count=3)
         assert legal['completed']==1 and legal['bank_count']==3
-        p.write_text('cycle,request_id,bank,operand,complete,retained_words\\n0,0,0,0,0,1\\n1,0,1,1,1,0\\n')
+        p.write_text('cycle,request_id,bank,operand,complete,retained_words\n0,0,0,0,0,1\n1,0,1,1,1,0\n')
         small=audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=1,max_cycles=2,bank_count=2)
         large=audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=1,max_cycles=2,bank_count=3)
         try: compare(small,large)
         except ValueError: pass
         else: raise AssertionError('unequal bank inventories accepted')
-
     print('PASS: wall-clock, word budget, matched resources, bank ports, row-order invariance, incomplete completion')
 
 if __name__=='__main__':
