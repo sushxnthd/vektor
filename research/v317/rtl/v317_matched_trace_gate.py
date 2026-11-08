@@ -10,8 +10,8 @@ import argparse, csv, json
 from collections import defaultdict
 from pathlib import Path
 
-def audit(path, *, period_ns, bank_ports, return_ports, word_budget, max_cycles, retention_mode='bypass'):
-    if min(period_ns,bank_ports,return_ports,max_cycles) <= 0 or word_budget < 0:
+def audit(path, *, period_ns, bank_ports, return_ports, word_budget, max_cycles, bank_count=16, retention_mode='bypass'):
+    if min(period_ns,bank_ports,return_ports,max_cycles,bank_count) <= 0 or word_budget < 0:
         raise ValueError('invalid physical budget')
     if retention_mode not in ('bypass','registered'): raise ValueError('unknown retention mode')
     by_cycle = defaultdict(list)
@@ -33,7 +33,7 @@ def audit(path, *, period_ns, bank_ports, return_ports, word_budget, max_cycles,
             if rid == -1:
                 if (bank,op,r['complete']) != (-1,-1,0): raise ValueError('bad idle row')
                 continue
-            if rid < 0 or bank < 0 or op not in (0,1): raise ValueError('bad grant')
+            if rid < 0 or bank < 0 or bank >= bank_count or op not in (0,1): raise ValueError('bad grant')
             if rid in completed or op in acquired[rid]: raise ValueError('duplicate operand/retired request')
             acquired[rid].add(op)
             grants[bank]+=1
@@ -57,10 +57,10 @@ def audit(path, *, period_ns, bank_ports, return_ports, word_budget, max_cycles,
         peak=max(peak,live)
     return {'completed':len(completed),'horizon_ns':max_cycles*period_ns,
             'throughput_per_ns':len(completed)/(max_cycles*period_ns),
-            'peak_retained_words':peak,'word_budget':word_budget,'retention_mode':retention_mode,'bank_ports':bank_ports,'return_ports':return_ports}
+            'peak_retained_words':peak,'word_budget':word_budget,'retention_mode':retention_mode,'bank_ports':bank_ports,'return_ports':return_ports,'bank_count':bank_count}
 
 def compare(base, candidate):
-    if any(base[k] != candidate[k] for k in ('bank_ports','return_ports','word_budget','retention_mode')):
+    if any(base[k] != candidate[k] for k in ('bank_ports','return_ports','word_budget','retention_mode','bank_count')):
         raise ValueError('unmatched physical resources or retention semantics')
     return {'ratio':candidate['throughput_per_ns']/base['throughput_per_ns'] if base['throughput_per_ns'] else None,
             'baseline':base,'candidate':candidate}
@@ -109,6 +109,20 @@ def selftest():
         except ValueError: pass
         else: raise AssertionError('unmatched retention semantics accepted')
         assert compare(b,b)['ratio']==1.0
+        # A finite bank inventory is a physical resource, not an unbounded label.
+        p.write_text('cycle,request_id,bank,operand,complete,retained_words\n0,0,0,0,0,1\n1,0,2,1,1,0\n'.replace('\\n','\n'))
+        try: audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=1,max_cycles=2,bank_count=2)
+        except ValueError: pass
+        else: raise AssertionError('out-of-range bank accepted')
+        legal=audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=1,max_cycles=2,bank_count=3)
+        assert legal['completed']==1 and legal['bank_count']==3
+        p.write_text('cycle,request_id,bank,operand,complete,retained_words\\n0,0,0,0,0,1\\n1,0,1,1,1,0\\n')
+        small=audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=1,max_cycles=2,bank_count=2)
+        large=audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=1,max_cycles=2,bank_count=3)
+        try: compare(small,large)
+        except ValueError: pass
+        else: raise AssertionError('unequal bank inventories accepted')
+
     print('PASS: wall-clock, word budget, matched resources, bank ports, row-order invariance, incomplete completion')
 
 if __name__=='__main__':
@@ -116,6 +130,7 @@ if __name__=='__main__':
     ap.add_argument('--baseline'); ap.add_argument('--candidate')
     ap.add_argument('--baseline-period-ns',type=float,default=3)
     ap.add_argument('--candidate-period-ns',type=float,default=3)
+    ap.add_argument('--bank-count',type=int,default=16)
     ap.add_argument('--bank-ports',type=int,default=2)
     ap.add_argument('--return-ports',type=int,default=2)
     ap.add_argument('--word-budget',type=int,default=4)
@@ -124,7 +139,7 @@ if __name__=='__main__':
     a=ap.parse_args()
     selftest()
     if a.baseline and a.candidate:
-        kwargs=dict(bank_ports=a.bank_ports,return_ports=a.return_ports,word_budget=a.word_budget,max_cycles=a.cycles,retention_mode=a.retention_mode)
+        kwargs=dict(bank_count=a.bank_count,bank_ports=a.bank_ports,return_ports=a.return_ports,word_budget=a.word_budget,max_cycles=a.cycles,retention_mode=a.retention_mode)
         b=audit(a.baseline,period_ns=a.baseline_period_ns,**kwargs)
         c=audit(a.candidate,period_ns=a.candidate_period_ns,**kwargs)
         print(json.dumps(compare(b,c),indent=2))
