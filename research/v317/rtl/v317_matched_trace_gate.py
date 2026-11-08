@@ -92,7 +92,7 @@ def selftest():
         else: raise AssertionError('failed to reject incomplete request')
         # Identical completed trace is feasible with zero registered words
         # only when a timing-validated combinational bypass is assumed.
-        p.write_text('cycle,request_id,bank,operand,complete,retained_words\\n0,0,0,0,0,0\\n0,0,1,1,1,0\\n')
+        p.write_text('cycle,request_id,bank,operand,complete,retained_words\n0,0,0,0,0,0\n0,0,1,1,1,0\n')
         audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=0,max_cycles=1,retention_mode='bypass')
         try: audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=0,max_cycles=1,retention_mode='registered')
         except ValueError: pass
