@@ -37,8 +37,11 @@ def audit(path, *, period_ns, bank_ports, return_ports, word_budget, max_cycles)
             acquired[rid].add(op)
             grants[bank]+=1
             if r['complete']:
-                if acquired[rid] != {0,1} or rid in retire: raise ValueError('premature/duplicate completion')
+                if rid in retire: raise ValueError('duplicate completion')
                 retire.add(rid)
+        # Completion is a cycle-level event, independent of CSV row ordering.
+        if any(acquired[rid] != {0,1} for rid in retire):
+            raise ValueError('premature completion')
         if any(n>bank_ports for n in grants.values()): raise ValueError('bank port exceeded')
         if len(retire)>return_ports: raise ValueError('return port exceeded')
         completed.update(retire)
@@ -71,7 +74,17 @@ def selftest():
         try: audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=2,max_cycles=2)
         except ValueError: pass
         else: raise AssertionError('failed to reject overbooked bank')
-    print('PASS: wall-clock slowdown, word-budget rejection, bank-port rejection')
+        for lines in (
+            '0,0,0,0,1,0\n0,0,1,1,0,0\n',
+            '0,0,1,1,0,0\n0,0,0,0,1,0\n',
+        ):
+            p.write_text('cycle,request_id,bank,operand,complete,retained_words\n'+lines)
+            assert audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=0,max_cycles=1)['completed']==1
+        p.write_text('cycle,request_id,bank,operand,complete,retained_words\n0,0,0,0,1,1\n')
+        try: audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=1,max_cycles=1)
+        except ValueError: pass
+        else: raise AssertionError('failed to reject incomplete request')
+    print('PASS: wall-clock, word budget, bank ports, row-order invariance, incomplete completion')
 
 if __name__=='__main__':
     ap=argparse.ArgumentParser()
