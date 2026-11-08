@@ -1,9 +1,9 @@
 # Research Activity
 
-Updated: 2026-11-07 (UTC)
+Updated: 2026-11-08 (UTC)
 
 - Active research branch: `research/v317-sass-provenance-gate`
 - Active draft PR: #34
-- Latest durable research commit: `68d756855430dd2015b1d96d9582b41fbf7d7779`
-- Evidence: added paired-seed persistent-queue service falsification for weighted contention versus minimum contention, using 20,000-cycle traffic streams at three bank-skew levels. Independent local calculation on the same algorithm found weighted contention loses 76-86 completed requests per seed in the moderate-skew regime; the committed script has been fetched back but not executed verbatim. This is an abstract scheduler model, not RTL, physical timing, or GPU throughput. Existing electrical and throughput no-go evidence remains binding.
-- Experimental evidence remains on the research branch; this default-branch ledger is not validation or release approval.
+- Latest durable research commit: `47ac5a8ec61fa9e5cdaf4ff4ffb323eb07c8a48e`
+- Evidence: committed independent bank-skew capacity audit with exhaustive two-bank allocation oracle. For 100 cycles, four 1-port banks and four shared return ports, demand (160,0,0,0) yields a bank-aware optimistic ceiling of 100 completions, while pooling bank capacity falsely permits 160. The equivalent local model passed 2,304 exhaustive cases; committed script was fetched back from GitHub, but not executed verbatim. This is a conservation falsification, not RTL/STA, electrical signoff, measured GPU IPC, or a surviving positive architecture mechanism.
+- Earlier V317 physical failures and V296 throughput no-go remain binding. Experimental evidence stays on the research branch; this ledger is not validation or release approval.
