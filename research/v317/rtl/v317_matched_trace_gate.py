@@ -10,9 +10,10 @@ import argparse, csv, json
 from collections import defaultdict
 from pathlib import Path
 
-def audit(path, *, period_ns, bank_ports, return_ports, word_budget, max_cycles):
+def audit(path, *, period_ns, bank_ports, return_ports, word_budget, max_cycles, retention_mode='bypass'):
     if min(period_ns,bank_ports,return_ports,max_cycles) <= 0 or word_budget < 0:
         raise ValueError('invalid physical budget')
+    if retention_mode not in ('bypass','registered'): raise ValueError('unknown retention mode')
     by_cycle = defaultdict(list)
     with open(path, newline='') as f:
         for row in csv.DictReader(f):
@@ -44,6 +45,11 @@ def audit(path, *, period_ns, bank_ports, return_ports, word_budget, max_cycles)
             raise ValueError('premature completion')
         if any(n>bank_ports for n in grants.values()): raise ValueError('bank port exceeded')
         if len(retire)>return_ports: raise ValueError('return port exceeded')
+        # Registered retention must hold every acquired word until the cycle's
+        # retirement edge; combinational bypass may retire without registering.
+        pre_retire = sum(len(ops) for rid,ops in acquired.items() if rid not in completed)
+        if retention_mode == 'registered' and pre_retire > word_budget:
+            raise ValueError('registered pre-retirement word budget exceeded')
         completed.update(retire)
         live = sum(len(ops) for rid,ops in acquired.items() if rid not in completed)
         if live>word_budget: raise ValueError('physical word budget exceeded')
@@ -51,7 +57,7 @@ def audit(path, *, period_ns, bank_ports, return_ports, word_budget, max_cycles)
         peak=max(peak,live)
     return {'completed':len(completed),'horizon_ns':max_cycles*period_ns,
             'throughput_per_ns':len(completed)/(max_cycles*period_ns),
-            'peak_retained_words':peak,'bank_ports':bank_ports,'return_ports':return_ports}
+            'peak_retained_words':peak,'retention_mode':retention_mode,'bank_ports':bank_ports,'return_ports':return_ports}
 
 def compare(base, candidate):
     if (base['bank_ports'],base['return_ports']) != (candidate['bank_ports'],candidate['return_ports']):
@@ -84,6 +90,14 @@ def selftest():
         try: audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=1,max_cycles=1)
         except ValueError: pass
         else: raise AssertionError('failed to reject incomplete request')
+        # Identical completed trace is feasible with zero registered words
+        # only when a timing-validated combinational bypass is assumed.
+        p.write_text('cycle,request_id,bank,operand,complete,retained_words\\n0,0,0,0,0,0\\n0,0,1,1,1,0\\n')
+        audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=0,max_cycles=1,retention_mode='bypass')
+        try: audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=0,max_cycles=1,retention_mode='registered')
+        except ValueError: pass
+        else: raise AssertionError('registered path silently borrowed unbudgeted bypass')
+        audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=2,max_cycles=1,retention_mode='registered')
     print('PASS: wall-clock, word budget, bank ports, row-order invariance, incomplete completion')
 
 if __name__=='__main__':
@@ -94,11 +108,12 @@ if __name__=='__main__':
     ap.add_argument('--bank-ports',type=int,default=2)
     ap.add_argument('--return-ports',type=int,default=2)
     ap.add_argument('--word-budget',type=int,default=4)
+    ap.add_argument('--retention-mode',choices=('bypass','registered'),default='registered',help='registered charges pre-retirement operand words; bypass requires independent path timing proof')
     ap.add_argument('--cycles',type=int,default=1000)
     a=ap.parse_args()
     selftest()
     if a.baseline and a.candidate:
-        kwargs=dict(bank_ports=a.bank_ports,return_ports=a.return_ports,word_budget=a.word_budget,max_cycles=a.cycles)
+        kwargs=dict(bank_ports=a.bank_ports,return_ports=a.return_ports,word_budget=a.word_budget,max_cycles=a.cycles,retention_mode=a.retention_mode)
         b=audit(a.baseline,period_ns=a.baseline_period_ns,**kwargs)
         c=audit(a.candidate,period_ns=a.candidate_period_ns,**kwargs)
         print(json.dumps(compare(b,c),indent=2))
