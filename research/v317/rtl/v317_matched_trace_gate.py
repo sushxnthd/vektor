@@ -57,11 +57,11 @@ def audit(path, *, period_ns, bank_ports, return_ports, word_budget, max_cycles,
         peak=max(peak,live)
     return {'completed':len(completed),'horizon_ns':max_cycles*period_ns,
             'throughput_per_ns':len(completed)/(max_cycles*period_ns),
-            'peak_retained_words':peak,'retention_mode':retention_mode,'bank_ports':bank_ports,'return_ports':return_ports}
+            'peak_retained_words':peak,'word_budget':word_budget,'retention_mode':retention_mode,'bank_ports':bank_ports,'return_ports':return_ports}
 
 def compare(base, candidate):
-    if (base['bank_ports'],base['return_ports']) != (candidate['bank_ports'],candidate['return_ports']):
-        raise ValueError('unmatched port resources')
+    if any(base[k] != candidate[k] for k in ('bank_ports','return_ports','word_budget','retention_mode')):
+        raise ValueError('unmatched physical resources or retention semantics')
     return {'ratio':candidate['throughput_per_ns']/base['throughput_per_ns'] if base['throughput_per_ns'] else None,
             'baseline':base,'candidate':candidate}
 
@@ -98,7 +98,18 @@ def selftest():
         except ValueError: pass
         else: raise AssertionError('registered path silently borrowed unbudgeted bypass')
         audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=2,max_cycles=1,retention_mode='registered')
-    print('PASS: wall-clock, word budget, bank ports, row-order invariance, incomplete completion')
+        # Comparison must not silently equate unlike operand storage budgets.
+        b=audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=2,max_cycles=1,retention_mode='registered')
+        c=audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=8,max_cycles=1,retention_mode='registered')
+        try: compare(b,c)
+        except ValueError: pass
+        else: raise AssertionError('unmatched operand-word budgets accepted')
+        c=audit(p,period_ns=3,bank_ports=1,return_ports=1,word_budget=2,max_cycles=1,retention_mode='bypass')
+        try: compare(b,c)
+        except ValueError: pass
+        else: raise AssertionError('unmatched retention semantics accepted')
+        assert compare(b,b)['ratio']==1.0
+    print('PASS: wall-clock, word budget, matched resources, bank ports, row-order invariance, incomplete completion')
 
 if __name__=='__main__':
     ap=argparse.ArgumentParser()
