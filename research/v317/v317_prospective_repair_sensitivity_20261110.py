@@ -21,6 +21,7 @@ class Route:
     fanout: int
     drc_verified: bool
     drc_violations: int
+    experiment_id: str = ""
 
     def legal(self):
         return (math.isfinite(self.area) and math.isfinite(self.period_ns)
@@ -30,14 +31,24 @@ class Route:
                 and self.drc_verified)
 
 def required_service(candidate, baseline, target=1.02):
+    # Falsification: earlier gate silently accepted cross-run timing/area inputs.
+    # A shared nonempty provenance identifier is mandatory, not documentation.
+    if not (isinstance(target, (int, float)) and not isinstance(target, bool)
+            and math.isfinite(target) and target > 0):
+        return None
+    if not (isinstance(candidate.experiment_id, str) and candidate.experiment_id
+            and candidate.experiment_id == baseline.experiment_id):
+        return None
     if not (candidate.legal() and baseline.legal()):
         return None
     return target * candidate.area * candidate.period_ns / (baseline.area * baseline.period_ns)
 
-def decision(candidate, baseline, measured_service, target=1.02):
+def decision(candidate, baseline, measured_service, target=1.02, service_experiment_id=None):
     req = required_service(candidate, baseline, target)
     if req is None:
         return {"accept": False, "reason": "electrical_or_DRC_failure", "required_service": None}
+    if service_experiment_id != candidate.experiment_id:
+        return {"accept": False, "reason": "workload_provenance_mismatch", "required_service": req}
     if (measured_service is None or not isinstance(measured_service, (int, float))
             or not math.isfinite(measured_service) or measured_service <= 0):
         return {"accept": False, "reason": "missing_matched_workload_service", "required_service": req}
@@ -57,26 +68,26 @@ def synthetic_sweep():
                    "evidence": "counterfactual_cross_run_only"}
 
 def selftest():
-    ok = Route(100, 2, 0, 0, 0, 0, 0, True, 0)
-    illegal = Route(100, 2, 0, 1, 0, 0, 0, True, 0)
-    unverified = Route(100, 2, 0, 0, 0, 0, 0, False, 0)
+    ok = Route(100, 2, 0, 0, 0, 0, 0, True, 0, "paired-run-001")
+    illegal = Route(100, 2, 0, 1, 0, 0, 0, True, 0, "paired-run-001")
+    unverified = Route(100, 2, 0, 0, 0, 0, 0, False, 0, "paired-run-001")
     assert required_service(ok, ok) == 1.02
     assert required_service(illegal, ok) is None
     assert required_service(ok, unverified) is None
-    assert not decision(ok, ok, None)["accept"]
-    assert decision(ok, ok, 1.03)["accept"]
-    assert not decision(ok, ok, 1.01)["accept"]
-    assert not decision(illegal, ok, 100)["accept"]
+    assert not decision(ok, ok, None, service_experiment_id="paired-run-001")["accept"]
+    assert decision(ok, ok, 1.03, service_experiment_id="paired-run-001")["accept"]
+    assert not decision(ok, ok, 1.01, service_experiment_id="paired-run-001")["accept"]
+    assert not decision(illegal, ok, 100, service_experiment_id="paired-run-001")["accept"]
     # Falsification: the previous gate accepted +infinity as a workload win.
     # It also accepted negative-infinity periods as invalid but positive-infinity
     # area/period could contaminate required_service. Fail closed on all nonfinite.
     for nonfinite in (float('nan'), float('inf'), -float('inf')):
         assert not Route(nonfinite, 2, 0, 0, 0, 0, 0, True, 0).legal()
         assert not Route(100, nonfinite, 0, 0, 0, 0, 0, True, 0).legal()
-        assert not decision(ok, ok, nonfinite)["accept"]
+        assert not decision(ok, ok, nonfinite, service_experiment_id="paired-run-001")["accept"]
     assert not Route(100, 2, -1, 0, 0, 0, 0, True, 0).legal()
     assert not Route(100, 2, False, 0, 0, 0, 0, True, 0).legal()
-    rows = list(synthetic_sweep())
+    # Cross-run legal measurements cannot be combined into a false positive.\n    other = Route(100, 1, 0, 0, 0, 0, 0, True, 0, "other-run")\n    assert required_service(other, ok) is None\n    assert required_service(ok, ok, target=float("nan")) is None\n    assert required_service(ok, ok, target=-1) is None\n    assert not decision(ok, ok, 999, service_experiment_id="other-run")["accept"]\n    assert not decision(ok, ok, 999)["accept"]\n    assert required_service(Route(100, 2, 0, 0, 0, 0, 0, True, 0), ok) is None\n    rows = list(synthetic_sweep())
     assert len(rows) == 16
     # Candidate timing deterioration makes the required service monotonically worse.
     assert rows[0]["required_service_for_2pct"] < rows[3]["required_service_for_2pct"]
