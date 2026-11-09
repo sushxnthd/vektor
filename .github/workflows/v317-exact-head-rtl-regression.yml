@@ -23,3 +23,9 @@ jobs:
           set -euo pipefail
           iverilog -g2012 -s tb_rf_proxy_banked_tile -o /tmp/v317_rf_proxy_sim research/v317/rtl/rf_proxy_banked_tile.sv research/v317/rtl/tb_rf_proxy_banked_tile.sv
           vvp /tmp/v317_rf_proxy_sim
+
+      - name: Independent RF operand-data and port-overflow oracle
+        run: |
+          set -euo pipefail
+          iverilog -g2012 -s tb_v317_rf_proxy_independent_oracle -o /tmp/v317_independent_oracle research/v317/rtl/rf_proxy_banked_tile.sv research/v317/rtl/tb_v317_rf_proxy_independent_oracle.sv
+          vvp /tmp/v317_independent_oracle
