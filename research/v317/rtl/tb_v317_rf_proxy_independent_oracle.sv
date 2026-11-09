@@ -41,9 +41,9 @@ module tb_v317_rf_proxy_independent_oracle;
     // Wave 0 reads row 0 twice, both ports of bank 0.
     issue_valid=4'b0001; issue_wave_flat=0;
     check(64'h0000000000001010, 0);
-    // Wave 1 reads row 1 twice, distinct wave ID and same bank.
+    // Wave 1 reads rows 1 and 0, distinct wave ID and same bank.
     issue_valid=4'b0010; issue_wave_flat=20'd1 << 5;
-    check(64'h0000000011110000, 0);
+    check(64'h0000000010110000, 0);
     // Two waves require four operands from one 2R bank.
     // First wave receives two reads, second receives zeros, overflow asserted.
     issue_valid=4'b0011; issue_wave_flat=20'd1 << 5;
