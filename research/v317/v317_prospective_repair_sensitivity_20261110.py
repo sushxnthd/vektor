@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""V317 prospective matched-repair sensitivity: no physical claims.
+
+Only accepts *same-run, electrically legal* paired observations. Computes
+required service gain rather than assuming the candidate wins on clock alone.
+The frozen illustrative sweep is a sensitivity test, NOT measured routing.
+"""
+import argparse
+import json
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class Route:
+    area: float
+    period_ns: float
+    setup: int
+    hold: int
+    cap: int
+    slew: int
+    fanout: int
+    drc_verified: bool
+    drc_violations: int
+
+    def legal(self):
+        return (self.area > 0 and self.period_ns > 0
+                and all(x == 0 for x in (self.setup, self.hold, self.cap,
+                                          self.slew, self.fanout, self.drc_violations))
+                and self.drc_verified)
+
+def required_service(candidate, baseline, target=1.02):
+    if not (candidate.legal() and baseline.legal()):
+        return None
+    return target * candidate.area * candidate.period_ns / (baseline.area * baseline.period_ns)
+
+def decision(candidate, baseline, measured_service, target=1.02):
+    req = required_service(candidate, baseline, target)
+    if req is None:
+        return {"accept": False, "reason": "electrical_or_DRC_failure", "required_service": None}
+    if measured_service is None or measured_service <= 0:
+        return {"accept": False, "reason": "missing_matched_workload_service", "required_service": req}
+    return {"accept": measured_service >= req, "reason": "tested", "required_service": req}
+
+def synthetic_sweep():
+    # Prior reported areas and periods originate in DIFFERENT experiments.
+    # All rows are counterfactual; not eligible for physical acceptance.
+    a_c, a_p = 21314.6, 21324.7
+    for compact_repair in (0, 0.02, 0.05, 0.10):
+        for pair_repair in (0, 0.02, 0.05, 0.10):
+            tc, tp = 2.24 + compact_repair, 2.20 + pair_repair
+            yield {"compact_repair_ns": compact_repair,
+                   "pairwise_repair_ns": pair_repair,
+                   "required_service_for_2pct": 1.02 * a_p * tp / (a_c * tc),
+                   "required_service_for_break_even": a_p * tp / (a_c * tc),
+                   "evidence": "counterfactual_cross_run_only"}
+
+def selftest():
+    ok = Route(100, 2, 0, 0, 0, 0, 0, True, 0)
+    illegal = Route(100, 2, 0, 1, 0, 0, 0, True, 0)
+    unverified = Route(100, 2, 0, 0, 0, 0, 0, False, 0)
+    assert required_service(ok, ok) == 1.02
+    assert required_service(illegal, ok) is None
+    assert required_service(ok, unverified) is None
+    assert not decision(ok, ok, None)["accept"]
+    assert decision(ok, ok, 1.03)["accept"]
+    assert not decision(ok, ok, 1.01)["accept"]
+    assert not decision(illegal, ok, 100)["accept"]
+    rows = list(synthetic_sweep())
+    assert len(rows) == 16
+    # Candidate timing deterioration makes the required service monotonically worse.
+    assert rows[0]["required_service_for_2pct"] < rows[3]["required_service_for_2pct"]
+    # Baseline deterioration improves candidate's relative position.
+    assert rows[0]["required_service_for_2pct"] > rows[12]["required_service_for_2pct"]
+
+if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("--selftest", action="store_true")
+    args = p.parse_args()
+    selftest()
+    print(json.dumps({"selftest": "pass", "sweep": list(synthetic_sweep()),
+                      "physical_acceptance": "blocked_until_same_run_legal_routes_and_measured_service"}, indent=2))
