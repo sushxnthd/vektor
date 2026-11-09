@@ -7,6 +7,7 @@ The frozen illustrative sweep is a sensitivity test, NOT measured routing.
 """
 import argparse
 import json
+import math
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
@@ -22,8 +23,9 @@ class Route:
     drc_violations: int
 
     def legal(self):
-        return (self.area > 0 and self.period_ns > 0
-                and all(x == 0 for x in (self.setup, self.hold, self.cap,
+        return (math.isfinite(self.area) and math.isfinite(self.period_ns)
+                and self.area > 0 and self.period_ns > 0
+                and all(isinstance(x, int) and not isinstance(x, bool) and x == 0 for x in (self.setup, self.hold, self.cap,
                                           self.slew, self.fanout, self.drc_violations))
                 and self.drc_verified)
 
@@ -36,7 +38,8 @@ def decision(candidate, baseline, measured_service, target=1.02):
     req = required_service(candidate, baseline, target)
     if req is None:
         return {"accept": False, "reason": "electrical_or_DRC_failure", "required_service": None}
-    if measured_service is None or measured_service <= 0:
+    if (measured_service is None or not isinstance(measured_service, (int, float))
+            or not math.isfinite(measured_service) or measured_service <= 0):
         return {"accept": False, "reason": "missing_matched_workload_service", "required_service": req}
     return {"accept": measured_service >= req, "reason": "tested", "required_service": req}
 
@@ -64,6 +67,15 @@ def selftest():
     assert decision(ok, ok, 1.03)["accept"]
     assert not decision(ok, ok, 1.01)["accept"]
     assert not decision(illegal, ok, 100)["accept"]
+    # Falsification: the previous gate accepted +infinity as a workload win.
+    # It also accepted negative-infinity periods as invalid but positive-infinity
+    # area/period could contaminate required_service. Fail closed on all nonfinite.
+    for nonfinite in (float('nan'), float('inf'), -float('inf')):
+        assert not Route(nonfinite, 2, 0, 0, 0, 0, 0, True, 0).legal()
+        assert not Route(100, nonfinite, 0, 0, 0, 0, 0, True, 0).legal()
+        assert not decision(ok, ok, nonfinite)["accept"]
+    assert not Route(100, 2, -1, 0, 0, 0, 0, True, 0).legal()
+    assert not Route(100, 2, False, 0, 0, 0, 0, True, 0).legal()
     rows = list(synthetic_sweep())
     assert len(rows) == 16
     # Candidate timing deterioration makes the required service monotonically worse.
