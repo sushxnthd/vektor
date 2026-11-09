@@ -45,9 +45,9 @@ module tb_v317_rf_proxy_independent_oracle;
     issue_valid=4'b0010; issue_wave_flat=20'd1 << 5;
     check(64'h0000000010110000, 0);
     // Two waves require four operands from one 2R bank.
-    // First wave receives two reads, second receives zeros, overflow asserted.
+    // First wave receives two reads in bytes 0 and 1; second wave receives zeros in bytes 2 and 3; overflow asserted.
     issue_valid=4'b0011; issue_wave_flat=20'd1 << 5;
-    check(64'h0000000010101010, 1);
+    check(64'h0000000000001010, 1);
     // No issue must not produce stale data or overflow.
     issue_valid=0;
     check(64'h0, 0);
