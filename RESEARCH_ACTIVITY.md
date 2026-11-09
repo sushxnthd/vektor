@@ -1,9 +1,9 @@
 # Research Activity
 
-Updated: 2026-11-09 (UTC)
+Updated: 2026-11-10 (UTC)
 
 - Active research branch: `research/v317-sass-provenance-gate`
 - Active draft PR: #34
-- Latest durable research commit: `7341e32cdeccba3ed3bfaa66aac8f15a004075ef`
-- Evidence: source-pinned negative physical dominance gate from completed matched RF-proxy routing: compact 21,314.6 um² vs pairwise 21,324.7 um², with both electrically illegal; paired generic-Yosys controller-only synthesis 1321 vs 272 fixed and 1614 vs 558 rotating cells does not establish a tile advantage. Conditional clock requirement and area-dominance inequality documented in `research/v317/PHYSICAL_COMPACT_DOMINANCE_GATE_20261109.md`. No new route or GPU IPC measured this run.
+- Latest durable research commit: `a948fcad2c755fd9d0d955e9a446e2033b7ed10f`
+- Evidence: the prospective repair acceptance checker previously documented a same-run requirement without enforcing it. Added experiment identity checks for paired routes and workload service, rejection of missing/mismatched provenance, and regression assertions. This is a fail-closed falsification of the prior checker, not new routed timing or measured GPU throughput. Existing electrical violations and absent verified DRC signoff remain binding.
 - Prior V317 physical/electrical failures and V296 throughput no-go remain binding. This ledger is visibility only, not release or validation approval.
