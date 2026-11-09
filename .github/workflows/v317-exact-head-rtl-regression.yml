@@ -18,14 +18,20 @@ jobs:
           python3 research/v317/rtl/v317_prospective_boundary.py
       - name: Install RTL simulator
         run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog
-      - name: Existing RF-proxy matched RTL equivalence and port tests
-        run: |
-          set -euo pipefail
-          iverilog -g2012 -s tb_rf_proxy_banked_tile -o /tmp/v317_rf_proxy_sim research/v317/rtl/rf_proxy_banked_tile.sv research/v317/rtl/tb_rf_proxy_banked_tile.sv
-          vvp /tmp/v317_rf_proxy_sim
-
       - name: Independent RF operand-data and port-overflow oracle
         run: |
           set -euo pipefail
           iverilog -g2012 -s tb_v317_rf_proxy_independent_oracle -o /tmp/v317_independent_oracle research/v317/rtl/rf_proxy_banked_tile.sv research/v317/rtl/tb_v317_rf_proxy_independent_oracle.sv
           vvp /tmp/v317_independent_oracle
+      - name: Existing RF-proxy matched RTL equivalence and port tests
+        run: |
+          set -euo pipefail
+          iverilog -g2012 -s tb_rf_proxy_banked_tile -o /tmp/v317_rf_proxy_sim \
+            rtl/vtile/steal_warp_scheduler.sv \
+            rtl/vtile/issue_control.sv \
+            rtl/vtile/rf_bank_arbiter.sv \
+            research/v317/rtl/rf_bank_pairwise_credit.sv \
+            research/v317/rtl/rf_integrated_issue_top.sv \
+            research/v317/rtl/rf_proxy_banked_tile.sv \
+            research/v317/rtl/tb_rf_proxy_banked_tile.sv
+          vvp /tmp/v317_rf_proxy_sim
