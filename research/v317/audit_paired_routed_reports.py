@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fail-closed paired routed-report audit for V317.
 
-Inputs are *measured* JSON records from matched baseline/candidate runs. No
+Inputs are *measured* JSON records from matched baseline/candidate runs. Both designs\nshould come from the same checked-out repository commit, with distinct design\nlabels; distinct source SHAs would confound a matched comparison. No
 default physical values, no inferred closure, and no synthetic signoff.
 Required fields: design, source_sha, liberty_sha, sdc_sha, placement_seed,
 area_um2, worst_setup_slack_ns, worst_hold_slack_ns, max_cap_violations,
@@ -45,8 +45,10 @@ def check(b, c):
     for field in ("liberty_sha", "sdc_sha", "placement_seed"):
         if b[field] != c[field]:
             errors.append(f"unmatched {field}")
-    if b["source_sha"] == c["source_sha"]:
-        errors.append("same source SHA: candidate distinction unproven")
+    if b["source_sha"] != c["source_sha"]:
+        errors.append("unmatched source_sha: require same checked-out repository revision")
+    if b["design"] == c["design"]:
+        errors.append("identical design labels: comparator distinction unproven")
     for tag, record in (("baseline", b), ("candidate", c)):
         if record["area_um2"] <= 0 or record["elapsed_ns"] <= 0 or record["useful_ops"] <= 0:
             errors.append(f"{tag}: nonpositive area/time/work")
@@ -72,22 +74,22 @@ def check(b, c):
             "scope": "report-level screen only; not physical signoff"}
 
 def selftest():
-    b = dict(design="compact", source_sha="base", liberty_sha="lib",
+    b = dict(design="compact", source_sha="same_repo_commit", liberty_sha="lib",
              sdc_sha="constraints", placement_seed=7, area_um2=100,
              worst_setup_slack_ns=.1, worst_hold_slack_ns=.1,
              max_cap_violations=0, max_transition_violations=0,
              max_fanout_violations=0, useful_ops=100, elapsed_ns=100,
              memory_bytes=100)
-    c = dict(b, design="candidate", source_sha="new", area_um2=99, elapsed_ns=90)
+    c = dict(b, design="candidate", area_um2=99, elapsed_ns=90)
     assert check(b, c)["pass"]
     for change in ({"max_cap_violations": 1}, {"worst_hold_slack_ns": -.01},
                    {"area_um2": 101}, {"elapsed_ns": 110},
                    {"memory_bytes": 110}, {"liberty_sha": "other"},
-                   {"placement_seed": 8}, {"source_sha": "base"},
+                   {"placement_seed": 8}, {"source_sha": "different_repo_commit"}, {"design": "compact"},
                    {"elapsed_ns": float("nan")}, {"useful_ops": 0}):
         assert not check(b, dict(c, **change))["pass"], change
     assert not check(b, {k:v for k,v in c.items() if k != "worst_setup_slack_ns"})["pass"]
-    print("PASS: positive fixture and 11 independent fail-closed controls")
+    print("PASS: positive fixture and 12 independent fail-closed controls")
     print("LIMIT: fixtures are synthetic; no measured signoff supplied")
 
 if __name__ == "__main__":
