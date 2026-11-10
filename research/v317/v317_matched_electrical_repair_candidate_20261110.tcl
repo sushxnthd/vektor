@@ -16,6 +16,12 @@ if {$::env(DESIGN_LABEL) ni {compact pairwise}} {
 if {![file exists $::env(INPUT_ODB)]} {
   error "Missing input database $::env(INPUT_ODB)"
 }
+if {[file normalize $::env(INPUT_ODB)] eq [file normalize $::env(OUTPUT_ODB)]} {
+  error "Refusing to overwrite the input routed checkpoint"
+}
+if {[llength [all_clocks]] == 0} {
+  error "No timing clocks loaded; source matched SDC before repair"
+}
 file mkdir $::env(REPORT_DIR)
 read_db $::env(INPUT_ODB)
 # Physical repair uses the *same* per-design settings. Do not change clock
@@ -38,6 +44,11 @@ foreach {kind option} {max_capacitance -max_capacitance max_slew -max_slew max_f
 repair_design
 # Re-estimate from the modified placement. The pre-repair global-route RC
 # is stale once repair_design inserts or resizes cells.
+estimate_parasitics -placement
+repair_timing -setup
+repair_timing -hold
+# Hold insertion can regress setup. Recheck and repair setup, then hold once
+# more. The final reports remain diagnostic until extracted-RC rerouting.
 estimate_parasitics -placement
 repair_timing -setup
 repair_timing -hold
