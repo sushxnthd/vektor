@@ -87,7 +87,15 @@ def selftest():
         assert not decision(ok, ok, nonfinite, service_experiment_id="paired-run-001")["accept"]
     assert not Route(100, 2, -1, 0, 0, 0, 0, True, 0).legal()
     assert not Route(100, 2, False, 0, 0, 0, 0, True, 0).legal()
-    # Cross-run legal measurements cannot be combined into a false positive.\n    other = Route(100, 1, 0, 0, 0, 0, 0, True, 0, "other-run")\n    assert required_service(other, ok) is None\n    assert required_service(ok, ok, target=float("nan")) is None\n    assert required_service(ok, ok, target=-1) is None\n    assert not decision(ok, ok, 999, service_experiment_id="other-run")["accept"]\n    assert not decision(ok, ok, 999)["accept"]\n    assert required_service(Route(100, 2, 0, 0, 0, 0, 0, True, 0), ok) is None\n    rows = list(synthetic_sweep())
+    # Cross-run legal measurements cannot be combined into a false positive.
+    other = Route(100, 1, 0, 0, 0, 0, 0, True, 0, "other-run")
+    assert required_service(other, ok) is None
+    assert required_service(ok, ok, target=float("nan")) is None
+    assert required_service(ok, ok, target=-1) is None
+    assert not decision(ok, ok, 999, service_experiment_id="other-run")["accept"]
+    assert not decision(ok, ok, 999)["accept"]
+    assert required_service(Route(100, 2, 0, 0, 0, 0, 0, True, 0), ok) is None
+    rows = list(synthetic_sweep())
     assert len(rows) == 16
     # Candidate timing deterioration makes the required service monotonically worse.
     assert rows[0]["required_service_for_2pct"] < rows[3]["required_service_for_2pct"]
