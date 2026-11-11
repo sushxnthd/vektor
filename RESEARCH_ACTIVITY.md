@@ -1,5 +1,15 @@
 # Research Activity
 
+Updated: 2026-11-11 (UTC)
+
+- Active research branch: `research/v317-sass-provenance-gate`
+- Active draft PR: #34
+- Latest durable research commit: `32cb8f2febac95e14970ac440e2a6698888af988`
+- Evidence: added a separate exact exhaustive small-bank falsifier for four-slot two-source/two-port compact greedy versus a maximum-cardinality oracle, including rational arithmetic, grant-delta distribution, and a self-test. This is new independent checker code, not a completed physical experiment or measured GPU throughput. Routed electrical violations, the compact-baseline area falsification, and missing verified DRC remain binding. Checker execution on hosted CI is not yet established.
+- Prior V296 throughput no-go and V317 physical failures remain binding. Ledger is visibility only, not release approval.
+
+--- 
+
 Updated: 2026-11-10 (UTC)
 
 - Active research branch: `research/v317-sass-provenance-gate`
