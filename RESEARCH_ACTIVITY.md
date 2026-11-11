@@ -1,5 +1,14 @@
 # Research Activity
 
+Updated: 2026-11-12 (UTC)
+
+- Active research branch: `research/v317-sass-provenance-gate`
+- Active draft PR: #34
+- Latest durable research commit: `2ca31cfadfb3be6409c70b4a903102b15a08aa72`
+- Evidence: committed a prospective exact-rational interval clock/workload falsification gate. Under explicitly hypothetical ranges, uniform 16-bank traffic is rejected even by an optimistic oracle; hot-bank traffic remains conditional, not validated. Source presence was verified; script execution, repaired detailed routing, extracted-RC legality, DRC and measured throughput are not established. Prior matched area/electrical failures remain binding. This ledger is visibility only, not release approval.
+
+---
+
 Updated: 2026-11-11 (UTC)
 
 - Active research branch: `research/v317-sass-provenance-gate`
