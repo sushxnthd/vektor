@@ -19,11 +19,14 @@ if {![file exists $::env(INPUT_ODB)]} {
 if {[file normalize $::env(INPUT_ODB)] eq [file normalize $::env(OUTPUT_ODB)]} {
   error "Refusing to overwrite the input routed checkpoint"
 }
+read_db $::env(INPUT_ODB)
+# The design database must exist before querying clocks. The caller is
+# responsible for loading matched Liberty/SDC and RC setup; fail closed if
+# no clocks are visible after the database has been restored.
 if {[llength [all_clocks]] == 0} {
-  error "No timing clocks loaded; source matched SDC before repair"
+  error "No timing clocks loaded after read_db; load matched SDC before repair"
 }
 file mkdir $::env(REPORT_DIR)
-read_db $::env(INPUT_ODB)
 # Physical repair uses the *same* per-design settings. Do not change clock
 # constraints or disable timing checks to manufacture a passing result.
 estimate_parasitics -global_routing
