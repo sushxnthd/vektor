@@ -1,0 +1,72 @@
+{
+  "provenance": {
+    "run_id": 41429483633,
+    "artifact_id": 13135637209,
+    "artifact_sha256": "7718f5e7f71988e7bd97bc16aa52807e432a6f0ec61af78d81f7e106dd299993",
+    "source_sha": "f53a808ccb15b9baaf571fb8ec5d7a6ce786d60f",
+    "evidence": "extracted-RC OpenROAD audit output, no SRAM macros"
+  },
+  "threshold_pct": 2,
+  "rows": [
+    {
+      "density": 0.05,
+      "source": {
+        "area_um2": 21610.6,
+        "hold_slack_ps": -1.57355,
+        "hold_violations": 3,
+        "max_cap_violations": 11,
+        "wire_um": 284662,
+        "power_proxy_mw": 10.6252
+      },
+      "pairwise": {
+        "area_um2": 21432.2,
+        "hold_slack_ps": -0.400319,
+        "hold_violations": 4,
+        "max_cap_violations": 8,
+        "wire_um": 287232,
+        "power_proxy_mw": 10.5349
+      },
+      "historical": true
+    },
+    {
+      "density": 0.15,
+      "source": {
+        "area_um2": 21533.5,
+        "hold_slack_ps": -2.79751,
+        "hold_violations": 6,
+        "max_cap_violations": 16,
+        "wire_um": 275492,
+        "power_proxy_mw": 10.4854
+      },
+      "pairwise": {
+        "area_um2": 21404.2,
+        "hold_slack_ps": -0.757699,
+        "hold_violations": 2,
+        "max_cap_violations": 14,
+        "wire_um": 282650,
+        "power_proxy_mw": 10.4741
+      },
+      "historical": false
+    },
+    {
+      "density": 0.35,
+      "source": {
+        "area_um2": 21535.6,
+        "hold_slack_ps": -1.7813,
+        "hold_violations": 10,
+        "max_cap_violations": 15,
+        "wire_um": 270784,
+        "power_proxy_mw": 10.5201
+      },
+      "pairwise": {
+        "area_um2": 21324.7,
+        "hold_slack_ps": 3.95201,
+        "hold_violations": 0,
+        "max_cap_violations": 21,
+        "wire_um": 269563,
+        "power_proxy_mw": 10.328
+      },
+      "historical": false
+    }
+  ]
+}

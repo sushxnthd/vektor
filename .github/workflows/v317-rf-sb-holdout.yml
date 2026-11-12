@@ -1,0 +1,66 @@
+name: v317 bank-credit unseen S/B law falsification
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - 'research/v317/rtl/parse_rf_sb_holdout.py'
+      - '.github/workflows/v317-rf-sb-holdout.yml'
+  workflow_dispatch:
+jobs:
+  unseen-law-and-equal-port-rtl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Unseen seven-point independent RTL oracle
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/rf_sb_holdout
+          for config in 2:8 4:32 8:8 3:8 5:32 6:32 7:8; do
+            S="${config%%:*}"
+            B="${config##*:}"
+            prefix="S${S}_B${B}"
+            iverilog -g2012 -s tb_v317_sb_scaling \
+              -Ptb_v317_sb_scaling.S="$S" -Ptb_v317_sb_scaling.B="$B" \
+              -o "build/v317/rf_sb_holdout/${prefix}.vvp" \
+              research/v317/rtl/rf_bank_sb_scaling.sv \
+              research/v317/rtl/tb_rf_bank_sb_scaling.sv
+            vvp "build/v317/rf_sb_holdout/${prefix}.vvp" \
+              | tee "build/v317/rf_sb_holdout/${prefix}.rtl.log"
+          done
+      - name: Matched generic synthesis for seven frozen holdouts
+        run: |
+          set -euo pipefail
+          for config in 2:8 4:32 8:8 3:8 5:32 6:32 7:8; do
+            S="${config%%:*}"
+            B="${config##*:}"
+            prefix="S${S}_B${B}"
+            for kind in bankmask pairwise; do
+              yosys -p "read_verilog -sv research/v317/rtl/rf_bank_sb_scaling.sv; chparam -set S $S -set B $B v317_${kind}_param; synth -flatten -top v317_${kind}_param; stat; ltp -noff; write_json build/v317/rf_sb_holdout/${prefix}_${kind}.json" \
+                2>&1 | tee "build/v317/rf_sb_holdout/${prefix}_${kind}.log"
+            done
+          done
+      - name: Score immutable predictions including misses
+        run: |
+          set -euo pipefail
+          python -m research.v317.rtl.parse_rf_sb_holdout build/v317/rf_sb_holdout \
+            | tee build/v317/rf_sb_holdout/holdout.json
+          python -m json.tool build/v317/rf_sb_holdout/holdout.json >/dev/null
+      - name: Source pin and versions
+        if: always()
+        run: |
+          mkdir -p build/v317/rf_sb_holdout
+          git rev-parse HEAD > build/v317/rf_sb_holdout/commit.txt
+          yosys -V > build/v317/rf_sb_holdout/yosys_version.txt || true
+          iverilog -V > build/v317/rf_sb_holdout/iverilog_version.txt 2>&1 || true
+      - name: Preserve negative and positive evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-rf-sb-unseen-law
+          path: build/v317/rf_sb_holdout/

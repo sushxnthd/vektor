@@ -1,0 +1,37 @@
+name: V317 independent six-seed raw physicality audit
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - 'research/v317/rtl/audit_integrated_seed_challenge.py'
+      - '.github/workflows/v317-integrated-seed-raw-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit-immutable-six-route-artifact:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download original six-route evidence without regenerating it
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 41364018384
+          name: v317-integrated-placement-seed-7-19-37
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: build/v317/integrated_seed_challenge
+      - name: Independently parse raw OpenROAD metrics and legality
+        run: |
+          set -euo pipefail
+          python3 research/v317/rtl/audit_integrated_seed_challenge.py \
+            build/v317/integrated_seed_challenge \
+            --output build/v317/seed_challenge_audit.json
+      - name: Preserve independent result, including falsifications
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-integrated-six-seed-independent-audit
+          path: build/v317/seed_challenge_audit.json
+          retention-days: 30

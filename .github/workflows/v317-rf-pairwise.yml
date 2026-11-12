@@ -1,0 +1,62 @@
+name: v317 pairwise bank-credit physicality challenge
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+  pull_request:
+    paths:
+      - 'research/v317/rtl/rf_bank_pairwise_credit.sv'
+      - 'research/v317/rtl/tb_rf_bank_pairwise_credit.sv'
+      - 'research/v317/rtl/parse_rf_pairwise_cost.py'
+      - '.github/workflows/v317-rf-pairwise.yml'
+jobs:
+  matched-rtl-and-generic-synthesis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Exhaustive independent bank-port equivalence oracle
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/rf_pairwise
+          iverilog -g2012 -s tb_v317_rf_pairwise_credit -o build/v317/rf_pairwise/tb \
+            rtl/vtile/rf_bank_arbiter.sv \
+            research/v317/rtl/rf_bank_rotating_control.sv \
+            research/v317/rtl/rf_bank_pairwise_credit.sv \
+            research/v317/rtl/tb_rf_bank_pairwise_credit.sv
+          vvp build/v317/rf_pairwise/tb | tee build/v317/rf_pairwise/rtl.log
+      - name: Full-width combinational equivalence proof (all 16-bank inputs)
+        run: |
+          set -euo pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/rf_bank_arbiter.sv research/v317/rtl/rf_bank_pairwise_credit.sv; proc; opt; equiv_make vektor_rf_bank_arbiter vektor_v317_rf_pairwise v317_pairwise_equiv; hierarchy -top v317_pairwise_equiv; equiv_simple; equiv_status -assert' 2>&1 | tee build/v317/rf_pairwise/formal_equiv.log
+      - name: Four-way matched generic Yosys synthesis
+        run: |
+          set -euo pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/rf_bank_arbiter.sv; synth -flatten -top vektor_rf_bank_arbiter; stat; ltp -noff; write_json build/v317/rf_pairwise/source_fixed.json' 2>&1 | tee build/v317/rf_pairwise/source_fixed.log
+          yosys -p 'read_verilog -sv research/v317/rtl/rf_bank_pairwise_credit.sv; synth -flatten -top vektor_v317_rf_pairwise; stat; ltp -noff; write_json build/v317/rf_pairwise/pairwise_fixed.json' 2>&1 | tee build/v317/rf_pairwise/pairwise_fixed.log
+          yosys -p 'read_verilog -sv rtl/vtile/rf_bank_arbiter.sv research/v317/rtl/rf_bank_rotating_control.sv; synth -flatten -top vektor_v317_rf_rotating; stat; ltp -noff; write_json build/v317/rf_pairwise/source_rotating.json' 2>&1 | tee build/v317/rf_pairwise/source_rotating.log
+          yosys -p 'read_verilog -sv research/v317/rtl/rf_bank_pairwise_credit.sv; synth -flatten -top vektor_v317_rf_pairwise_rotating; stat; ltp -noff; write_json build/v317/rf_pairwise/pairwise_rotating.json' 2>&1 | tee build/v317/rf_pairwise/pairwise_rotating.log
+      - name: Source-pinned matched cost and falsification flags
+        run: |
+          set -euo pipefail
+          python -m research.v317.rtl.parse_rf_pairwise_cost \
+            build/v317/rf_pairwise/source_fixed.json build/v317/rf_pairwise/source_fixed.log \
+            build/v317/rf_pairwise/pairwise_fixed.json build/v317/rf_pairwise/pairwise_fixed.log \
+            build/v317/rf_pairwise/source_rotating.json build/v317/rf_pairwise/source_rotating.log \
+            build/v317/rf_pairwise/pairwise_rotating.json build/v317/rf_pairwise/pairwise_rotating.log \
+            | tee build/v317/rf_pairwise/cost.json
+          python -m json.tool build/v317/rf_pairwise/cost.json >/dev/null
+      - name: Source pin
+        if: always()
+        run: |
+          mkdir -p build/v317/rf_pairwise
+          git rev-parse HEAD > build/v317/rf_pairwise/commit.txt
+      - name: Preserve evidence including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-rf-pairwise-physicality
+          path: build/v317/rf_pairwise/

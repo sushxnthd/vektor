@@ -1,0 +1,79 @@
+name: V317 registered Nangate45 matched physical route
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - '.github/workflows/v317-rf-registered-openroad.yml'
+      - 'research/v317/rtl/rf_registered_physical_top.sv'
+      - 'research/v317/rtl/rf_registered_route.mk'
+      - 'research/v317/rtl/rf_registered_route.sdc'
+      - 'research/v317/rtl/tb_rf_registered_physical.sv'
+      - 'research/v317/FROZEN_RF_REGISTERED_OPENROAD_ROUTE_20261101.md'
+  workflow_dispatch:
+jobs:
+  matched-route:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source-pinned RTL wrapper regression
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog
+          mkdir -p build/v317/orfs_route
+          iverilog -g2012 -s tb_rf_registered_physical -o build/v317/orfs_route/registered_tb \
+            rtl/vtile/rf_bank_arbiter.sv \
+            research/v317/rtl/rf_bank_pairwise_credit.sv \
+            research/v317/rtl/rf_registered_physical_top.sv \
+            research/v317/rtl/tb_rf_registered_physical.sv
+          vvp build/v317/orfs_route/registered_tb | tee build/v317/orfs_route/rtl_simulation.log
+      - name: Pin official OpenROAD Flow Scripts and toolchain container
+        run: |
+          set -euo pipefail
+          image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
+          docker pull "$image"
+          docker image inspect "$image" --format '{{json .RepoDigests}}' | tee build/v317/orfs_route/container_digests.json
+          printf '%s\n' "$image" > build/v317/orfs_route/pinned_image.txt
+          git rev-parse HEAD > build/v317/orfs_route/source_sha.txt
+      - name: Route both equivalent designs at two frozen utilization levels
+        run: |
+          set +e
+          set -uo pipefail
+          image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
+          failed=0
+          for util in 35 65; do
+            if [ "$util" -eq 35 ]; then
+              die="0 0 60 60"; core="4 4 56 56"
+            else
+              die="0 0 44 44"; core="4 4 40 40"
+            fi
+            for variant in source pairwise; do
+              name="vektor_v317_rf_physical_top_${variant}"
+              label="${variant}_${util}"
+              for dir in results logs reports objects; do
+                mkdir -p "build/v317/orfs_route/${label}/${dir}/nangate45/${name}/base"
+              done
+              echo "ROUTE START ${label}" | tee "build/v317/orfs_route/${label}/status.txt"
+              docker run --rm \
+                -v "$PWD:/work/vektor" \
+                -e VEKTOR_ROOT=/work/vektor \
+                -w /OpenROAD-flow-scripts/flow \
+                "$image" bash -lc "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_registered_route.mk DESIGN_NAME=${name} DIE_AREA='${die}' CORE_AREA='${core}' FLOW_VARIANT=base WORK_HOME=/work/vektor/build/v317/orfs_route/${label} -j1" \
+                > "build/v317/orfs_route/${label}/make.log" 2>&1
+              rc=$?
+              echo "exit_code=${rc}" | tee -a "build/v317/orfs_route/${label}/status.txt"
+              if [ "$rc" -ne 0 ]; then
+                failed=1
+                tail -n 90 "build/v317/orfs_route/${label}/make.log" || true
+              fi
+            done
+          done
+          exit "$failed"
+      - name: Preserve full routed and failed evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-matched-registered-nangate45-route
+          path: build/v317/orfs_route/
+          retention-days: 30

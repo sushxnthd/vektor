@@ -1,0 +1,32 @@
+{
+  "source_sha": "96f4dae55effc33d3e8032cf1245b3384d18d5b2",
+  "evidence_tier": "flop-mapped 16-bank 2R RF proxy; no SRAM macro",
+  "workflow_run": 41443576796,
+  "artifact_id": 13143485214,
+  "variants": {
+    "source": {
+      "area_um2": 21535.6, "setup_slack_ps": 453.458,
+      "hold_slack_ps": -1.7813, "hold_violations": 10,
+      "max_cap_violations": 15, "fmax_mhz": 392.689,
+      "power_proxy_mw": 10.5201, "wire_um": 270784,
+      "sequential_cells": 1213, "macro_count": 0,
+      "route_exit": 0, "route_drc_violations": 0, "legal": false
+    },
+    "pairwise": {
+      "area_um2": 21324.7, "setup_slack_ps": 751.34,
+      "hold_slack_ps": 3.95201, "hold_violations": 0,
+      "max_cap_violations": 21, "fmax_mhz": 444.709,
+      "power_proxy_mw": 10.328, "wire_um": 269563,
+      "sequential_cells": 1213, "macro_count": 0,
+      "route_exit": 0, "route_drc_violations": 0, "legal": false
+    },
+    "compact": {
+      "area_um2": 21314.6, "setup_slack_ps": 805.813,
+      "hold_slack_ps": -0.812156, "hold_violations": 6,
+      "max_cap_violations": 14, "fmax_mhz": 455.75,
+      "power_proxy_mw": 10.4516, "wire_um": 246157,
+      "sequential_cells": 1213, "macro_count": 0,
+      "route_exit": 0, "route_drc_violations": 0, "legal": false
+    }
+  }
+}

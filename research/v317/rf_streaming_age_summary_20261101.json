@@ -1,0 +1,159 @@
+{
+  "evidence_tier": "SYNTHETIC_FOUR_SLOT_RF_SERVICE_NOT_GPU_IPC",
+  "protocol_commit": "a553905b3d692e36459fd8a3b6c75b39fb3c6690",
+  "source_commit": "5f8a0f24eaa7e14f3cd92a336c5788c9c301a41a",
+  "cycles": 30000,
+  "warmup": 3000,
+  "ports_per_bank": 2,
+  "slots": 4,
+  "two_bank_long_batch": {
+    "random_cases": 6400,
+    "max_length": 64,
+    "closed_form": "max(a,b)+ceil(c/2)",
+    "counterexamples": 0
+  },
+  "frozen": {
+    "no_win": {
+      "p": 0.55,
+      "seed": 317110,
+      "priority_completed": 59068,
+      "exact_completed": 59068,
+      "age_exact_completed": 59068,
+      "priority_p99": 1,
+      "exact_p99": 1,
+      "age_exact_p99": 1
+    },
+    "possible_win": {
+      "p": 0.48,
+      "seed": 317111,
+      "predicted_exact_ratio_min": 1.01,
+      "priority_completed": 51910,
+      "exact_completed": 51900,
+      "age_exact_completed": 51900,
+      "exact_ratio": 0.99980736,
+      "priority_p99": 18,
+      "exact_p99": 16,
+      "age_exact_p99": 4,
+      "priority_backlog": 1,
+      "exact_backlog": 1,
+      "age_exact_backlog": 1,
+      "prediction": "FALSIFIED"
+    },
+    "unseen_transfer": {
+      "p": 0.52,
+      "seed": 317113,
+      "priority_completed": 56048,
+      "exact_completed": 56049,
+      "age_exact_completed": 56049,
+      "exact_ratio": 1.00001784,
+      "priority_p99": 6,
+      "exact_p99": 6,
+      "age_exact_p99": 3
+    }
+  },
+  "adversarial_1000_cycles": {
+    "priority_service_by_slot": [
+      1000,
+      1000,
+      0,
+      0
+    ],
+    "exact_service_by_slot": [
+      0,
+      0,
+      1000,
+      1000
+    ],
+    "age_exact_service_by_slot": [
+      500,
+      500,
+      500,
+      500
+    ]
+  },
+  "posthoc_controls": {
+    "0.48": {
+      "oldest_greedy": {
+        "completed": 51901,
+        "backlog": 0,
+        "p99": 4
+      },
+      "rotating_priority": {
+        "completed": 51900,
+        "backlog": 1,
+        "p99": 6
+      }
+    },
+    "0.60": {
+      "priority": {
+        "rate": 2.262704,
+        "backlog": 4521,
+        "p99": 7102
+      },
+      "exact": {
+        "rate": 2.310741,
+        "backlog": 3002,
+        "p99": 4720
+      },
+      "age_exact": {
+        "rate": 2.412333,
+        "backlog": 6,
+        "p99": 8
+      },
+      "oldest_greedy": {
+        "rate": 2.412407,
+        "backlog": 3,
+        "p99": 13
+      },
+      "rotating_priority": {
+        "rate": 2.412296,
+        "backlog": 7,
+        "p99": 30
+      }
+    },
+    "0.75": {
+      "priority": {
+        "rate": 2.426556,
+        "backlog": 17337
+      },
+      "exact": {
+        "rate": 2.538148,
+        "backlog": 14029
+      },
+      "age_exact": {
+        "rate": 2.656185,
+        "backlog": 10460
+      },
+      "rotating_priority": {
+        "rate": 2.540259,
+        "backlog": 13873
+      }
+    },
+    "0.90": {
+      "priority": {
+        "rate": 2.50263,
+        "backlog": 32801
+      },
+      "exact": {
+        "rate": 2.619778,
+        "backlog": 29217
+      },
+      "age_exact": {
+        "rate": 2.652333,
+        "backlog": 28288
+      },
+      "rotating_priority": {
+        "rate": 2.540148,
+        "backlog": 31689
+      }
+    }
+  },
+  "limitations": [
+    "No physical timing",
+    "No collector",
+    "No dependencies",
+    "No real GPU trace",
+    "Posthoc controls not prospective",
+    "Overload throughput not stable service"
+  ]
+}

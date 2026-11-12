@@ -1,0 +1,40 @@
+name: V317 periodic bank phase prospective transfer
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - 'research/v317/FROZEN_PERIODIC_BANK_PHASE_TRANSFER_20261102.md'
+      - 'research/v317/rtl/periodic_bank_phase_transfer.py'
+      - 'research/v317/rtl/audit_periodic_bank_phase_transfer.py'
+      - 'research/v317/PERIODIC_BANK_PHASE_TRANSFER_RESULT_20261102.md'
+      - '.github/workflows/v317-periodic-bank-phase-transfer.yml'
+  workflow_dispatch:
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run held-out finite-FIFO policy comparison
+        run: python3 research/v317/rtl/periodic_bank_phase_transfer.py > periodic_bank_transfer.json
+      - name: Independently replay all traces and exhaustively audit small bank cases
+        run: python3 research/v317/rtl/audit_periodic_bank_phase_transfer.py periodic_bank_transfer.json > periodic_bank_audit.json
+      - name: Print frozen prediction decisions without suppressing negative outcomes
+        run: |
+          python3 - <<'PY'
+          import json
+          x=json.load(open('periodic_bank_transfer.json'))['regimes']
+          for name in ('periodic_clean','periodic_noise1','periodic_noise5','periodic_cap2','uniform16'):
+              print(name, 'ratio=',x[name]['ratio'],'strongest=',x[name]['strongest_control'])
+          gates={'periodic_clean':x['periodic_clean']['ratio']>=1.10,
+                 'periodic_noise1':x['periodic_noise1']['ratio']>=1.02,
+                 'periodic_cap2':x['periodic_cap2']['ratio']<=1.01,
+                 'uniform16':x['uniform16']['ratio']<1.02}
+          print('FROZEN_GATES:',gates)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v317-periodic-bank-phase-transfer
+          path: |
+            periodic_bank_transfer.json
+            periodic_bank_audit.json

@@ -1,0 +1,76 @@
+name: v317 prospective legal-load electrical transfer
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - '.github/workflows/v317-rf-legal-load-transfer.yml'
+      - 'research/v317/rtl/audit_rf_legal_load.py'
+      - 'research/v317/rtl/test_audit_rf_legal_load.py'
+      - 'research/v317/rtl/audit_rf_sta.py'
+      - 'research/v317/rtl/run_rf_sta.tcl'
+      - 'research/v317/rtl/rf_bank_pairwise_credit.sv'
+      - 'rtl/vtile/rf_bank_arbiter.sv'
+  workflow_dispatch:
+jobs:
+  prospective-electrical-holdout:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install no-cost synthesis and STA
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys opensta
+          yosys -V
+          sta -version || true
+      - name: Pin and verify identical Nangate45 Liberty
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/rf_legal_load
+          lib=build/v317/rf_legal_load/NangateOpenCellLibrary_typical.lib
+          curl -fL --retry 3 --retry-delay 2 --connect-timeout 20 -o "$lib" "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/202c7fccbce32e86db899c54b0a0f0484f869cc3/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib"
+          test "$(git hash-object "$lib")" = '90e4afb274cfc6514c587c434c77903d554117d1'
+      - name: Matched fixed-priority synthesis, no timing repair
+        run: |
+          set -euo pipefail
+          lib=build/v317/rf_legal_load/NangateOpenCellLibrary_typical.lib
+          while IFS='|' read -r label top sources; do
+            yosys -p "read_liberty -lib -ignore_miss_func $lib; read_verilog -sv $sources; synth -flatten -top $top -noabc; dfflibmap -liberty $lib; abc -liberty $lib; clean; stat -liberty $lib; write_verilog -noattr -noexpr build/v317/rf_legal_load/$label.v" > "build/v317/rf_legal_load/$label.yosys.log" 2>&1
+            test -s "build/v317/rf_legal_load/$label.v"
+          done <<'CONFIGS'
+          source_fixed|vektor_rf_bank_arbiter|rtl/vtile/rf_bank_arbiter.sv
+          pairwise_fixed|vektor_v317_rf_pairwise|research/v317/rtl/rf_bank_pairwise_credit.sv
+          CONFIGS
+      - name: Frozen 10/30-fF holdouts and exploratory 24/26-fF boundary
+        run: |
+          set -euo pipefail
+          lib=build/v317/rf_legal_load/NangateOpenCellLibrary_typical.lib
+          for load in 10 24 26 30; do
+            for label in source_fixed pairwise_fixed; do
+              case "$label" in
+                source_fixed) top=vektor_rf_bank_arbiter ;;
+                pairwise_fixed) top=vektor_v317_rf_pairwise ;;
+              esac
+              STA_LIBERTY="$lib" STA_NETLIST="build/v317/rf_legal_load/$label.v" STA_TOP="$top" STA_LOAD="$load" sta -exit research/v317/rtl/run_rf_sta.tcl 2>&1 | tee "build/v317/rf_legal_load/${label}_${load}.log"
+            done
+          done
+      - name: Independent synthetic falsification tests
+        run: |
+          python -m unittest research.v317.rtl.test_audit_rf_sta research.v317.rtl.test_audit_rf_legal_load -v
+      - name: Score frozen predictions and preserve raw JSON
+        run: |
+          set -euo pipefail
+          python -m research.v317.rtl.audit_rf_legal_load build/v317/rf_legal_load | tee build/v317/rf_legal_load/independent_audit.json
+          python -m json.tool build/v317/rf_legal_load/independent_audit.json >/dev/null
+      - name: Preserve source and failures
+        if: always()
+        run: |
+          mkdir -p build/v317/rf_legal_load
+          git rev-parse HEAD > build/v317/rf_legal_load/source_sha.txt
+      - name: Upload source-pinned raw evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-prospective-legal-load-transfer
+          path: build/v317/rf_legal_load/

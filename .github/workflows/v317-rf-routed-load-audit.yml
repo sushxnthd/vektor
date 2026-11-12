@@ -1,0 +1,51 @@
+name: V317 independent prospective routed-load audit
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - '.github/workflows/v317-rf-routed-load-audit.yml'
+      - 'research/v317/rtl/audit_routed_load_transfer.py'
+      - 'research/v317/RF_ROUTED_LOAD_TRANSFER_PROSPECTIVE_RESULT_20261102.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  independent-raw-zip-audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch immutable frozen source-pinned route evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/routed_load_independent
+          gh run download 41343090875 -R sushxnthd/vektor -n v317-prospective-routed-load-transfer -D build/v317/routed_load_independent
+          test -s build/v317/routed_load_independent/source-10-fF/status.txt
+          test -s build/v317/routed_load_independent/pairwise-40-fF/status.txt
+          (cd build/v317/routed_load_independent && zip -qr /tmp/v317-routed-load.zip .)
+      - name: Independent 10/40-fF electrical, area, timing, wire and power-proxy audit
+        run: |
+          set -euo pipefail
+          python3 research/v317/rtl/audit_routed_load_transfer.py /tmp/v317-routed-load.zip \
+            | tee build/v317/routed_load_independent_audit.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('build/v317/routed_load_independent_audit.json'))
+          assert x['source_sha']=='01edebed092c65c264d42814a927614338b8ef9e'
+          assert set(x['comparisons'])=={'10','40'}
+          assert all(x['comparisons'][str(load)]['intrinsic_grant_equivalent_service_gain']==1.0
+                     for load in (10,40))
+          assert x['comparisons']['40']['routed_cell_area_reduction_pct']>50
+          assert x['comparisons']['40']['isolated_period_ratio_source_over_pairwise']>2
+          print('PASS: prospective matched routed load transfer reproduced from raw reports')
+          PY
+      - name: Preserve independent audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-independent-routed-load-transfer-audit
+          path: build/v317/routed_load_independent_audit.json
+          retention-days: 30

@@ -1,0 +1,78 @@
+name: v317 independent Nangate45 pre-route cell timing
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - '.github/workflows/v317-rf-opensta-cell-timing.yml'
+      - 'research/v317/rtl/run_rf_sta.tcl'
+      - 'research/v317/rtl/audit_rf_sta.py'
+      - 'research/v317/rtl/test_audit_rf_sta.py'
+      - 'research/v317/rtl/rf_bank_pairwise_credit.sv'
+      - 'research/v317/rtl/rf_bank_rotating_control.sv'
+      - 'rtl/vtile/rf_bank_arbiter.sv'
+  workflow_dispatch:
+jobs:
+  matched-cell-timing:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install no-cost synthesis and STA
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys opensta
+          yosys -V
+          sta -version || true
+      - name: Pin and verify Nangate45 library
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/rf_sta
+          lib=build/v317/rf_sta/NangateOpenCellLibrary_typical.lib
+          curl -fL --retry 3 --retry-delay 2 --connect-timeout 20 -o "$lib" "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/202c7fccbce32e86db899c54b0a0f0484f869cc3/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib"
+          test "$(git hash-object "$lib")" = '90e4afb274cfc6514c587c434c77903d554117d1'
+      - name: Matched synthesis and mapped Verilog export
+        run: |
+          set -euo pipefail
+          lib=build/v317/rf_sta/NangateOpenCellLibrary_typical.lib
+          while IFS='|' read -r label top sources; do
+            yosys -p "read_liberty -lib -ignore_miss_func $lib; read_verilog -sv $sources; synth -flatten -top $top -noabc; dfflibmap -liberty $lib; abc -liberty $lib; clean; stat -liberty $lib; write_verilog -noattr -noexpr build/v317/rf_sta/$label.v" > "build/v317/rf_sta/$label.yosys.log" 2>&1
+            test -s "build/v317/rf_sta/$label.v"
+          done <<'CONFIGS'
+          source_fixed|vektor_rf_bank_arbiter|rtl/vtile/rf_bank_arbiter.sv
+          pairwise_fixed|vektor_v317_rf_pairwise|research/v317/rtl/rf_bank_pairwise_credit.sv
+          source_rotating|vektor_v317_rf_rotating|rtl/vtile/rf_bank_arbiter.sv research/v317/rtl/rf_bank_rotating_control.sv
+          pairwise_rotating|vektor_v317_rf_pairwise_rotating|research/v317/rtl/rf_bank_pairwise_credit.sv
+          CONFIGS
+      - name: Original loads and three frozen unseen holdouts, four variants
+        run: |
+          set -euo pipefail
+          lib=build/v317/rf_sta/NangateOpenCellLibrary_typical.lib
+          for load in 2 20 40 60 80 100; do
+            for label in source_fixed pairwise_fixed source_rotating pairwise_rotating; do
+              case "$label" in
+                source_fixed) top=vektor_rf_bank_arbiter ;;
+                pairwise_fixed) top=vektor_v317_rf_pairwise ;;
+                source_rotating) top=vektor_v317_rf_rotating ;;
+                pairwise_rotating) top=vektor_v317_rf_pairwise_rotating ;;
+              esac
+              STA_LIBERTY="$lib" STA_NETLIST="build/v317/rf_sta/$label.v" STA_TOP="$top" STA_LOAD="$load" sta -exit research/v317/rtl/run_rf_sta.tcl 2>&1 | tee "build/v317/rf_sta/${label}_${load}.log"
+            done
+          done
+      - name: Independent evidence checker
+        run: |
+          set -euo pipefail
+          python -m unittest research.v317.rtl.test_audit_rf_sta -v
+          python -m research.v317.rtl.audit_rf_sta build/v317/rf_sta | tee build/v317/rf_sta/independent_audit.json
+          python -m json.tool build/v317/rf_sta/independent_audit.json >/dev/null
+      - name: Preserve source and all failures
+        if: always()
+        run: |
+          mkdir -p build/v317/rf_sta
+          git rev-parse HEAD > build/v317/rf_sta/source_sha.txt
+      - name: Upload netlists and raw timing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-pre-route-opensta-cell-timing
+          path: build/v317/rf_sta/

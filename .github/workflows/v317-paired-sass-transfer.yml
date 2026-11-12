@@ -1,0 +1,51 @@
+name: V317 paired SASS listing transfer
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - research/v317/paired_sass_listing_transfer.py
+      - research/v317/test_paired_sass_listing_transfer.py
+      - research/v317/sass_audit.py
+      - .github/workflows/v317-paired-sass-transfer.yml
+jobs:
+  paired-sass:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test independent structural parser
+        run: python -m unittest -v research.v317.test_paired_sass_listing_transfer
+      - name: Fetch pinned public SASS and reproduce static counts
+        run: python -m research.v317.paired_sass_listing_transfer > paired-sass-result.json
+      - name: Check observed regression and claim boundaries
+        run: |
+          python - <<'PY'
+          import json
+          d = json.load(open("paired-sass-result.json", encoding="utf-8"))
+          assert d["matched_pc_count"] == 712
+          assert d["lexical_source_histograms_identical"]
+          assert not d["gpu_speedup_inference_allowed"]
+          for name in ("fast", "slow"):
+              m = d["metrics"][name]
+              assert m["matches_frozen_text_sha256"], (name, m["sha256"])
+              assert m["instructions"] == 712
+              assert m["classified"] == 486 and m["unknown_semantics"] == 226
+              assert m["static_source_occurrences"] == 848 and m["reuse_hints"] == 12
+          x = d["differences_by_pc"]
+          assert len(x["instruction_text"]) == 8
+          assert len(x["instruction_word"]) == 0
+          assert len(x["control_word"]) == 8
+          assert len(x["register_tokens"]) == 0
+          print("PASS: pinned text transfer and negative claim boundary")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v317-paired-sass-json
+          path: paired-sass-result.json
+          if-no-files-found: ignore
