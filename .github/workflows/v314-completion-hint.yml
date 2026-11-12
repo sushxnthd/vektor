@@ -1,0 +1,27 @@
+name: V314 completion-hint prospective falsification
+on:
+  push:
+    branches:
+      - research/v314-completion-hint-port-bound
+  workflow_dispatch:
+
+jobs:
+  prospective-synthetic-screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Freeze and run candidate vs strong buffered collector
+        run: python3 research/v314/completion_hint_holdout.py | tee v314-holdout.json
+      - name: Independent per-bank event and workload-conservation audit
+        run: python3 research/v314/audit_completion_hint.py | tee v314-audit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v314-falsification-evidence
+          path: |
+            v314-holdout.json
+            v314-audit.txt
