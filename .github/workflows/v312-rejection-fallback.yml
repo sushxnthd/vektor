@@ -1,0 +1,69 @@
+name: v312-rejection-fallback-screen
+on:
+  push:
+    branches: ["research/v312-rejection-aware-bank-fallback"]
+  pull_request:
+    paths:
+      - "research/v312/**"
+      - "rtl/vtile/v312_rejection_fallback.sv"
+      - "rtl/vtile/v312_factored_fallback.sv"
+      - "verification/rtl/tb_v312_rejection_fallback.sv"
+      - ".github/workflows/v312-rejection-fallback.yml"
+  workflow_dispatch:
+jobs:
+  prospective-synthetic-screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frozen finite-state prediction and seeded holdouts
+        run: |
+          mkdir -p build/v312
+          python3 research/v312/rejection_fallback_screen.py > build/v312/results.json
+          cat build/v312/results.json
+      - name: Independent reference and adversarial audit
+        run: |
+          python3 research/v312/audit_rejection_fallback.py build/v312/results.json
+      - name: Occupancy, clock, control and bandwidth sensitivity
+        run: |
+          python3 research/v312/throughput_boundary_sensitivity.py build/v312/results.json > build/v312/sensitivity.json
+          cat build/v312/sensitivity.json
+      - name: Preserve exact evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v312-rejection-fallback-screen
+          path: build/v312/
+  rtl-functional-generic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+      - name: Independent 50,002-vector dual-implementation functional oracle
+        run: |
+          mkdir -p build/v312
+          iverilog -g2012 -s tb_v312_rejection_fallback -o build/v312/v312_tb \
+            rtl/vtile/v312_rejection_fallback.sv \
+            rtl/vtile/v312_factored_fallback.sv \
+            verification/rtl/tb_v312_rejection_fallback.sv
+          vvp build/v312/v312_tb | tee build/v312/rtl_sim.log
+      - name: Generic synthesis, counted implementation (not physical signoff)
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/v312_rejection_fallback.sv; synth -top vektor_v312_rejection_fallback; stat' \
+            2>&1 | tee build/v312/v312_generic_yosys.log
+      - name: Generic synthesis, factored implementation (same mechanism)
+        run: |
+          set -o pipefail
+          yosys -p 'read_verilog -sv rtl/vtile/v312_factored_fallback.sv; synth -top vektor_v312_factored_fallback; stat' \
+            2>&1 | tee build/v312/v312_factored_generic_yosys.log
+      - name: Preserve RTL evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v312-rejection-fallback-rtl
+          path: build/v312/

@@ -1,0 +1,71 @@
+name: V312 matched Nangate45 placement RC falsification
+on:
+  push:
+    branches: ["research/v312-rejection-aware-bank-fallback"]
+    paths:
+      - "research/v312/**"
+      - "rtl/vtile/v312_compact_head_only_control.sv"
+      - "rtl/vtile/v312_factored_fallback.sv"
+      - ".github/workflows/v312-matched-placement-rc.yml"
+  pull_request:
+    paths:
+      - "research/v312/**"
+      - "rtl/vtile/v312_compact_head_only_control.sv"
+      - "rtl/vtile/v312_factored_fallback.sv"
+      - ".github/workflows/v312-matched-placement-rc.yml"
+  workflow_dispatch:
+jobs:
+  physical-prefilter:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate independent checker and forged-evidence controls
+        run: |
+          set -euo pipefail
+          python3 -m py_compile research/v312/audit_matched_placement_rc.py
+          python3 - <<'PY'
+          import importlib.util
+          spec=importlib.util.spec_from_file_location("audit","research/v312/audit_matched_placement_rc.py")
+          module=importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          module.selftest()
+          print("V312_ADVERSARIAL_PHYSICAL_EVIDENCE_SELFTEST_PASS")
+          PY
+      - name: Pin physical toolchain and Nangate45 platform
+        run: |
+          set -euo pipefail
+          mkdir -p build/v312_physical
+          image=ghcr.io/the-openroad-project/openlane:1.0.2
+          docker pull "$image"
+          docker image inspect "$image" > build/v312_physical/container_image_inspect.json
+          docker image inspect --format '{{.Id}}' "$image" > build/v312_physical/container_image_id.txt
+          git clone --depth 1 https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts.git build/v312_physical/orfs
+          git -C build/v312_physical/orfs fetch --depth 1 origin 202c7fccbce32e86db899c54b0a0f0484f869cc3
+          git -C build/v312_physical/orfs checkout --detach 202c7fccbce32e86db899c54b0a0f0484f869cc3
+          git -C build/v312_physical/orfs rev-parse HEAD > build/v312_physical/orfs_source_commit.txt
+          sha256sum build/v312_physical/orfs/flow/platforms/nangate45/lef/NangateOpenCellLibrary.tech.lef build/v312_physical/orfs/flow/platforms/nangate45/lef/NangateOpenCellLibrary.macro.mod.lef build/v312_physical/orfs/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib > build/v312_physical/platform_sha256.txt
+          echo "$GITHUB_SHA" > build/v312_physical/source_commit.txt
+      - name: Matched Yosys, OpenROAD zero-wire, dense and relaxed placed RC
+        run: |
+          set -euo pipefail
+          docker run --rm -v "$PWD":/work -w /work ghcr.io/the-openroad-project/openlane:1.0.2 bash /work/research/v312/matched_placement_rc.sh
+      - name: Independently apply frozen physical kill rules
+        run: |
+          set -euo pipefail
+          sudo chown -R "$(id -u):$(id -g)" build/v312_physical
+          python3 research/v312/audit_matched_placement_rc.py | tee build/v312_physical/audit.stdout.log
+      - name: Preserve all raw and negative evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v312-matched-placement-rc-evidence
+          path: |
+            build/v312_physical/*.log
+            build/v312_physical/*.json
+            build/v312_physical/*.txt
+            build/v312_physical/*.v
+            build/v312_physical/*.odb
+            build/v312_physical/*.sdc
+            build/v312_physical/*.tcl
+          if-no-files-found: warn

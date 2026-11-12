@@ -1,0 +1,25 @@
+name: V312 buffered collector strong-baseline falsification
+on:
+  push:
+    branches: ["research/v312-rejection-aware-bank-fallback"]
+    paths:
+      - "research/v312/buffered_collector_strong_control.py"
+      - ".github/workflows/v312-buffered-collector.yml"
+  workflow_dispatch:
+jobs:
+  equal-information-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute independently encoded same-information buffered collector
+        run: |
+          set -euo pipefail
+          mkdir -p build/v312_buffered
+          python3 research/v312/buffered_collector_strong_control.py | tee build/v312_buffered/result.json
+      - name: Preserve exact synthetic queue-service result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v312-buffered-strong-control
+          path: build/v312_buffered/
