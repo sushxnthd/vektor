@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-30",
+  "status": "PASS_INDEPENDENT_SIMULATOR_COUNTER_REPLAY",
+  "source": "GitHub Actions run 41091279796, artifact 12992914321",
+  "artifact_sha256": "9728ca510a69a1826a307aa5d68b7e13ba057396340bdaf3e18f685d47ffb390",
+  "raw_log_sha256": [
+    "fae56e0412b42fbdf2792c7811b261218e9c67e7a43bab91552f5a2615302abc",
+    "db1d4a3e645a1451a11787a1cbdcd0f207e61d79a32a388a766ee270fad34c56"
+  ],
+  "simulator_sha256": "ca62cf6be77dfd0b2e15078e41dffdd7656ca48ddb212e88b28797882cc727c4",
+  "config_sha256": [
+    "8ccad878b6abfec8254ecd6c7e0efee2714908dc3a04f611ff8787000e277bd3",
+    "19dd14b3a4b6c1a1cb2833bd091f0dbd485ad79336ef7d4b0c9db1f7c46f504e"
+  ],
+  "selected_list": "rodinia_2.0-ft/9.1/pathfinder-rodinia-2.0-ft/1000_20_5___data_result_1000_20_5_txt/traces/kernelslist.g",
+  "original_kernel_launches": 4,
+  "original_memcpy_htod": 2,
+  "repeat_count": 2,
+  "repeat_semantic_counter_vectors_identical": true,
+  "raw_logs_identical": false,
+  "per_kernel_counter_increments": [
+    {
+      "uid": 1,
+      "cycles": 7294,
+      "instructions": 276480,
+      "l1d_misses": 917,
+      "l2_misses": 128,
+      "global_reads": 789,
+      "global_writes": 156
+    },
+    {
+      "uid": 2,
+      "cycles": 7295,
+      "instructions": 276480,
+      "l1d_misses": 915,
+      "l2_misses": 1,
+      "global_reads": 787,
+      "global_writes": 156
+    },
+    {
+      "uid": 3,
+      "cycles": 7231,
+      "instructions": 276480,
+      "l1d_misses": 915,
+      "l2_misses": 0,
+      "global_reads": 787,
+      "global_writes": 156
+    },
+    {
+      "uid": 4,
+      "cycles": 6897,
+      "instructions": 230200,
+      "l1d_misses": 787,
+      "l2_misses": 0,
+      "global_reads": 658,
+      "global_writes": 157
+    }
+  ],
+  "totals": {
+    "cycles": 28717,
+    "instructions": 1059640,
+    "l1d_misses": 3534,
+    "l2_misses": 129,
+    "global_reads": 3021,
+    "global_writes": 625
+  },
+  "source_counter_semantics": "cumulative simulator counters differenced between kernel completions; no hardware byte/DRAM equivalence",
+  "hardware_validated": false,
+  "architecture_speedup_permitted": false
+}

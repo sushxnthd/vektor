@@ -1,0 +1,64 @@
+name: V309 prospective-protocol opcode-aware V100 FFMA bank-service falsification
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/ffma_opcode_gate.py
+      - research/v309/audit_ffma_opcode_gate.py
+      - research/v309/FFMA_OPCODE_GATE_PROTOCOL_20261030.md
+      - .github/workflows/v309-ffma-opcode-gate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ffma-gate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Local opcode and independent adversarial tests
+        run: |
+          python3 research/v309/ffma_opcode_gate.py --selftest
+          python3 research/v309/audit_ffma_opcode_gate.py --selftest
+      - name: Retrieve and authenticate original Purdue V100 Rodinia traces
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Run complete opcode-aware profile and independent redecoder
+        run: |
+          set -euo pipefail
+          python3 research/v309/ffma_opcode_gate.py /tmp/v309-v100-rodinia.tgz > v309-ffma-opcode-profile.json
+          python3 research/v309/audit_ffma_opcode_gate.py /tmp/v309-v100-rodinia.tgz v309-ffma-opcode-profile.json > v309-ffma-opcode-audit.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('v309-ffma-opcode-profile.json'))
+          a=json.load(open('v309-ffma-opcode-audit.json'))
+          g=d['global']
+          print('INDEPENDENT',a)
+          print('PRE-REGISTERED_GATE',d['pre_registered_ffma_gate'])
+          print('ACTIVE',g['active'],'FFMA_ROWS',g['ffma_rows'])
+          print('FFMA_P2_EXTRA',g['ffma_p2_extra'],'ALL_P2_EXTRA',g['all_p2_extra'])
+          print('FFMA_SERIAL_PROXY_PERCENT',100*d['conditional_ffma_serial_throughput_gain_fraction'])
+          print('FFMA_THREE_SAME_BANK',g['ffma_three_same_bank'],'FFMA_MORE_THAN_THREE',g['ffma_more_than_three'])
+          for name,x in d['applications'].items():
+              print('FAMILY',name,'ACTIVE',x['active'],'FFMA',x['ffma_rows'],'FFMA_P2_EXTRA',x['ffma_p2_extra'])
+          PY
+      - name: Preserve full raw evidence and independent audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-ffma-opcode-gate
+          path: |
+            v309-ffma-opcode-profile.json
+            v309-ffma-opcode-audit.json
+          if-no-files-found: warn

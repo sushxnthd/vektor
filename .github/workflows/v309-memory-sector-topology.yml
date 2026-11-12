@@ -1,0 +1,66 @@
+name: V309 authenticated SASS memory-sector topology falsification
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/memory_sector_topology.py
+      - research/v309/audit_memory_sector_topology.py
+      - research/v309/MEMORY_SECTOR_PROTOCOL_20261030.md
+      - .github/workflows/v309-memory-sector-topology.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  memory-sector:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent selftests, byte-oracle and fail-closed mutants
+        run: |
+          set -euo pipefail
+          python3 research/v309/memory_sector_topology.py --selftest
+          python3 research/v309/audit_memory_sector_topology.py --selftest
+      - name: Retrieve SHA-pinned V100 Rodinia dynamic SASS
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Full-corpus memory address topology and independent audit
+        run: |
+          set -euo pipefail
+          python3 research/v309/memory_sector_topology.py /tmp/v309-v100-rodinia.tgz > v309-memory-sector-profile.json
+          python3 research/v309/audit_memory_sector_topology.py /tmp/v309-v100-rodinia.tgz v309-memory-sector-profile.json > v309-memory-sector-audit.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('v309-memory-sector-profile.json'))
+          a=json.load(open('v309-memory-sector-audit.json'))
+          g=p['global']
+          assert a['audit']=='PASS'
+          assert g['global_proxy']+g['other_memory']==484259
+          assert p['fixed_address_ideal_coalescer_improvement_sectors']==0
+          print('AUDIT',a)
+          print('GLOBAL',g)
+          for app,x in p['applications'].items():
+              print('APP',app,'GLOBAL_PROXY',x['global_proxy'],'SECTORS32',x['sectors32'],
+                    'LAYOUT_ONLY_SLACK',x.get('layout_only_sector_slack'),
+                    'UTIL',x['sector_utilization'])
+          PY
+      - name: Preserve authenticated profile and independent evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-memory-sector-topology
+          path: |
+            v309-memory-sector-profile.json
+            v309-memory-sector-audit.json
+          if-no-files-found: warn

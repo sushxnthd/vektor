@@ -1,0 +1,61 @@
+name: V309 legacy predicate-mask provenance and sector-envelope audit
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/legacy_predicate_mask_provenance.py
+      - research/v309/LEGACY_PREDICATE_MASK_PROTOCOL_20261030.md
+      - .github/workflows/v309-legacy-mask-provenance.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  provenance:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Source-conditional exact-mask and sector-envelope selftests
+        run: |
+          set -euo pipefail
+          python3 research/v309/legacy_predicate_mask_provenance.py --selftest
+      - name: Fetch and verify authenticated V100 Rodinia trace archive
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Full-corpus source-conditional identifiability and sharp envelopes
+        run: |
+          set -euo pipefail
+          python3 research/v309/legacy_predicate_mask_provenance.py /tmp/v309-v100-rodinia.tgz > v309-legacy-mask-provenance.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('v309-legacy-mask-provenance.json'))
+          g=p['global']
+          assert p['source_snapshot_is_proven_producer'] is False
+          assert g['global_proxy']==240465
+          assert g.get('format_0',0)+g.get('format_1',0)+g.get('format_2',0)==240465
+          assert g['format0_exact_under_hypothesis']+g['format0_predicate_hidden']+g.get('format0_source_incompatible',0)==g['format_0']
+          assert g['format1_sector_identifiable32']+g['format1_sector_ambiguous32']==g['format_1']
+          assert g['format1_sector_lower32']<=g['format1_sector_upper32']
+          print('SOURCE-CONDITIONAL GLOBAL',g)
+          for app,a in p['applications'].items():
+              print('APP',app,'FORMAT0_HIDDEN',a.get('format0_predicate_hidden',0),
+                    'FORMAT1_AMBIGUOUS',a.get('format1_sector_ambiguous32',0))
+          PY
+      - name: Preserve full-corpus conditional provenance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-legacy-mask-provenance
+          path: v309-legacy-mask-provenance.json
+          if-no-files-found: warn

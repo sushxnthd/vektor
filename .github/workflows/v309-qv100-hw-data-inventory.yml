@@ -1,0 +1,44 @@
+name: V309 bounded Quadro V100 hardware-counter provenance inventory
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - .github/workflows/v309-qv100-hw-data-inventory.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inventory bounded upstream Quadro V100 profiler archive
+        run: |
+          set -euo pipefail
+          url='https://engineering.purdue.edu/tgrogers/gpgpu-sim/hw_data/quadro.v100.cycle.tgz'
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 300 --max-filesize 134217728 \
+            "$url" -o /tmp/v309-quadro-v100-hw.tgz
+          sha256sum /tmp/v309-quadro-v100-hw.tgz | tee v309-qv100-hw-sha256.txt
+          wc -c /tmp/v309-quadro-v100-hw.tgz | tee v309-qv100-hw-bytes.txt
+          tar -tzf /tmp/v309-quadro-v100-hw.tgz > v309-qv100-hw-manifest.txt
+          wc -l v309-qv100-hw-manifest.txt
+          echo 'EXACT RODINIA 2.0-ft MEMBERS:'
+          grep -Eic 'rodinia[-_]2[.]0-ft' v309-qv100-hw-manifest.txt || true
+          echo 'RODINIA 3.1 MEMBERS:'
+          grep -Eic 'rodinia[-_]3[.]1' v309-qv100-hw-manifest.txt || true
+          echo 'SAMPLE RODINIA MEMBERS:'
+          grep -i 'rodinia' v309-qv100-hw-manifest.txt | head -n 60 || true
+          echo 'No same-run pairing or measured GPU speedup is inferred.'
+      - name: Preserve source provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-quadro-v100-hardware-data-manifest
+          path: |
+            v309-qv100-hw-sha256.txt
+            v309-qv100-hw-bytes.txt
+            v309-qv100-hw-manifest.txt
+          if-no-files-found: warn

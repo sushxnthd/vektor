@@ -1,0 +1,49 @@
+name: V309 release trace acquisition budget falsification
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - 'research/v309/release_budget_gate.py'
+      - 'research/v309/RELEASE_BUDGET_NO_GO_20261029.md'
+      - '.github/workflows/v309-release-budget.yml'
+  workflow_dispatch:
+jobs:
+  qualify:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch release metadata only (NO trace downloads)
+        run: |
+          curl --fail --silent --show-error --location --retry 3 \
+            -H 'Accept: application/vnd.github+json' \
+            https://api.github.com/repos/accel-sim/accel-sim-framework/releases/tags/v2.0.1 \
+            -o /tmp/vektor-v309-release.json
+      - name: Independent mutation checks and exact budget analysis
+        run: |
+          python3 research/v309/release_budget_gate.py --selftest
+          python3 research/v309/release_budget_gate.py /tmp/vektor-v309-release.json --budget-mib 512 > v309-release-budget-512.json
+          python3 research/v309/release_budget_gate.py /tmp/vektor-v309-release.json --budget-mib 3072 > v309-release-budget-3072.json
+          python3 - <<'PY'
+          import json
+          with open('v309-release-budget-512.json') as f: x = json.load(f)
+          with open('v309-release-budget-3072.json') as f: y = json.load(f)
+          assert x['configurations'] == 20
+          assert x['parts'] == 116
+          assert x['total_release_trace_bytes'] == 208293038080
+          assert x['minimum_distinct_family_bytes'] == 2755338240
+          assert x['qualification'] == 'BLOCKED_BY_BYTE_BUDGET'
+          assert y['qualification'] == 'SIZE_ONLY_ELIGIBLE_NOT_VALIDATED'
+          print('PASS: external release metadata matches frozen observed byte totals')
+          PY
+      - name: Preserve acquisition feasibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-external-release-budget-evidence
+          path: v309-release-budget-*.json
+          if-no-files-found: warn

@@ -1,0 +1,80 @@
+name: V309 matched OpenROAD placement-estimated RC physical prefilter
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "rtl/vtile/compact_greedy_arbiter.sv"
+      - "rtl/vtile/factored_subset_arbiter.sv"
+      - "research/v309/orfs_placement.sdc"
+      - "research/v309/orfs_placement_sta.tcl"
+      - "research/v309/orfs_place_direct.tcl"
+      - "research/v309/orfs_zero_wire_control.tcl"
+      - "research/v309/orfs_matched_placement.sh"
+      - "research/v309/audit_orfs_placement.py"
+      - ".github/workflows/v309-orfs-placement-rc-gate.yml"
+  workflow_dispatch:
+
+jobs:
+  matched-placed-rc:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check independent audit syntax and adversarial fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile research/v309/audit_orfs_placement.py
+          python3 - <<'PY'
+          import importlib.util
+          spec = importlib.util.spec_from_file_location("audit", "research/v309/audit_orfs_placement.py")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          module.selftest()
+          print("V309_PLACED_RC_AUDIT_NEGATIVE_CONTROLS_PASS")
+          PY
+      - name: Pull documented ORFS toolchain and record immutable image identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/v309_orfs/{results,logs,reports,objects}
+          image=ghcr.io/the-openroad-project/openlane:1.0.2
+          docker pull "$image"
+          docker image inspect "$image" > build/v309_orfs/container_image_inspect.json
+          docker image inspect --format '{{.Id}}' "$image" | tee build/v309_orfs/container_image_id.txt
+          docker image inspect --format '{{json .RepoDigests}}' "$image" | tee build/v309_orfs/container_repo_digests.json
+          git clone --depth 1 https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts.git build/v309_orfs/orfs
+          git -C build/v309_orfs/orfs fetch --depth 1 origin 202c7fccbce32e86db899c54b0a0f0484f869cc3
+          git -C build/v309_orfs/orfs checkout --detach 202c7fccbce32e86db899c54b0a0f0484f869cc3
+          git -C build/v309_orfs/orfs rev-parse HEAD | tee build/v309_orfs/orfs_source_commit.txt
+          sha256sum build/v309_orfs/orfs/flow/platforms/nangate45/lef/NangateOpenCellLibrary.tech.lef build/v309_orfs/orfs/flow/platforms/nangate45/lef/NangateOpenCellLibrary.macro.mod.lef build/v309_orfs/orfs/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib | tee build/v309_orfs/platform_sha256.txt
+          printf '%s\n' "$GITHUB_SHA" > build/v309_orfs/source_commit.txt
+      - name: Place both matched controllers at two frozen floorplans
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$PWD":/work \
+            -w /work \
+            ghcr.io/the-openroad-project/openlane:1.0.2 \
+            bash /work/research/v309/orfs_matched_placement.sh
+      - name: Independently enforce frozen clock-limited upper-bound kill
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo chown -R "$(id -u):$(id -g)" build/v309_orfs
+          python3 research/v309/audit_orfs_placement.py | tee build/v309_orfs/independent_audit.log
+      - name: Preserve placed databases, matched timing, electrical and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-orfs-matched-placement-rc-evidence
+          path: |
+            build/v309_orfs/*.log
+            build/v309_orfs/*.json
+            build/v309_orfs/*.odb
+            build/v309_orfs/*.v
+            build/v309_orfs/*.meta
+            build/v309_orfs/*.txt
+          if-no-files-found: warn

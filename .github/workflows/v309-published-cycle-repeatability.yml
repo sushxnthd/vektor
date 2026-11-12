@@ -1,0 +1,49 @@
+name: V309 external simulator cycle-repeatability and source-attestation gate
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/published_cycle_repeatability.py
+      - research/v309/PUBLISHED_CYCLE_REPEATABILITY_PROTOCOL_20261030.md
+      - .github/workflows/v309-published-cycle-repeatability.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Offline independent parser and negative-mutant controls
+        run: |
+          set -euo pipefail
+          python3 research/v309/published_cycle_repeatability.py --selftest > v309-cycle-repeatability-selftest.json
+      - name: Source-attest exact public Accel-Sim issue comments
+        run: |
+          set -euo pipefail
+          python3 research/v309/published_cycle_repeatability.py --attest-public-source --output v309-cycle-repeatability-result.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('v309-cycle-repeatability-result.json'))
+          assert d['source_attestation']=='PASS_EXACT_TWO_PUBLIC_COMMENT_TABLES'
+          assert d['summary']['qv100']['workloads_with_nonzero_cycle_range']==0
+          assert d['summary']['rtx2060']['workloads_with_nonzero_cycle_range']==9
+          assert d['v309_archive_digest_matched'] is False
+          assert d['hardware_counter_calibrated'] is False
+          assert d['physical_speedup_inference_permitted'] is False
+          print(json.dumps(d['summary'],indent=2,sort_keys=True))
+          PY
+      - name: Preserve source-attested third-party evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-published-cycle-repeatability-evidence
+          path: |
+            v309-cycle-repeatability-selftest.json
+            v309-cycle-repeatability-result.json
+          if-no-files-found: warn

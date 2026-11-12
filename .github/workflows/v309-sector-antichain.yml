@@ -1,0 +1,71 @@
+name: V309 bounded exact antichain sector audit
+on:
+  push:
+    branches:
+      - research/v309-external-ptx-bottleneck-gate
+    paths:
+      - research/v309/sector_antichain_dp.py
+      - research/v309/sector_antichain_full_audit.py
+      - research/v309/sector_antichain_independent_oracle.py
+      - research/v309/ANTICHAIN_DP_PROTOCOL_20261030.md
+      - .github/workflows/v309-sector-antichain.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sector-antichain:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Exhaustive independent original-mask oracle
+        run: |
+          set -euo pipefail
+          python3 research/v309/sector_antichain_dp.py --selftest
+      - name: Independent 32-lane original-mask oracle and 64-bit boundary tests
+        run: |
+          set -euo pipefail
+          python3 research/v309/sector_antichain_independent_oracle.py
+      - name: Acquire authenticated bounded historical V100 trace archive
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --retry 2 --retry-delay 3 \
+            --connect-timeout 25 --max-time 240 --max-filesize 67108864 \
+            'https://engineering.purdue.edu/tgrogers/accel-sim/traces/tesla-v100/2020.03.18/rodinia_2.0-ft.tgz' \
+            -o /tmp/v309-v100-rodinia.tgz
+          echo 'aeb7de478785856e4ac834d12be0e71ab0df297f43fc02650e2ca90dea66d8b1  /tmp/v309-v100-rodinia.tgz' | sha256sum -c -
+      - name: Full-corpus independent DP envelope comparison
+        run: |
+          set -euo pipefail
+          python3 research/v309/sector_antichain_full_audit.py /tmp/v309-v100-rodinia.tgz > v309-antichain-audit.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('v309-antichain-audit.json'))
+          g=p['global']
+          assert p['producer_identity_verified'] is False
+          assert p['trace_files']==210 and g['global_proxy']==240465
+          assert g['format0']==106728 and g['format1']==133737
+          assert (g['old_sector_lower'],g['old_sector_upper'])==(1580660,1595620)
+          assert g['old_sector_lower']<=g['new_sector_lower']<=g['new_sector_upper']<=g['old_sector_upper']
+          assert g.get('dp_eligible',0)==sum(g.get('dp_'+s,0) for s in
+              ('exact','state_cap','transition_cap','unknown_address_overflow'))+g.get('dp_global_budget_exhausted',0)
+          print('SOURCE-CONDITIONAL BOUNDED EXACT DP',g)
+          for app,a in p['applications'].items():
+              print('APP',app,'DP_ELIGIBLE',a.get('dp_eligible',0),
+                    'DP_EXACT',a.get('dp_exact_rows',0),
+                    'DP_NEWLY_IDENTIFIED',a.get('dp_newly_identified_rows',0),
+                    'OLD',a['old_sector_lower'],a['old_sector_upper'],
+                    'NEW',a['new_sector_lower'],a['new_sector_upper'])
+          PY
+      - name: Preserve primary evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v309-antichain-source-conditional-evidence
+          path: v309-antichain-audit.json
+          if-no-files-found: warn
