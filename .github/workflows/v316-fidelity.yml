@@ -1,0 +1,26 @@
+name: V316 modern fixed-window RF novelty falsifier
+on:
+  push:
+    branches:
+      - research/v316-modern-fixed-latency-fidelity-gate
+  workflow_dispatch:
+jobs:
+  falsify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent exhaustive and prospective checks
+        run: |
+          mkdir -p evidence/v316
+          python3 research/v316/fixed_window_falsifier.py | tee evidence/v316/frozen_result.json
+          python3 -m json.tool evidence/v316/frozen_result.json > /dev/null
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v316-fixed-window-falsification
+          path: evidence/v316/frozen_result.json
+          if-no-files-found: error
