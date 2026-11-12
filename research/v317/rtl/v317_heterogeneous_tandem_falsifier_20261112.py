@@ -33,7 +33,7 @@ def main():
         for aa in product((F(1),F(2)), repeat=n):
             for bb in product((F(1),F(3)), repeat=n):
                 assert makespan(aa,bb) == independent_dag(aa,bb)
-    a = (F(1),F(1),F(1),F(1))
+    a = (F(2),F(2),F(2),F(2))
     b1 = (F(1),F(1),F(4),F(4))
     b2 = (F(4),F(4),F(1),F(1))
     assert sorted(b1) == sorted(b2)
