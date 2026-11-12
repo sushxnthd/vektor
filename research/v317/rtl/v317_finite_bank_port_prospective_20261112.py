@@ -15,10 +15,12 @@ class Work:
     name: str
     banks: tuple[int, ...]
     predicted: str
+    service: int
+    issue: int
 
 FROZEN = (
-    Work("disjoint_alternating", (0,1)*64, "WIN"),
-    Work("single_bank_hotspot", (0,)*128, "NO_WIN"),
+    Work("disjoint_alternating", (0,1)*64, "WIN", 1, 4),
+    Work("single_bank_hotspot", (0,)*128, "NO_WIN", 4, 1),
 )
 
 def simulate(work, pairwise, service=4, issue=1, pair_overhead=1, bank_count=2):
@@ -52,7 +54,7 @@ def evaluate(work, service=4, issue=1, overhead=1, area_ratio=Fraction(1001,1000
 
 def run():
     for w in FROZEN:
-        b,c,g = evaluate(w)
+        b,c,g = evaluate(w, service=w.service, issue=w.issue)
         actual = "WIN" if g > 1 else "NO_WIN"
         assert actual == w.predicted, (w.name,b,c,str(g),actual)
         print(f"{w.name}: baseline={b} candidate={c} throughput_per_area={float(g):.6f} predicted={w.predicted}")
@@ -60,7 +62,7 @@ def run():
     for w in FROZEN:
         last = 0
         for overhead in range(0, 17):
-            cycles = simulate(w, True, pair_overhead=overhead)
+            cycles = simulate(w, True, service=w.service, issue=w.issue, pair_overhead=overhead)
             assert cycles >= last
             last = cycles
     # No bank capacity is created by fusion: all-hot request completion
