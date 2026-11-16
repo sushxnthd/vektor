@@ -1,5 +1,14 @@
 # Research Activity
 
+Updated: 2026-11-16 (UTC)
+
+- Active research branch: `research/v317-sass-provenance-gate`
+- Active draft PR: #34
+- Latest durable research commit: `a384c51b9564479d59ba4b0b01e1824455f3f126`
+- Evidence: committed and fetched an independently executed bounded-lookahead bank-queue competitor falsifier. Synthetic exhaustive binary sequences of lengths 2–10 reveal adjacent-only pairing can lose to four-entry lookahead at identical bank-port count; lookahead is NOT proven equal-area or electrically viable. No repaired routing, extracted-RC legality, DRC or measured GPU throughput. This checkpoint is visibility only, not validation.
+
+---
+
 Updated: 2026-11-12 (UTC)
 
 - Active research branch: `research/v317-sass-provenance-gate`
