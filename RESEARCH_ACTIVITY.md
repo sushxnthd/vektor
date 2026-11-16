@@ -1,6 +1,14 @@
 # Research Activity
 
-Updated: 2026-11-16 (UTC)
+Updated: 2026-11-17 (UTC)
+
+- Active research branch: `research/v317-sass-provenance-gate`
+- Active draft PR: #34
+- Latest durable research commit: `4c7870cc65c982cd03b01b42c60c51d23ded3bd1`
+- Evidence: added and fetched a strict-order two-request, one-port-per-bank combinational RTL reference control with explicit assertion harness. The control forbids deeper lookahead overtaking; it is not a new V296 mechanism or a physically validated GPU implementation. RTL simulation, synthesis, routing, extracted-RC electrical legality and GPU workload throughput remain unverified. Ledger is visibility only, not validation.
+
+---
+
 
 - Active research branch: `research/v317-sass-provenance-gate`
 - Active draft PR: #34
