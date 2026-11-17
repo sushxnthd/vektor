@@ -28,6 +28,12 @@ jobs:
           iverilog -g2012 -s v317_fifo_pair_trace_tb -o /tmp/v317_trace_tb research/v317/rtl/v317_fifo_pair_reference_20261117.sv research/v317/rtl/v317_fifo_pair_trace_tb_20261117.sv
           vvp /tmp/v317_trace_tb | tee fifo_trace.log
           grep -q 'PASS four 64-request FIFO traces' fifo_trace.log
+      - name: Backpressure and FIFO conservation traces
+        run: |
+          set -euo pipefail
+          iverilog -g2012 -s v317_fifo_backpressure_tb -o /tmp/v317_bp_tb research/v317/rtl/v317_fifo_pair_reference_20261117.sv research/v317/rtl/v317_fifo_backpressure_tb_20261117.sv
+          vvp /tmp/v317_bp_tb | tee fifo_backpressure.log
+          grep -q 'PASS backpressure FIFO conservation' fifo_backpressure.log
       - name: Generic logic synthesis (not PPA signoff)
         run: |
           set -euo pipefail
@@ -41,5 +47,6 @@ jobs:
           path: |
             fifo_simulation.log
             fifo_trace.log
+            fifo_backpressure.log
             fifo_yosys.log
           if-no-files-found: warn
