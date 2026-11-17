@@ -20,6 +20,7 @@ Never substitute placement/global-route estimates for extracted route.
 """
 import json
 import math
+import re
 import sys
 from fractions import Fraction
 
@@ -38,6 +39,9 @@ def validate(report):
     for field in MATCHED:
         if field not in report or report[field] in ("", None):
             raise ValueError("missing matched provenance: " + field)
+    for field in ("sdc_sha256", "lef_sha256", "lib_sha256"):
+        if not isinstance(report[field], str) or not re.fullmatch(r"[0-9a-f]{64}", report[field]):
+            raise ValueError("invalid provenance SHA256: " + field)
     designs = report.get("designs", {})
     if set(designs) != {"compact", "pairwise"}:
         raise ValueError("both matched designs required")
@@ -72,8 +76,8 @@ def validate(report):
     return results
 
 def self_test():
-    base = dict(technology="test", openroad_version="test", sdc_sha256="test",
-                lef_sha256="test", lib_sha256="test", rc_corner="test",
+    base = dict(technology="test", openroad_version="test", sdc_sha256="a"*64,
+                lef_sha256="b"*64, lib_sha256="c"*64, rc_corner="test",
                 routing_layers="test", die_box_um="test",
                 utilization_target="test")
     def design(cycles):
@@ -99,7 +103,16 @@ def self_test():
             pass
         finally:
             base["designs"]["pairwise"][key] = old
-    print("PASS: valid matched fixture and nine negative evidence gates")
+    old_digest = base["sdc_sha256"]
+    base["sdc_sha256"] = "test"
+    try:
+        validate(base)
+        raise AssertionError("accepted placeholder provenance digest")
+    except ValueError:
+        pass
+    finally:
+        base["sdc_sha256"] = old_digest
+    print("PASS: valid matched fixture, nine negative physical gates, placeholder digest rejection")
 
 if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1] == "--self-test":
