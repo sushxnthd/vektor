@@ -1,5 +1,16 @@
 # Research Activity
 
+Updated: 2026-11-20 (UTC)
+
+- Active research branch: `research/v317-sass-provenance-gate`
+- Active draft PR: #34
+- Latest durable research commit: `4dc9bb2a8d706fbf1532574532d5b79cc88d7119`
+- Evidence: committed and fetched an exact weighted four-bank oldest-protected versus scan-greedy sensitivity checker, independently executed locally. Across hot-bank operand weights 1, 2, 3, 5, the theoretical zero-cost protected-oracle service ratios are 1.014590, 1.014139, 1.012280, and 1.007959, all below the frozen 1.02 threshold. This is a combinational synthetic sensitivity, not finite-queue throughput or physical validation. Previous compact-greedy area superiority and electrical illegality remain binding. No new RTL, legal route, SRAM integration or GPU IPC. V287 remains historical. Ledger is visibility only.
+
+---
+
+# Research Activity
+
 Updated: 2026-11-19 (UTC)
 
 - Active research branch: `research/v317-sass-provenance-gate`
