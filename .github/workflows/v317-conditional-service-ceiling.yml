@@ -1,0 +1,22 @@
+name: v317-conditional-service-ceiling
+
+on:
+  pull_request:
+    paths:
+      - 'research/v317/rtl/conditional_service_ceiling_20261119.py'
+      - 'research/v317/CONDITIONAL_SERVICE_CEILING_20261119.md'
+      - '.github/workflows/v317-conditional-service-ceiling.yml'
+  workflow_dispatch:
+
+jobs:
+  exact-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run exact-rational boundary self-test
+        run: |
+          python research/v317/rtl/conditional_service_ceiling_20261119.py | tee conditional_service_ceiling.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v317-conditional-service-ceiling
+          path: conditional_service_ceiling.txt
