@@ -1,5 +1,14 @@
 # Research Activity
 
+Updated: 2026-11-19 (UTC)
+
+- Active research branch: `research/v317-sass-provenance-gate`
+- Active draft PR: #34
+- Latest durable research commit: `a07a1427bbd77b0847d56b99950f2eeeb1b545a5`
+- Evidence: added an exact-rational conditional service-ceiling checker, froze uniform-16 as a predicted no-win regime and 65%-hot-bank as a conditional potential-win regime, and added a hosted reproduction workflow. The derived necessary law is `G <= min(r_b, r_s*r_f*r_o)`; a >=2% gain requires both bandwidth ratio >=1.02 and clock-times-occupancy >=1.02/r_s. Existing V317 compact-greedy physical falsification remains binding; no new electrically legal route, SRAM-macro tile, GPU IPC, calibrated power or RTX-5090-equivalence claim is made. Hosted workflow execution is not yet established. Ledger is visibility only, not validation.
+
+---
+
 Updated: 2026-11-17 (UTC)
 
 - Active research branch: `research/v317-sass-provenance-gate`
