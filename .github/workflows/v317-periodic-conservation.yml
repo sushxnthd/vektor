@@ -11,6 +11,7 @@ on:
       - 'research/v317/rtl/rotating_scan_development_replay_gate_20261120.py'
       - 'research/v317/rtl/rotating_scan_cluster_sensitivity_20261120.py'
       - 'research/v317/rtl/independent_physical_headroom_gate_20261120.py'
+      - 'research/v317/rtl/independent_work_byte_capacity_audit_20261121.py'
       - '.github/workflows/v317-periodic-conservation.yml'
 permissions:
   contents: read
@@ -65,3 +66,10 @@ jobs:
           python -B research/v317/rtl/independent_physical_headroom_gate_20261120.py
       - name: Digest independent physical-headroom source
         run: sha256sum research/v317/rtl/independent_physical_headroom_gate_20261120.py
+
+      - name: Independent dimensional work-byte capacity audit (development only)
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/independent_work_byte_capacity_audit_20261121.py
+      - name: Digest independent work-byte capacity source
+        run: sha256sum research/v317/rtl/independent_work_byte_capacity_audit_20261121.py
