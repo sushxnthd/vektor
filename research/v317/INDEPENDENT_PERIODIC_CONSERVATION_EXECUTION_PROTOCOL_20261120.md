@@ -1,0 +1,5 @@
+# Independent periodic conservation execution protocol — 2026-11-20
+
+Target: `research/v317/rtl/independent_periodic_conservation_audit_20261120.py` at blob `45aacb1d107408c0c5b35c4fe98e0aa0aa57b5ef` on existing research branch / draft PR #34.
+
+Run with `python3 research/v317/rtl/independent_periodic_conservation_audit_20261120.py` using Python standard library. Capture interpreter version, exit code, stdout/stderr and source SHA in a durable follow-up report. Acceptance requires exit code zero and all 12 deterministic periodic cases satisfying full-window conservation, bank-port legality, oldest protection, and exact equal-throughput assertions. Any exception or mismatched accounting is a FAIL, not an architecture gain. This checker is a negative-control simulator, not RTL, timing, routed electrical signoff, SRAM, or GPU IPC. Preserve V296/V317 lineage; V287 is historical. The protected oracle remains no-go for physical promotion without a prospective material finite-buffer benefit and matched legal physical evidence.
