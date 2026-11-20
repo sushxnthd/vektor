@@ -6,6 +6,8 @@ on:
       - 'research/v317/rtl/independent_periodic_conservation_audit_20261120.py'
       - 'research/v317/rtl/paired_trace_conservation_regression_20261120.py'
       - 'research/v317/rtl/finite_queue_prospective_20261120.py'
+      - 'research/v317/rtl/rotating_scan_structural_audit_20261120.py'
+      - 'research/v317/rtl/rotating_scan_prospective_20261120.py'
       - '.github/workflows/v317-periodic-conservation.yml'
 permissions:
   contents: read
@@ -32,3 +34,10 @@ jobs:
           python -B research/v317/rtl/paired_trace_conservation_regression_20261120.py
       - name: Report paired-trace source SHA-256
         run: sha256sum research/v317/rtl/paired_trace_conservation_regression_20261120.py research/v317/rtl/finite_queue_prospective_20261120.py
+
+      - name: Audit frozen rotating-scan implementation classification
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/rotating_scan_structural_audit_20261120.py
+      - name: Report frozen rotating-scan audit source digests
+        run: sha256sum research/v317/rtl/rotating_scan_structural_audit_20261120.py research/v317/rtl/rotating_scan_prospective_20261120.py
