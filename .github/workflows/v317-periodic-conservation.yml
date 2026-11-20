@@ -8,6 +8,7 @@ on:
       - 'research/v317/rtl/finite_queue_prospective_20261120.py'
       - 'research/v317/rtl/rotating_scan_structural_audit_20261120.py'
       - 'research/v317/rtl/rotating_scan_prospective_20261120.py'
+      - 'research/v317/rtl/rotating_scan_development_replay_gate_20261120.py'
       - '.github/workflows/v317-periodic-conservation.yml'
 permissions:
   contents: read
@@ -41,3 +42,10 @@ jobs:
           python -B research/v317/rtl/rotating_scan_structural_audit_20261120.py
       - name: Report frozen rotating-scan audit source digests
         run: sha256sum research/v317/rtl/rotating_scan_structural_audit_20261120.py research/v317/rtl/rotating_scan_prospective_20261120.py
+
+      - name: Reproduce frozen development falsification (never holdout)
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/rotating_scan_development_replay_gate_20261120.py
+      - name: Digest development replay gate and simulator
+        run: sha256sum research/v317/rtl/rotating_scan_development_replay_gate_20261120.py research/v317/rtl/rotating_scan_prospective_20261120.py
