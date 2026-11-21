@@ -20,6 +20,9 @@ def instrument(arrivals, rotating):
     stats = Counter()
     bank_use = [0] * sim.BANKS
     postwarm_completed = 0
+    postwarm_bank_use = [0] * sim.BANKS
+    postwarm_nonempty = 0
+    postwarm_blocked = 0
     for t, batch in enumerate(arrivals):
         before = list(q)
         chosen = sim.grants(before, phase, rotating)
@@ -43,6 +46,10 @@ def instrument(arrivals, rotating):
                 stats["one_grant_nonempty"] += 1
         if t >= sim.WARMUP:
             postwarm_completed += len(chosen)
+            postwarm_nonempty += int(bool(before))
+            postwarm_blocked += int(bool(before) and len(chosen) < len(before))
+            for j, n in enumerate(ports):
+                postwarm_bank_use[j] += n
         for i in sorted(chosen, reverse=True):
             del q[i]
         for operands in batch:
@@ -59,7 +66,8 @@ def instrument(arrivals, rotating):
     assert stats["offered"] == stats["admitted"] + stats["dropped"]
     assert stats["admitted"] == stats["offered"] - stats["dropped"]
     assert sum(bank_use) == 2 * (stats["admitted"] - stats["remaining"])
-    return dict(stats), bank_use, postwarm_completed
+    assert sum(postwarm_bank_use) == 2 * postwarm_completed
+    return dict(stats), bank_use, postwarm_completed, postwarm_bank_use, postwarm_nonempty, postwarm_blocked
 
 def main():
     results = []
@@ -69,7 +77,7 @@ def main():
             arrivals = list(sim.trace(20261121, regime, rate, rate == "burst"))
             row = {"regime": regime, "rate": rate}
             for name, rotating in (("compact", False), ("rotating", True)):
-                stats, banks, warm = instrument(arrivals, rotating)
+                stats, banks, warm, warm_banks, warm_nonempty, warm_blocked = instrument(arrivals, rotating)
                 original = sim.run(arrivals, rotating)
                 assert warm == round(original["throughput"] * (sim.CYCLES - sim.WARMUP))
                 for key in ("offered", "admitted", "dropped", "remaining"):
@@ -84,11 +92,15 @@ def main():
                     "blocked_cycle_fraction": stats["blocked_cycles"] / stats["cycles"],
                     "one_grant_fraction": stats["one_grant_nonempty"] / max(1, stats["nonempty_cycles"]),
                     "bank_port_utilization": [x / (sim.CYCLES * sim.PORTS) for x in banks],
+                    "postwarm_bank_port_utilization": [x / ((sim.CYCLES - sim.WARMUP) * sim.PORTS) for x in warm_banks],
+                    "postwarm_blocked_nonempty_fraction": warm_blocked / max(1, warm_nonempty),
+                    "postwarm_completed": warm,
+                    "postwarm_port_work_conservation": sum(warm_banks) == 2 * warm,
                 }
             row["ratio"] = row["rotating"]["throughput"] / row["compact"]["throughput"]
             results.append(row)
     print(json.dumps({"scope": "synthetic development seed 20261121; no holdouts",
-                      "caveats": "bank-port utilization is a simulator proxy, not measured electrical traffic; counters cover all cycles while throughput excludes warmup",
+                      "caveats": "bank-port utilization is a simulator proxy, not measured electrical traffic; all-cycle and postwarm counters are separated; per-bank port counts assume two operand accesses per completed synthetic request",
                       "results": results}, indent=2))
 
 if __name__ == "__main__":
