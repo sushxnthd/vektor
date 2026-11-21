@@ -12,6 +12,7 @@ on:
       - 'research/v317/rtl/rotating_scan_cluster_sensitivity_20261120.py'
       - 'research/v317/rtl/independent_physical_headroom_gate_20261120.py'
       - 'research/v317/rtl/independent_work_byte_capacity_audit_20261121.py'
+      - 'research/v317/rtl/independent_traffic_mix_transfer_audit_20261121.py'
       - '.github/workflows/v317-periodic-conservation.yml'
 permissions:
   contents: read
@@ -73,3 +74,10 @@ jobs:
           python -B research/v317/rtl/independent_work_byte_capacity_audit_20261121.py
       - name: Digest independent work-byte capacity source
         run: sha256sum research/v317/rtl/independent_work_byte_capacity_audit_20261121.py
+
+      - name: Independent workload-mix transfer falsification (development only)
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/independent_traffic_mix_transfer_audit_20261121.py
+      - name: Digest workload-mix audit source
+        run: sha256sum research/v317/rtl/independent_traffic_mix_transfer_audit_20261121.py
