@@ -1,0 +1,70 @@
+name: v317 matched Nangate45 mapped area and load sensitivity
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - '.github/workflows/v317-rf-mapped-area.yml'
+      - 'research/v317/rtl/audit_rf_mapped_area.py'
+      - 'research/v317/rtl/rf_bank_pairwise_credit.sv'
+      - 'research/v317/rtl/rf_bank_rotating_control.sv'
+      - 'rtl/vtile/rf_bank_arbiter.sv'
+  workflow_dispatch:
+jobs:
+  matched-mapped-cell-physicality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install no-cost Yosys/ABC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys
+      - name: Retrieve and verify pinned open Nangate45 typical Liberty
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/rf_mapped
+          lib=build/v317/rf_mapped/NangateOpenCellLibrary_typical.lib
+          curl -fL --retry 3 --retry-delay 2 --connect-timeout 20 -o "$lib" "https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/202c7fccbce32e86db899c54b0a0f0484f869cc3/flow/platforms/nangate45/lib/NangateOpenCellLibrary_typical.lib"
+          echo "90e4afb274cfc6514c587c434c77903d554117d1  $lib" | git hash-object --stdin >/dev/null 2>&1 || true
+          actual=$(git hash-object "$lib")
+          echo "Liberty Git blob SHA: $actual"
+          test "$actual" = "90e4afb274cfc6514c587c434c77903d554117d1"
+          yosys -V | tee build/v317/rf_mapped/yosys_version.txt
+      - name: Four matched library-mapped synthesis runs
+        run: |
+          set -euo pipefail
+          lib=build/v317/rf_mapped/NangateOpenCellLibrary_typical.lib
+          while IFS='|' read -r label top sources; do
+            echo "MAPPED_START $label $top"
+            yosys -p "read_liberty -lib -ignore_miss_func $lib; read_verilog -sv $sources; synth -flatten -top $top -noabc; dfflibmap -liberty $lib; abc -liberty $lib; clean; stat -liberty $lib; write_json build/v317/rf_mapped/$label.json" 2>&1 | tee "build/v317/rf_mapped/$label.log"
+            test -s "build/v317/rf_mapped/$label.json"
+          done <<'CONFIGS'
+          source_fixed|vektor_rf_bank_arbiter|rtl/vtile/rf_bank_arbiter.sv
+          pairwise_fixed|vektor_v317_rf_pairwise|research/v317/rtl/rf_bank_pairwise_credit.sv
+          source_rotating|vektor_v317_rf_rotating|rtl/vtile/rf_bank_arbiter.sv research/v317/rtl/rf_bank_rotating_control.sv
+          pairwise_rotating|vektor_v317_rf_pairwise_rotating|research/v317/rtl/rf_bank_pairwise_credit.sv
+          CONFIGS
+      - name: Independent mapped-area and dimensionless load audit
+        run: |
+          set -euo pipefail
+          python -m py_compile research/v317/rtl/audit_rf_mapped_area.py
+          python -m research.v317.rtl.audit_rf_mapped_area \
+            build/v317/rf_mapped/NangateOpenCellLibrary_typical.lib \
+            build/v317/rf_mapped/source_fixed.json \
+            build/v317/rf_mapped/pairwise_fixed.json \
+            build/v317/rf_mapped/source_rotating.json \
+            build/v317/rf_mapped/pairwise_rotating.json \
+            | tee build/v317/rf_mapped/independent_audit.json
+          python -m json.tool build/v317/rf_mapped/independent_audit.json >/dev/null
+      - name: Preserve source SHA and failures
+        if: always()
+        run: |
+          mkdir -p build/v317/rf_mapped
+          git rev-parse HEAD > build/v317/rf_mapped/source_sha.txt
+      - name: Upload all mapped netlists and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-matched-nangate45-mapped-area
+          path: build/v317/rf_mapped/

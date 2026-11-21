@@ -1,0 +1,46 @@
+name: V317 finite-FIFO age-head scheduling prospective falsification
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - 'research/v317/FROZEN_FINITE_AGE_HEAD_QUEUE_GATE_20261102.md'
+      - 'research/v317/rtl/finite_age_queue.py'
+      - 'research/v317/rtl/audit_finite_age_queue.py'
+      - 'research/v317/FINITE_AGE_QUEUE_PROSPECTIVE_RESULT_20261102.md'
+      - '.github/workflows/v317-finite-age-queue.yml'
+  workflow_dispatch:
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run prospective evaluator
+        run: python3 research/v317/rtl/finite_age_queue.py > finite_age_queue_reproduced.json
+      - name: Independently audit full traces and exhaustive four-bank controls
+        run: python3 research/v317/rtl/audit_finite_age_queue.py finite_age_queue_reproduced.json > finite_age_queue_audit.json
+      - name: Verify source-pinned result digest and negative gates
+        run: |
+          python3 - <<'PY'
+          import hashlib, json
+          raw=open('finite_age_queue_reproduced.json','rb').read()
+          expected='31381136fe68d83c84a11a6c7fac5d111930c2492cefa757249943d19eadd3e5'
+          assert hashlib.sha256(raw).hexdigest()==expected, 'frozen output changed'
+          x=json.loads(raw)
+          assert x['regimes']['uniform16']['ratio']<1.02
+          assert x['regimes']['hot65_16']['ratio']<1.02
+          assert x['regimes']['structured4']['ratio']<1.02, 'positive prediction unexpectedly recovered'
+          assert x['regimes']['structured4_cap2']['ratio']==1.0
+          assert x['regimes']['uniform16_lowload']['ratio']==1.0
+          assert all(r['greedy']['conservation_ok'] and r['head']['conservation_ok']
+                     for s in x['regimes'].values() for r in s['rows'])
+          assert all(r['greedy']['max_wait']<=7 and r['head']['max_wait']<=7
+                     for s in x['regimes'].values() for r in s['rows'])
+          print('FROZEN structured predicted-win FALSIFIED; all raw counts reproduced.')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v317-finite-age-queue
+          path: |
+            finite_age_queue_reproduced.json
+            finite_age_queue_audit.json

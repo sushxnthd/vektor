@@ -1,0 +1,90 @@
+name: V317 competent compact-greedy RF-proxy challenger
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - '.github/workflows/v317-rf-proxy-compact-challenger.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compact-strong-baseline:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify 4096-cycle three-way RTL and two-read-port legality
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog
+          mkdir -p build/v317/rf_proxy_compact
+          git rev-parse HEAD | tee build/v317/rf_proxy_compact/source_sha.txt
+          echo 'PLACE_DENSITY_LB_ADDON=0.35' > build/v317/rf_proxy_compact/density_config.txt
+          iverilog -g2012 -s tb_rf_proxy_compact_challenger -o build/v317/rf_proxy_compact/tb \
+            rtl/vtile/steal_warp_scheduler.sv \
+            rtl/vtile/issue_control.sv \
+            rtl/vtile/rf_bank_arbiter.sv \
+            research/v317/rtl/rf_bank_pairwise_credit.sv \
+            research/v317/rtl/rf_integrated_issue_top.sv \
+            research/v317/rtl/rf_proxy_banked_tile.sv \
+            research/v317/rtl/compact_greedy_equal_policy.sv \
+            research/v317/rtl/rf_proxy_compact_challenger.sv \
+            research/v317/rtl/tb_rf_proxy_compact_challenger.sv
+          vvp build/v317/rf_proxy_compact/tb | tee build/v317/rf_proxy_compact/rtl.log
+          grep -q 'PASS V317 compact challenger cycles=4096' build/v317/rf_proxy_compact/rtl.log
+      - name: Verify pinned OpenROAD/ORFS container
+        shell: bash
+        run: |
+          set -euo pipefail
+          image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
+          docker pull "$image"
+          docker image inspect "$image" --format '{{json .RepoDigests}}' | tee build/v317/rf_proxy_compact/container_digests.json
+          printf '%s\n' "$image" > build/v317/rf_proxy_compact/pinned_image.txt
+      - name: Three matched source, pairwise, compact full physical routes
+        shell: bash
+        run: |
+          set +e
+          set -uo pipefail
+          image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
+          failed=0
+          for variant in source pairwise compact; do
+            name="vektor_v317_rf_proxy_top_${variant}"
+            dest="build/v317/rf_proxy_compact/rf_proxy_${variant}"
+            for dir in results logs reports objects; do
+              mkdir -p "${dest}/${dir}/nangate45/${name}/base"
+            done
+            printf 'START variant=%s density=0.35\n' "$variant" > "${dest}/status.txt"
+            docker run --rm \
+              -v "$PWD:/work/vektor" \
+              -e VEKTOR_ROOT=/work/vektor \
+              -w /OpenROAD-flow-scripts/flow \
+              "$image" bash -lc "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_proxy_compact_challenger.mk DESIGN_NAME=${name} DIE_AREA='0 0 240 240' CORE_AREA='8 8 232 232' FLOW_VARIANT=base PLACE_DENSITY_LB_ADDON=0.35 WORK_HOME=/work/vektor/${dest} -j1" \
+              > "${dest}/make.log" 2>&1
+            rc=$?
+            printf 'exit_code=%s\n' "$rc" >> "${dest}/status.txt"
+            if [ "$rc" -ne 0 ]; then
+              failed=1
+              tail -n 70 "${dest}/make.log" || true
+            fi
+          done
+          exit "$failed"
+      - name: Independently audit routed RC and frozen materiality gate
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/v317/rtl/audit_rf_proxy_compact_challenger.py \
+            build/v317/rf_proxy_compact --repo . \
+            --output build/v317/rf_proxy_compact/audit.json
+      - name: Preserve all routes and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-rf-proxy-compact-strong-baseline
+          path: build/v317/rf_proxy_compact/
+          retention-days: 30
+          if-no-files-found: warn

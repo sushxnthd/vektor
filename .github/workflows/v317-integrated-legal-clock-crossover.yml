@@ -1,0 +1,81 @@
+name: V317 legal-clock crossover source-baseline challenge
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - '.github/workflows/v317-integrated-legal-clock-crossover.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matched-legal-clock:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record provenance and run matched RTL equivalence
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog
+          mkdir -p build/v317/legal_clock
+          git rev-parse HEAD | tee build/v317/legal_clock/source_sha.txt
+          cp research/v317/FROZEN_LEGAL_CLOCK_CROSSOVER_CHALLENGE_20261102.md build/v317/legal_clock/frozen_protocol.md
+          iverilog -g2012 -s tb_rf_integrated_issue -o build/v317/legal_clock/issue_tb \
+            rtl/vtile/steal_warp_scheduler.sv \
+            rtl/vtile/issue_control.sv \
+            rtl/vtile/rf_bank_arbiter.sv \
+            research/v317/rtl/rf_bank_pairwise_credit.sv \
+            research/v317/rtl/rf_integrated_issue_top.sv \
+            research/v317/rtl/tb_rf_integrated_issue.sv
+          vvp build/v317/legal_clock/issue_tb | tee build/v317/legal_clock/rtl_simulation.log
+          for period in 2.050 2.200; do
+            sed "s/-period 2.000 /-period ${period} /" \
+              research/v317/rtl/rf_integrated_issue.sdc \
+              > "build/v317/legal_clock/period_${period}.sdc"
+            grep -F -- "-period ${period} " "build/v317/legal_clock/period_${period}.sdc"
+          done
+      - name: Verify pinned ORFS image
+        run: |
+          set -euo pipefail
+          image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
+          docker pull "$image"
+          docker image inspect "$image" --format '{{json .RepoDigests}}' | tee build/v317/legal_clock/container_digests.json
+          printf '%s\n' "$image" > build/v317/legal_clock/pinned_image.txt
+      - name: Route all four frozen matched implementations and retain failures
+        run: |
+          set +e
+          set -uo pipefail
+          image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
+          failed=0
+          for period in 2.050 2.200; do
+            for variant in source pairwise; do
+              name="vektor_v317_issue_integrated_top_${variant}"
+              label="period${period}_${variant}"
+              home="build/v317/legal_clock/${label}"
+              for dir in results logs reports objects; do
+                mkdir -p "${home}/${dir}/nangate45/${name}/base"
+              done
+              printf 'period_ns=%s\nvariant=%s\nseed=7\nABC_AREA=1\nGPL_TIMING_DRIVEN=1\nPLACE_DENSITY_LB_ADDON=0.05\n' "$period" "$variant" > "${home}/config.txt"
+              docker run --rm \
+                -v "$PWD:/work/vektor" \
+                -e VEKTOR_ROOT=/work/vektor \
+                -w /OpenROAD-flow-scripts/flow \
+                "$image" bash -lc "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_integrated_issue.mk DESIGN_NAME=${name} SDC_FILE=/work/vektor/build/v317/legal_clock/period_${period}.sdc ABC_AREA=1 GPL_TIMING_DRIVEN=1 GPL_RANDOM_SEED=7 PLACE_DENSITY_LB_ADDON=0.05 DIE_AREA='0 0 120 120' CORE_AREA='4 4 116 116' FLOW_VARIANT=base WORK_HOME=/work/vektor/${home} -j1" \
+                > "${home}/make.log" 2>&1
+              rc=$?
+              echo "exit_code=${rc}" | tee "${home}/status.txt"
+              if [ "$rc" -ne 0 ]; then
+                failed=1
+                tail -n 70 "${home}/make.log" || true
+              fi
+            done
+          done
+          exit "$failed"
+      - name: Preserve all four raw routed/electrical outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-integrated-legal-clock-2050-2200
+          path: build/v317/legal_clock/
+          retention-days: 30

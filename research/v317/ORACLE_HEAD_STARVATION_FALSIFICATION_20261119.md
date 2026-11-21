@@ -1,0 +1,13 @@
+# Exact head-starvation falsification of the four-slot bank oracle (2026-11-19 UTC)
+
+## Scope and execution
+This is a **negative, small-state functional counterexample**, not a physical GPU implementation or a new architecture mechanism. The executable is `rtl/oracle_head_starvation_falsifier_20261119.py`, committed separately before this report. It enumerates all 2^8 = 256 ordered four-request/two-operand assignments for two banks with two reads per bank and four output slots. The oracle maximizes instantaneous grants without a fairness constraint; the comparator is the existing strict-order greedy. A local independent Python invocation of the same algorithm before persistence yielded 52 oracle-advantage cases and 52 cases where the oldest request is bypassed. The committed program additionally asserts these counts and runs a 1,000-cycle repeating witness. **The committed version has not been executed in hosted CI; that evidence tier is pending.**
+
+## Concrete witness
+Queue (oldest first): `[(0,0),(0,0),(0,1),(0,1)]`. Strict-order greedy grants request index `(0,)`, one grant. Maximum-cardinality oracle grants `(2,3)`, two grants. Both obey the two-read/bank limit: the oracle uses bank 0 twice and bank 1 twice. The oracle does not serve either of the two oldest requests. After removing the granted requests, append two new `(0,1)` requests. The same four-request state recurs, with the oldest `(0,0)` request never served, indefinitely. The script checks 1,000 repetitions. This is a **deterministic starvation witness**, not a claim that every traffic distribution starves.
+
+## Implication
+The previously observed four-bank/65%-hot-bank oracle headroom is a **non-fair upper bound**. It cannot be promoted to an implementable GPU scheduler gain without an explicit bounded-age/fairness policy and a matched-resource RTL implementation. A fairness-constrained competitor may give up some of the oracle's instantaneous grants. Queue drops, finite buffers, and backpressure further invalidate a direct instantaneous-grant-to-GPU-IPC extrapolation. The existing compact-greedy area dominance (21,314.6 versus 21,324.7 square micrometers) and electrical violations remain binding.
+
+## Next falsifier
+Freeze a maximum-wait-age rule **before** testing, then compare strict-order greedy, bounded-age scheduler and the unfair oracle on identical arrival streams with FIFO admission/drop conservation, p99/p999 age, no-starvation controls, output/bank-port constraints and a held-out workload family. Only a realizable mechanism with both clean electrical routing and a >=2% material gain against compact greedy may advance. No V287 revival, SRAM-macro claim, GPU IPC measurement or RTX-5090-equivalence claim.

@@ -1,0 +1,46 @@
+name: v317-phase-order-identifiability
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - 'research/v317/rtl/phase_order_identifiability.py'
+      - 'research/v317/rtl/audit_phase_order_identifiability.py'
+      - 'research/v317/FROZEN_PHASE_ORDER_IDENTIFIABILITY_20261102.md'
+      - 'research/v317/PHASE_ORDER_IDENTIFIABILITY_RESULT_20261102.md'
+      - '.github/workflows/v317-phase-order-identifiability.yml'
+  pull_request:
+    paths:
+      - 'research/v317/rtl/phase_order_identifiability.py'
+      - 'research/v317/rtl/audit_phase_order_identifiability.py'
+      - 'research/v317/FROZEN_PHASE_ORDER_IDENTIFIABILITY_20261102.md'
+      - 'research/v317/PHASE_ORDER_IDENTIFIABILITY_RESULT_20261102.md'
+      - '.github/workflows/v317-phase-order-identifiability.yml'
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reproduce prospective synthetic result
+        run: python3 research/v317/rtl/phase_order_identifiability.py > /tmp/v317-phase-order.json
+      - name: Independent replay and exhaustive small-bank check
+        run: python3 research/v317/rtl/audit_phase_order_identifiability.py /tmp/v317-phase-order.json
+      - name: Frozen falsification checks
+        run: |
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/v317-phase-order.json'))['regimes']
+          assert x['clean']['ratio'] < 1.05
+          assert x['phase_flip_1pct']['ratio'] < 1.02
+          assert x['row_shuffle']['ratio'] < 1.05
+          assert x['phase_random']['ratio'] < 1.05
+          assert x['cap2']['ratio'] <= 1.01
+          for key in ('clean','phase_flip_1pct','phase_random'):
+              assert x[key]['totals']['degree'] == x[key]['totals']['exact_head']
+          print('FROZEN POSITIVE HYPOTHESES FALSIFIED; negative controls passed')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v317-phase-order-prospective-results
+          path: /tmp/v317-phase-order.json

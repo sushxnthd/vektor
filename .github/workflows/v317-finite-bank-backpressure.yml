@@ -1,0 +1,44 @@
+name: V317 finite-bank backpressure prospective audit
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - 'research/v317/rtl/finite_bank_backpressure.py'
+      - 'research/v317/rtl/audit_finite_bank_backpressure.py'
+      - 'research/v317/FROZEN_FINITE_BANK_BACKPRESSURE_GATE_20261102.md'
+      - 'research/v317/FINITE_BANK_BACKPRESSURE_PROSPECTIVE_RESULT_20261102.md'
+      - '.github/workflows/v317-finite-bank-backpressure.yml'
+  workflow_dispatch:
+jobs:
+  finite-bank-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Execute independent finite-buffer bank-port event simulation
+        run: python3 research/v317/rtl/finite_bank_backpressure.py > finite_bank_results.json
+      - name: Audit frozen predictions and queue conservation
+        run: python3 research/v317/rtl/audit_finite_bank_backpressure.py finite_bank_results.json
+      - name: Show preserved negative result
+        run: |
+          python3 - <<'PY'
+          import json
+          r = json.load(open('finite_bank_results.json'))
+          for row in r['rows']:
+              print(row['regime'], row['predicted_independent_head_ratio'], row['finite_fifo_ratio_mean'], row['falsified'])
+          PY
+      - name: Preserve raw JSON and digest
+        run: sha256sum finite_bank_results.json | tee finite_bank_results.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v317-finite-bank-backpressure-raw
+          path: |
+            finite_bank_results.json
+            finite_bank_results.sha256
+          retention-days: 30

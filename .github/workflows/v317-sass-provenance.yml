@@ -1,0 +1,47 @@
+name: v317 SASS provenance audit
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+  pull_request:
+    paths:
+      - 'research/v317/**'
+      - '.github/workflows/v317-sass-provenance.yml'
+jobs:
+  lexical-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent frozen regression
+        run: python -m unittest discover -s research/v317 -p 'test_*.py' -v
+      - name: Produce source-pinned synthetic evidence
+        run: |
+          mkdir -p build/v317
+          python research/v317/sass_audit.py --input research/v317/synthetic_sass_fixture.sass > build/v317/lexical_audit.json
+          python research/v317/bank_skew_identifiability.py > build/v317/bank_skew_identifiability.json
+          python -m research.v317.bounded_collector_evidence > build/v317/bounded_collector.json
+          python -m research.v317.operand_identity_reuse_evidence > build/v317/operand_identity_reuse.json
+          python -m research.v317.functional_information_gate > build/v317/functional_information_gate.json
+          python -m research.v317.write_visibility_latency > build/v317/write_visibility_latency.json
+          python -m research.v317.rf_arbiter_port_audit > build/v317/rf_arbiter_port_audit.json
+          python -m research.v317.rf_arbiter_drain_falsification > build/v317/rf_arbiter_drain.json
+          python -m research.v317.rf_streaming_age_falsification > build/v317/rf_streaming_age.json
+          python -m research.v317.rf_streaming_strong_controls > build/v317/rf_streaming_strong_controls.json
+          python -m json.tool build/v317/lexical_audit.json > /dev/null
+          python -m json.tool build/v317/bank_skew_identifiability.json > /dev/null
+          python -m json.tool build/v317/bounded_collector.json > /dev/null
+          python -m json.tool build/v317/operand_identity_reuse.json > /dev/null
+          python -m json.tool build/v317/functional_information_gate.json > /dev/null
+          python -m json.tool build/v317/write_visibility_latency.json > /dev/null
+          python -m json.tool build/v317/rf_arbiter_port_audit.json > /dev/null
+          python -m json.tool build/v317/rf_arbiter_drain.json > /dev/null
+          python -m json.tool build/v317/rf_streaming_age.json > /dev/null
+          python -m json.tool build/v317/rf_streaming_strong_controls.json > /dev/null
+          git rev-parse HEAD > build/v317/commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v317-synthetic-sass-lexical-audit
+          path: build/v317/

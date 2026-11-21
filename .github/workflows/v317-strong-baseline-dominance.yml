@@ -1,0 +1,37 @@
+name: V317 compact-baseline area-dominance falsification
+
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - 'research/v317/rtl/strong_baseline_dominance.py'
+      - 'research/v317/STRONG_BASELINE_THREE_WAY_AUDIT_20261102.json'
+      - '.github/workflows/v317-strong-baseline-dominance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-area-dominance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reproduce frozen negative physical-area law and mutation controls
+        run: |
+          python3 research/v317/rtl/strong_baseline_dominance.py \
+            research/v317/STRONG_BASELINE_THREE_WAY_AUDIT_20261102.json \
+            --output /tmp/v317-strong-baseline-dominance.json
+          python3 - <<'PY'
+          import json
+          from decimal import Decimal
+          p = json.load(open('/tmp/v317-strong-baseline-dominance.json'))
+          assert p['compact_raw_area_dominates_pairwise']
+          assert not p['legal_material_win']
+          assert not p['gpu_ipc_measured']
+          assert Decimal(p['pairwise_raw_saving_pct']) < 0
+          assert Decimal(p['required_pairwise_area_reduction_um2']) == Decimal('436.392')
+          print('PASS frozen compact-baseline falsification; no positive tile claim')
+          PY

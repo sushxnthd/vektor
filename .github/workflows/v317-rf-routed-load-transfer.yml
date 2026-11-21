@@ -1,0 +1,74 @@
+name: V317 prospective matched routed output-load transfer
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - '.github/workflows/v317-rf-routed-load-transfer.yml'
+      - 'research/v317/FROZEN_RF_ROUTED_LOAD_AND_AREA_PHASE_20261102.md'
+      - 'research/v317/rtl/rf_routed_budget_phase.py'
+      - 'research/v317/rtl/test_rf_routed_budget_phase.py'
+  workflow_dispatch:
+jobs:
+  routed-load-transfer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Independently enumerate all frozen budget phases and holdouts
+        run: |
+          set -euo pipefail
+          mkdir -p build/v317/routed_load_transfer
+          python3 -m unittest discover -v -s research/v317/rtl -p 'test_rf_routed_budget_phase.py' \
+            |& tee build/v317/routed_load_transfer/budget_tests.log
+          python3 research/v317/rtl/rf_routed_budget_phase.py --json \
+            > build/v317/routed_load_transfer/budget_phase.json
+          git rev-parse HEAD > build/v317/routed_load_transfer/source_sha.txt
+      - name: Pin official OpenROAD Flow Scripts container
+        run: |
+          set -euo pipefail
+          image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
+          docker pull "$image"
+          docker image inspect "$image" --format '{{json .RepoDigests}}' \
+            > build/v317/routed_load_transfer/container_digests.json
+          printf '%s\n' "$image" > build/v317/routed_load_transfer/pinned_image.txt
+      - name: Four equal-footprint routed runs with 10 and 40 fF grant loads
+        run: |
+          set +e
+          set -uo pipefail
+          image='openroad/orfs@sha256:9bd99a4657f491615a5a516a8de3352f8b82013a7d0788e0b244c233efd9f5b8'
+          failed=0
+          for load in 10 40; do
+            for variant in source pairwise; do
+              name="vektor_v317_rf_physical_top_$variant"
+              label="$variant-$load-fF"
+              root="build/v317/routed_load_transfer/$label"
+              mkdir -p "$root"
+              for dir in results logs reports objects; do
+                mkdir -p "$root/$dir/nangate45/$name/base"
+              done
+              cp research/v317/rtl/rf_registered_route.sdc "$root/load.sdc"
+              sed -i -E "s/^set_load[[:space:]]+[0-9.]+/set_load $load.0/" "$root/load.sdc"
+              grep '^set_load ' "$root/load.sdc" > "$root/load_constraint.txt"
+              printf 'ROUTE START %s\n' "$label" > "$root/status.txt"
+              docker run --rm \
+                -v "$PWD:/work/vektor" \
+                -e VEKTOR_ROOT=/work/vektor \
+                -w /OpenROAD-flow-scripts/flow \
+                "$image" bash -lc "source ../env.sh && make DESIGN_CONFIG=/work/vektor/research/v317/rtl/rf_registered_route.mk DESIGN_NAME=$name SDC_FILE=/work/vektor/$root/load.sdc DIE_AREA='0 0 60 60' CORE_AREA='4 4 56 56' FLOW_VARIANT=base WORK_HOME=/work/vektor/$root -j1" \
+                > "$root/make.log" 2>&1
+              rc=$?
+              printf 'exit_code=%s\n' "$rc" >> "$root/status.txt"
+              if [ "$rc" -ne 0 ]; then
+                failed=1
+                tail -n 90 "$root/make.log" || true
+              fi
+            done
+          done
+          exit "$failed"
+      - name: Preserve every successful and failed physical run
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-prospective-routed-load-transfer
+          path: build/v317/routed_load_transfer/
+          retention-days: 30

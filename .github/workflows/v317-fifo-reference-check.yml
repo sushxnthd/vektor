@@ -1,0 +1,52 @@
+name: V317 strict FIFO RTL functional and synthesis control
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - 'research/v317/rtl/v317_fifo_pair_*'
+      - '.github/workflows/v317-fifo-reference-check.yml'
+  workflow_dispatch:
+jobs:
+  rtl-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install open-source RTL tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iverilog yosys
+      - name: Exhaustive RTL simulation
+        run: |
+          set -euo pipefail
+          iverilog -g2012 -s v317_fifo_pair_tb -o /tmp/v317_fifo_tb research/v317/rtl/v317_fifo_pair_reference_20261117.sv research/v317/rtl/v317_fifo_pair_tb_20261117.sv
+          vvp /tmp/v317_fifo_tb | tee fifo_simulation.log
+          grep -q 'PASS 128 exhaustive' fifo_simulation.log
+      - name: Sequential FIFO conservation and correlation traces
+        run: |
+          set -euo pipefail
+          iverilog -g2012 -s v317_fifo_pair_trace_tb -o /tmp/v317_trace_tb research/v317/rtl/v317_fifo_pair_reference_20261117.sv research/v317/rtl/v317_fifo_pair_trace_tb_20261117.sv
+          vvp /tmp/v317_trace_tb | tee fifo_trace.log
+          grep -q 'PASS four 64-request FIFO traces' fifo_trace.log
+      - name: Backpressure and FIFO conservation traces
+        run: |
+          set -euo pipefail
+          iverilog -g2012 -s v317_fifo_backpressure_tb -o /tmp/v317_bp_tb research/v317/rtl/v317_fifo_pair_reference_20261117.sv research/v317/rtl/v317_fifo_backpressure_tb_20261117.sv
+          vvp /tmp/v317_bp_tb | tee fifo_backpressure.log
+          grep -q 'PASS backpressure FIFO conservation' fifo_backpressure.log
+      - name: Generic logic synthesis (not PPA signoff)
+        run: |
+          set -euo pipefail
+          yosys -Q -T -l fifo_yosys.log -p 'read_verilog -sv research/v317/rtl/v317_fifo_pair_reference_20261117.sv; hierarchy -top v317_fifo_pair_reference; proc; opt; techmap; opt; stat'
+          grep -q '=== v317_fifo_pair_reference ===' fifo_yosys.log
+      - name: Preserve reproducible tool output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-fifo-control-logs
+          path: |
+            fifo_simulation.log
+            fifo_trace.log
+            fifo_backpressure.log
+            fifo_yosys.log
+          if-no-files-found: warn

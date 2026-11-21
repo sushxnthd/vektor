@@ -1,0 +1,45 @@
+name: V317 independent integrated issue-control routed evidence audit
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - 'research/v317/rtl/audit_integrated_issue_route.py'
+      - 'research/v317/INTEGRATED_ISSUE_ROUTED_PROSPECTIVE_RESULT_20261102.md'
+      - '.github/workflows/v317-integrated-issue-evidence-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  independent-evidence-audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download immutable source-run artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: v317-integrated-issue-nangate45-route
+          run-id: 41352990340
+          github-token: ${{ github.token }}
+          path: /tmp/v317-integrated-artifact
+      - name: Run independent audit against raw OpenROAD files
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import pathlib
+          import zipfile
+          from research.v317.rtl.audit_integrated_issue_route import audit
+          root = pathlib.Path('/tmp/v317-integrated-artifact')
+          files = list(root.rglob('6_report.json'))
+          assert len(files) == 2, (len(files), root)
+          # Download-artifact extracts ZIP contents, so repack the raw files.
+          target = pathlib.Path('/tmp/v317-integrated-raw.zip')
+          with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as archive:
+              for file in root.rglob('*'):
+                  if file.is_file():
+                      archive.write(file, file.relative_to(root))
+          result = audit(target)
+          print(json.dumps(result, indent=2, sort_keys=True))
+          PY

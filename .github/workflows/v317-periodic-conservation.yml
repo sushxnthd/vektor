@@ -1,0 +1,83 @@
+name: V317 periodic conservation reproducibility
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'research/v317/rtl/independent_periodic_conservation_audit_20261120.py'
+      - 'research/v317/rtl/paired_trace_conservation_regression_20261120.py'
+      - 'research/v317/rtl/finite_queue_prospective_20261120.py'
+      - 'research/v317/rtl/rotating_scan_structural_audit_20261120.py'
+      - 'research/v317/rtl/rotating_scan_prospective_20261120.py'
+      - 'research/v317/rtl/rotating_scan_development_replay_gate_20261120.py'
+      - 'research/v317/rtl/rotating_scan_cluster_sensitivity_20261120.py'
+      - 'research/v317/rtl/independent_physical_headroom_gate_20261120.py'
+      - 'research/v317/rtl/independent_work_byte_capacity_audit_20261121.py'
+      - 'research/v317/rtl/independent_traffic_mix_transfer_audit_20261121.py'
+      - '.github/workflows/v317-periodic-conservation.yml'
+permissions:
+  contents: read
+jobs:
+  independent-periodic-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Run checked-out byte-identical source
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/independent_periodic_conservation_audit_20261120.py
+      - name: Report source SHA-256 for independent audit
+        run: sha256sum research/v317/rtl/independent_periodic_conservation_audit_20261120.py
+      - name: Run paired-trace finite-FIFO reference regression
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/paired_trace_conservation_regression_20261120.py
+      - name: Report paired-trace source SHA-256
+        run: sha256sum research/v317/rtl/paired_trace_conservation_regression_20261120.py research/v317/rtl/finite_queue_prospective_20261120.py
+
+      - name: Audit frozen rotating-scan implementation classification
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/rotating_scan_structural_audit_20261120.py
+      - name: Report frozen rotating-scan audit source digests
+        run: sha256sum research/v317/rtl/rotating_scan_structural_audit_20261120.py research/v317/rtl/rotating_scan_prospective_20261120.py
+
+      - name: Reproduce frozen development falsification (never holdout)
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/rotating_scan_development_replay_gate_20261120.py
+      - name: Digest development replay gate and simulator
+        run: sha256sum research/v317/rtl/rotating_scan_development_replay_gate_20261120.py research/v317/rtl/rotating_scan_prospective_20261120.py
+
+      - name: Development seed-cluster sensitivity (never holdout)
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/rotating_scan_cluster_sensitivity_20261120.py
+      - name: Digest development sensitivity source
+        run: sha256sum research/v317/rtl/rotating_scan_cluster_sensitivity_20261120.py research/v317/rtl/rotating_scan_prospective_20261120.py
+
+      - name: Independent necessary physical-headroom falsification (development only)
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/independent_physical_headroom_gate_20261120.py
+      - name: Digest independent physical-headroom source
+        run: sha256sum research/v317/rtl/independent_physical_headroom_gate_20261120.py
+
+      - name: Independent dimensional work-byte capacity audit (development only)
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/independent_work_byte_capacity_audit_20261121.py
+      - name: Digest independent work-byte capacity source
+        run: sha256sum research/v317/rtl/independent_work_byte_capacity_audit_20261121.py
+
+      - name: Independent workload-mix transfer falsification (development only)
+        run: |
+          set -euo pipefail
+          python -B research/v317/rtl/independent_traffic_mix_transfer_audit_20261121.py
+      - name: Digest workload-mix audit source
+        run: sha256sum research/v317/rtl/independent_traffic_mix_transfer_audit_20261121.py

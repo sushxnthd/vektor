@@ -1,0 +1,27 @@
+name: V317 bank assignment invariance audit
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - research/v317/rtl/bank_assignment_invariance.py
+      - research/v317/rtl/audit_bank_assignment_invariance.py
+      - .github/workflows/v317-bank-assignment-invariance.yml
+jobs:
+  exact-bank-map-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Evaluate frozen assignment uncertainty
+        run: |
+          python3 research/v317/rtl/bank_assignment_invariance.py > bank_assignment_invariance_20261103.json
+          python3 research/v317/rtl/audit_bank_assignment_invariance.py bank_assignment_invariance_20261103.json
+      - name: Preserve exact weighted counts and independent audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-bank-assignment-invariance
+          path: bank_assignment_invariance_20261103.json
+          if-no-files-found: warn

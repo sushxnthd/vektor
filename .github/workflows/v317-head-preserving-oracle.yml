@@ -1,0 +1,43 @@
+name: V317 head-preserving bank-service falsification reproduction
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - 'research/v317/rtl/head_preserving_oracle.py'
+      - 'research/v317/rtl/audit_head_preserving_oracle.py'
+      - 'research/v317/HEAD_PRESERVING_BANK_SERVICE_RESULT_20261102.json'
+      - 'research/v317/FROZEN_HEAD_PRESERVING_BANK_SERVICE_20261102.md'
+      - '.github/workflows/v317-head-preserving-oracle.yml'
+  workflow_dispatch:
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run preregistered evaluator
+        run: python3 research/v317/rtl/head_preserving_oracle.py > head_results.json
+      - name: Independently audit exhaustive B2/B4 and unseen seeds
+        run: python3 research/v317/rtl/audit_head_preserving_oracle.py head_results.json > head_audit.json
+      - name: Check immutable saved counts and negative gates
+        run: |
+          python3 - <<'PY'
+          import json
+          x=json.load(open('head_results.json'))
+          y=json.load(open('research/v317/HEAD_PRESERVING_BANK_SERVICE_RESULT_20261102.json'))
+          for group in ('regimes','exhaustive'):
+              for name in x[group]:
+                  for key in ('greedy_grants','head_preserving_grants','unrestricted_grants'):
+                      assert x[group][name][key]==y[group][name][key],(group,name,key)
+          assert x['regimes']['uniform16']['head_over_greedy'] < 1.02
+          assert x['regimes']['hot65_16']['head_over_greedy'] < 1.02
+          assert x['regimes']['hot65_16_cap2']['head_over_greedy'] == 1.0
+          assert x['controls']['head_blocker']=={'greedy':2,'head_preserving':2,'unrestricted':3}
+          print('Reproduced prospective hot-bank win falsification; not GPU IPC')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v317-head-preserving-oracle
+          path: |
+            head_results.json
+            head_audit.json

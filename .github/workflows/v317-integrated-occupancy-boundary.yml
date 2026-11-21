@@ -1,0 +1,25 @@
+name: v317 integrated occupancy and queue-semantics falsification
+on:
+  push:
+    branches: [research/v317-sass-provenance-gate]
+    paths:
+      - 'research/v317/rtl/integrated_occupancy_boundary.py'
+      - 'research/v317/rtl/test_integrated_occupancy_boundary.py'
+      - 'research/v317/FROZEN_INTEGRATED_ROBUST_TILE_OCCUPANCY_GATE_20261102.md'
+      - '.github/workflows/v317-integrated-occupancy-boundary.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prospective-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Independent frozen predictions and queue semantics
+        run: python3 -m unittest discover -s research/v317/rtl -p 'test_integrated_occupancy_boundary.py' -v
+      - name: Preserve complete deterministic sensitivity result
+        run: python3 research/v317/rtl/integrated_occupancy_boundary.py | tee v317_integrated_occupancy_result.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v317-integrated-occupancy-result
+          path: v317_integrated_occupancy_result.json

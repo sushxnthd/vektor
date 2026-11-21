@@ -1,0 +1,58 @@
+name: V317 frozen RF-proxy independent physical audit
+on:
+  push:
+    branches:
+      - research/v317-sass-provenance-gate
+    paths:
+      - '.github/workflows/v317-rf-proxy-independent-audit.yml'
+      - 'research/v317/RF_PROXY_BANKED_FROZEN_PHYSICAL_FALSIFICATION_20261102.md'
+      - 'research/v317/rtl/audit_rf_proxy_banked_tile.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  independent-falsification-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download original frozen route artifact from separate prior run
+        uses: actions/download-artifact@v4
+        with:
+          name: v317-rf-proxy-matched-nangate45
+          run-id: 41417132386
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: build/v317/rf_proxy
+      - name: Audit extracted-RC metrics, electrical violations, and frozen failure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 research/v317/rtl/audit_rf_proxy_banked_tile.py build/v317/rf_proxy --repo . --output build/v317/rf_proxy_audit.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          a = json.loads(Path('build/v317/rf_proxy_audit.json').read_text())
+          s,p = a['rows']
+          area_pct = 100*(1-p['area_um2']/s['area_um2'])
+          assert abs(area_pct - 0.8255208092324939) < 1e-5, area_pct
+          assert a['both_legal'] is False, a
+          assert a['area_win_survives'] is None, a
+          assert all(not x['legal'] for x in (s,p)), a
+          assert s['hold_violations']==3 and p['hold_violations']==4, a
+          assert s['max_cap_violations']==11 and p['max_cap_violations']==8, a
+          assert s['route_drc_violations']==0 and p['route_drc_violations']==0, a
+          assert s['setup_violations']==0 and p['setup_violations']==0, a
+          assert area_pct < 2.0
+          print('PASS INDEPENDENT NEGATIVE AUDIT: electrically illegal; area saving %.6f%% < 2.0%%' % area_pct)
+          PY
+      - name: Preserve independent audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v317-rf-proxy-independent-negative-audit
+          path: build/v317/rf_proxy_audit.json
+          if-no-files-found: warn
+          retention-days: 30

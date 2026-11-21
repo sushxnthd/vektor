@@ -1,0 +1,109 @@
+{
+  "cycles": 2,
+  "evidence_tier": "exact synthetic four-request two-cycle batch ceiling, not RTL or GPU IPC",
+  "exhaustive": {
+    "3": {
+      "degree": 23292,
+      "degree_losses": 492,
+      "degree_ties": 5781,
+      "degree_wins": 288,
+      "greedy": 23496,
+      "identities_passed": 6561,
+      "opportunities": 918,
+      "oracle": 24414,
+      "tail": 24414,
+      "vectors": 6561
+    },
+    "4": {
+      "degree": 243248,
+      "degree_losses": 4848,
+      "degree_ties": 58576,
+      "degree_wins": 2112,
+      "greedy": 245984,
+      "identities_passed": 65536,
+      "opportunities": 8760,
+      "oracle": 254744,
+      "tail": 254744,
+      "vectors": 65536
+    },
+    "5": {
+      "degree": 1482110,
+      "degree_losses": 25320,
+      "degree_ties": 357625,
+      "degree_wins": 7680,
+      "greedy": 1499750,
+      "identities_passed": 390625,
+      "opportunities": 41940,
+      "oracle": 1541690,
+      "tail": 1541690,
+      "vectors": 390625
+    }
+  },
+  "frozen_protocol": "FROZEN_TWO_CYCLE_CLAIRVOYANT_CEILING_20261103.md",
+  "issue_cap": 2,
+  "ports_per_bank": 2,
+  "predictions": {
+    "b16_gain_le_1pct": true,
+    "b5_gain_ge_0p1pct": true,
+    "exact_opportunity_identity": true,
+    "tail_equals_oracle": true
+  },
+  "request_count": 4,
+  "schema": "vektor.v317.two_cycle_clairvoyant_ceiling.v1",
+  "uniform_b16_by_seed": {
+    "1603": {
+      "degree": 47588,
+      "degree_losses": 226,
+      "degree_ties": 11768,
+      "degree_wins": 6,
+      "greedy": 47808,
+      "identities_passed": 12000,
+      "opportunities": 180,
+      "oracle": 47988,
+      "tail": 47988,
+      "vectors": 12000
+    },
+    "2603": {
+      "degree": 47592,
+      "degree_losses": 220,
+      "degree_ties": 11767,
+      "degree_wins": 13,
+      "greedy": 47799,
+      "identities_passed": 12000,
+      "opportunities": 194,
+      "oracle": 47993,
+      "tail": 47993,
+      "vectors": 12000
+    },
+    "3603": {
+      "degree": 47590,
+      "degree_losses": 229,
+      "degree_ties": 11770,
+      "degree_wins": 1,
+      "greedy": 47818,
+      "identities_passed": 12000,
+      "opportunities": 165,
+      "oracle": 47983,
+      "tail": 47983,
+      "vectors": 12000
+    }
+  },
+  "uniform_b16_samples_per_seed": 12000,
+  "uniform_b16_seeds": [
+    1603,
+    2603,
+    3603
+  ],
+  "uniform_b16_total": {
+    "degree": 142770,
+    "degree_losses": 675,
+    "degree_ties": 35305,
+    "degree_wins": 20,
+    "greedy": 143425,
+    "identities_passed": 36000,
+    "opportunities": 539,
+    "oracle": 143964,
+    "tail": 143964,
+    "vectors": 36000
+  }
+}
